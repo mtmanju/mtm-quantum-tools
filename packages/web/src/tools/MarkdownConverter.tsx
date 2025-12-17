@@ -11,7 +11,7 @@ const initMermaid = async () => {
   if (!mermaid) {
     const mermaidModule = await import('mermaid');
     mermaid = mermaidModule.default;
-    mermaid.initialize({ 
+    mermaid.initialize({
       startOnLoad: false,
       theme: 'default',
       securityLevel: 'loose',
@@ -54,26 +54,26 @@ const MarkdownConverter = () => {
     try {
       const m = await initMermaid();
       const id = `mermaid-diagram-${index}-${Date.now()}`;
-      
+
       // Render mermaid to SVG
       const { svg } = await m.render(id, code);
-      
+
       // Parse SVG to get dimensions
       const parser = new DOMParser();
       const svgDoc = parser.parseFromString(svg, 'image/svg+xml');
       const svgElement = svgDoc.documentElement;
-      
+
       // Get dimensions from viewBox or default
       let width = 800;
       let height = 600;
-      
+
       const viewBox = svgElement.getAttribute('viewBox');
       if (viewBox) {
         const parts = viewBox.split(' ');
         width = Math.ceil(parseFloat(parts[2])) || 800;
         height = Math.ceil(parseFloat(parts[3])) || 600;
       }
-      
+
       // Scale UP small diagrams for better quality (2x minimum)
       const minWidth = 400;
       const minHeight = 300;
@@ -82,7 +82,7 @@ const MarkdownConverter = () => {
         width = Math.ceil(width * scale);
         height = Math.ceil(height * scale);
       }
-      
+
       // Ensure maximum dimensions (for very large diagrams)
       const maxWidth = 1200;
       const maxHeight = 1000;
@@ -91,51 +91,51 @@ const MarkdownConverter = () => {
         width = Math.ceil(width * scale);
         height = Math.ceil(height * scale);
       }
-      
-      
+
+
       // Embed SVG in an HTML img with proper encoding to avoid CORS
       const svgString = new XMLSerializer().serializeToString(svgElement);
-      
+
       // Create high-quality canvas
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d', { 
+      const ctx = canvas.getContext('2d', {
         alpha: false,
         desynchronized: false,
       });
-      
+
       if (!ctx) {
         console.error('❌ Could not get canvas context');
         return null;
       }
-      
+
       // Enable high-quality rendering
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      
+
       // Fill white background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
-      
+
       // Use data URL instead of blob URL to avoid CORS
       const encodedSvg = encodeURIComponent(svgString)
         .replace(/'/g, '%27')
         .replace(/"/g, '%22');
       const dataUrl = `data:image/svg+xml,${encodedSvg}`;
-      
+
       return new Promise((resolve) => {
         const img = new Image();
-        
+
         const timeout = setTimeout(() => {
           resolve(null);
         }, 5000);
-        
+
         img.onload = () => {
           clearTimeout(timeout);
           try {
             ctx.drawImage(img, 0, 0, width, height);
-            
+
             // Use canvas.toDataURL as alternative to toBlob
             try {
               const dataUrl = canvas.toDataURL('image/png', 1.0);
@@ -147,16 +147,16 @@ const MarkdownConverter = () => {
               for (let i = 0; i < len; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
               }
-              
+
               // Verify PNG signature (first 8 bytes should be: 137 80 78 71 13 10 26 10)
-              const isPNG = bytes.length > 8 && 
+              const isPNG = bytes.length > 8 &&
                 bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71;
-              
+
               if (!isPNG) {
                 resolve(null);
                 return;
               }
-              
+
               resolve({ data: bytes, width, height, base64 });
             } catch (dataUrlError) {
               resolve(null);
@@ -166,12 +166,12 @@ const MarkdownConverter = () => {
             resolve(null);
           }
         };
-        
+
         img.onerror = () => {
           clearTimeout(timeout);
           resolve(null);
         };
-        
+
         // Set image source
         img.src = dataUrl;
       });
@@ -183,13 +183,13 @@ const MarkdownConverter = () => {
   // Helper function to parse inline markdown (bold, italic, code, links, strikethrough)
   const parseInlineMarkdown = (text: string): TextRun[] => {
     const runs: TextRun[] = []
-    
+
     // Enhanced regex to capture: **bold**, *italic*, `code`, [link](url), ~~strikethrough~~
     const regex = /(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[([^\]]+)\]\(([^)]+)\)|~~[^~]+~~)/g
-    
+
     let lastIndex = 0
     let match
-    
+
     while ((match = regex.exec(text)) !== null) {
       // Add text before the match
       if (match.index > lastIndex) {
@@ -199,9 +199,9 @@ const MarkdownConverter = () => {
           size: 22,
         }))
       }
-      
+
       const matched = match[0]
-      
+
       // ***Bold + Italic***
       if (matched.startsWith('***') && matched.endsWith('***')) {
         runs.push(new TextRun({
@@ -261,10 +261,10 @@ const MarkdownConverter = () => {
           size: 22,
         }))
       }
-      
+
       lastIndex = regex.lastIndex
     }
-    
+
     // Add remaining text
     if (lastIndex < text.length) {
       runs.push(new TextRun({
@@ -273,7 +273,7 @@ const MarkdownConverter = () => {
         size: 22,
       }))
     }
-    
+
     return runs.length > 0 ? runs : [new TextRun({ text, font: 'Calibri', size: 22 })]
   }
 
@@ -285,7 +285,7 @@ const MarkdownConverter = () => {
 
     try {
       const lines = markdownContent.split('\n')
-      
+
       const children: (Paragraph | Table)[] = []
       let i = 0
       let mermaidIndex = 0
@@ -299,7 +299,7 @@ const MarkdownConverter = () => {
         // Handle code blocks (including Mermaid)
         if (line.trim().startsWith('```')) {
           const language = line.trim().substring(3).trim()
-          
+
           // Start of code block
           if (!inCodeBlock) {
             inCodeBlock = true
@@ -309,25 +309,25 @@ const MarkdownConverter = () => {
             continue
           }
         }
-        
+
         // Inside code block - collect lines
         if (inCodeBlock && !line.trim().startsWith('```')) {
           codeBlockContent.push(line)
           i++
           continue
         }
-        
+
         // End of code block
         if (inCodeBlock && line.trim().startsWith('```')) {
           inCodeBlock = false
-          
+
           // Handle Mermaid diagrams
           if (codeBlockLanguage === 'mermaid') {
             const mermaidCode = codeBlockContent.join('\n').trim()
-            
+
             if (mermaidCode) {
               const imageResult = await renderMermaidToImage(mermaidCode, mermaidIndex++);
-              
+
               if (imageResult && imageResult.data && imageResult.data.length > 0) {
                 try {
                   // Calculate display dimensions to fit within page margins
@@ -336,21 +336,21 @@ const MarkdownConverter = () => {
                   // A4 height: 297mm (11.69"), minus 1" margins = 10.69" = 1026px usable
                   const pageWidth = 680; // Max width to fit in A4 margins (with padding)
                   const pageHeight = 1000; // Max height before page break on A4
-                  
+
                   // Get aspect ratio from actual image
                   const aspectRatio = imageResult.width / imageResult.height;
-                  
+
                   let displayWidth = Math.min(imageResult.width, pageWidth);
                   let displayHeight = Math.round(displayWidth / aspectRatio);
-                  
+
                   // If height exceeds page, scale down based on height
                   if (displayHeight > pageHeight) {
                     displayHeight = pageHeight;
                     displayWidth = Math.round(displayHeight * aspectRatio);
                   }
-                  
+
                   // Create image run using base64 data URL (most compatible with docx library)
-                  
+
                   // @ts-expect-error - docx library accepts Uint8Array despite type definition
                   const imageRun = new ImageRun({
                     data: imageResult.data,
@@ -359,14 +359,14 @@ const MarkdownConverter = () => {
                       height: displayHeight,
                     },
                   });
-                  
+
                   const imageParagraph = new Paragraph({
                     children: [imageRun],
                     spacing: { before: 120, after: 120 },
                     keepNext: false, // Don't keep with next paragraph
                     keepLines: false, // Allow page breaks within
                   });
-                  
+
                   children.push(imageParagraph);
                 } catch (error) {
                   children.push(
@@ -380,10 +380,10 @@ const MarkdownConverter = () => {
                       ],
                       spacing: { before: 240, after: 240 },
                     })
-                );
-              }
-            } else {
-              children.push(
+                  );
+                }
+              } else {
+                children.push(
                   new Paragraph({
                     children: [
                       new TextRun({
@@ -397,7 +397,7 @@ const MarkdownConverter = () => {
                 );
               }
             }
-          } 
+          }
           // Handle regular code blocks
           else {
             if (codeBlockContent.length > 0) {
@@ -412,7 +412,7 @@ const MarkdownConverter = () => {
                         size: 20, // 10pt
                       })
                     ],
-                    spacing: { 
+                    spacing: {
                       before: idx === 0 ? 120 : 0,
                       after: idx === codeBlockContent.length - 1 ? 120 : 0
                     },
@@ -424,7 +424,7 @@ const MarkdownConverter = () => {
               });
             }
           }
-          
+
           codeBlockContent = []
           codeBlockLanguage = ''
           i++
@@ -443,7 +443,7 @@ const MarkdownConverter = () => {
           }
 
           if (tableLines.length > 0) {
-            const rows = tableLines.map(tline => 
+            const rows = tableLines.map(tline =>
               tline.split('|').slice(1, -1).map(cell => cell.trim())
             )
 
@@ -601,11 +601,11 @@ const MarkdownConverter = () => {
         // Handle regular paragraphs
         else if (line.trim()) {
           const runs = parseInlineMarkdown(line)
-          
+
           children.push(
             new Paragraph({
               children: runs,
-              spacing: { 
+              spacing: {
                 after: 120,
                 line: 240, // 1.0 line spacing (single)
               },
@@ -754,7 +754,7 @@ const MarkdownConverter = () => {
 
         // Use toBlob for browser compatibility
         const blob = await Packer.toBlob(doc);
-        
+
         const outputFileName = fileName.replace(/\.md$/i, '') + '.docx'
         saveAs(blob, outputFileName)
         setError('')
@@ -771,23 +771,18 @@ const MarkdownConverter = () => {
 
   return (
     <div className="converter-container">
-      <div className="converter-header">
-        <FileText size={40} />
-        <div>
-          <h3>Markdown to DOCX Converter</h3>
-          <p>Upload your Markdown file and convert it to a professional Word document with full Mermaid diagram support</p>
-        </div>
-      </div>
-
+      {/* Dropzone Area */}
       <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
         <input {...getInputProps()} />
-        <Upload size={48} />
+        <div className="dropzone-icon-circle">
+          <Upload size={32} strokeWidth={1.5} />
+        </div>
         {isDragActive ? (
-          <p>Drop the Markdown file here...</p>
+          <p className="primary-text">Drop the Markdown file here...</p>
         ) : (
           <div>
-            <p>Drag & drop a Markdown file here, or click to select</p>
-            <p className="dropzone-hint">Supports .md and .markdown files with Mermaid diagrams</p>
+            <p className="primary-text">Upload Markdown File</p>
+            <p className="secondary-text">Drag & drop or click to select (.md)</p>
           </div>
         )}
       </div>
@@ -838,27 +833,31 @@ const MarkdownConverter = () => {
         </div>
       )}
 
-      <div className="info-box">
-        <h4>✨ Supported Features:</h4>
-        <ul>
-          <li><strong>Headers:</strong> H1, H2, H3, H4 with professional styling</li>
-          <li><strong>Text:</strong> **bold**, *italic*, `code`, ~~strikethrough~~, [links](url)</li>
-          <li><strong>Lists:</strong> Bullet lists (- or *) with nesting support</li>
-          <li><strong>Blockquotes:</strong> &gt; Quote text</li>
-          <li><strong>Tables:</strong> With blue headers and borders</li>
-          <li><strong>Code blocks:</strong> ```language with syntax highlighting</li>
-          <li><strong>Mermaid diagrams:</strong> Rendered as high-quality PNG images</li>
-          <li><strong>Horizontal rules:</strong> ---</li>
-        </ul>
-        <p className="info-note">
-          <strong>📝 Note:</strong> Word may show &quot;unreadable content&quot; warning on first open - click &quot;Yes&quot; to recover. 
-          This is normal for programmatically generated DOCX files. All content will be intact and editable.
-        </p>
-        <p className="info-note">
-          <strong>🎨 Styling:</strong> A4 format with 0.5&quot; margins, Calibri fonts, single line spacing, 
-          professional blue headings, and optimized diagram sizing.
-        </p>
-      </div>
+      {/* Features Grid - Only show when no content is loaded to keep interface clean */}
+      {!markdownContent && (
+        <div className="converter-features-grid">
+          <div className="feature-item">
+            <h4><FileText size={20} /> Supported Formatting</h4>
+            <ul className="feature-list">
+              <li>Headers (H1-H4) with professional styling</li>
+              <li>Bold, Italic, Strikethrough text</li>
+              <li>Code blocks with syntax highlighting</li>
+              <li>Blockquotes and Citations</li>
+              <li>Complex Tables with styling</li>
+            </ul>
+          </div>
+
+          <div className="feature-item">
+            <h4><Download size={20} /> Smart Conversion</h4>
+            <ul className="feature-list">
+              <li>Mermaid Diagrams to High-Res Images</li>
+              <li>Optimized layout for A4 printing</li>
+              <li>Automatic Table of Contents</li>
+              <li>Clean, professional topography</li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

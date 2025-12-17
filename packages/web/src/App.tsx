@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { FileText, Zap, Code, Calculator, Layout, FileJson, GitCompare, Table, Workflow, Database, FileCode, Shield, Clock } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { FileText, Zap, Code, Calculator, Layout, FileJson, GitCompare, Table, Workflow, Database, FileCode, Shield, Clock, Moon, Sun, ArrowLeft } from 'lucide-react'
 import MarkdownConverter from './tools/MarkdownConverter'
 import './App.css'
 import type { ReactElement } from 'react'
@@ -35,7 +35,7 @@ const tools: Tool[] = [
     category: 'Document Processing',
     status: 'coming-soon'
   },
-  
+
   // Data Tools
   {
     id: 'json-formatter',
@@ -62,7 +62,7 @@ const tools: Tool[] = [
     category: 'Data & API',
     status: 'coming-soon'
   },
-  
+
   // Business Tools
   {
     id: 'dmn-evaluator',
@@ -81,7 +81,7 @@ const tools: Tool[] = [
     category: 'Business Logic',
     status: 'coming-soon'
   },
-  
+
   // Developer Tools
   {
     id: 'diff-checker',
@@ -107,7 +107,7 @@ const tools: Tool[] = [
     category: 'Developer Tools',
     status: 'coming-soon'
   },
-  
+
   // Utilities
   {
     id: 'timestamp-converter',
@@ -127,152 +127,180 @@ const tools: Tool[] = [
   }
 ]
 
-function App() {
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
+// Custom hook for hash-based routing
+const useHashLocation = () => {
+  const [hash, setHash] = useState(window.location.hash)
 
-  const filteredTools = tools.filter(tool => 
+  useEffect(() => {
+    const handleHashChange = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  const navigate = (newHash: string) => {
+    window.location.hash = newHash
+  }
+
+  return { hash, navigate }
+}
+
+function App() {
+  const { hash, navigate } = useHashLocation()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  // Derive selected tool from hash
+  const getSelectedTool = (): Tool | null => {
+    if (!hash.startsWith('#tool/')) return null
+    const toolId = hash.replace('#tool/', '')
+    return tools.find(t => t.id === toolId) || null
+  }
+
+  const selectedTool = getSelectedTool()
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light'
+    setIsDarkMode(savedTheme === 'dark')
+    document.documentElement.setAttribute('data-theme', savedTheme)
+  }, [])
+
+  const toggleTheme = () => {
+    const newTheme = isDarkMode ? 'light' : 'dark'
+    setIsDarkMode(!isDarkMode)
+    document.documentElement.setAttribute('data-theme', newTheme)
+    localStorage.setItem('theme', newTheme)
+  }
+
+  const filteredTools = tools.filter(tool =>
     tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tool.category.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const featuredTools = filteredTools.filter(t => t.featured)
   const categories = Array.from(new Set(tools.map(t => t.category)))
   const activeCount = tools.filter(t => t.status === 'active').length
-  const totalCount = tools.length
+
+  const handleToolClick = (tool: Tool) => {
+    if (tool.status === 'active') {
+      navigate(`#tool/${tool.id}`)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   return (
     <div className="app">
-      <header className="header">
+      <header className={`header ${window.scrollY > 10 ? 'scrolled' : ''}`}>
         <div className="header-content">
-          <div className="logo">
-            <Layout size={36} />
-            <div className="logo-text">
-              <h1>Quantum Tools</h1>
-              <p className="subtitle">by MTM</p>
+          <div className="logo" onClick={() => navigate('')}>
+            <Layout size={28} strokeWidth={1.5} />
+            <div>
+              <h1>Quantum</h1>
+              <span className="logo-subtitle">Tools</span>
             </div>
           </div>
-          <p className="tagline">Enterprise Utility Platform - Accelerate Your Workflow</p>
+          <div className="header-actions">
+            <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+              {isDarkMode ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
+            </button>
+          </div>
         </div>
       </header>
 
       {!selectedTool ? (
         <main className="main-content">
-          {/* Stats Bar */}
-          <div className="stats-bar">
-            <div className="stat">
-              <span className="stat-value">{totalCount}</span>
-              <span className="stat-label">Total Tools</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{activeCount}</span>
-              <span className="stat-label">Active</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{categories.length}</span>
-              <span className="stat-label">Categories</span>
-            </div>
-          </div>
+          <section className="hero-section">
+            <h1 className="hero-title">Essential Utilities<br />For Modern Development.</h1>
+            <p className="hero-subtitle">A curated collection of developer tools designed for performance and precision.</p>
 
-          {/* Search */}
-          <div className="search-section">
-            <input
-              type="text"
-              placeholder="Search tools by name, description, or category..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-          </div>
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="Find a tool..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+            </div>
 
-          {/* Featured Tools */}
-          {!searchQuery && featuredTools.length > 0 && (
-            <section className="featured-section">
-              <div className="section-header">
-                <h2 className="section-title">Featured Tools</h2>
-                <p className="section-description">Most popular and frequently used tools</p>
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <span className="hero-stat-value">{tools.length}</span>
+                <span className="hero-stat-label">Tools Available</span>
               </div>
-              <div className="tools-grid featured-grid">
-                {featuredTools.map(tool => (
-                  <div 
-                    key={tool.id} 
-                    className={`tool-card featured ${tool.status}`}
-                    onClick={() => tool.status === 'active' && setSelectedTool(tool)}
-                  >
-                    <div className="tool-icon">{tool.icon}</div>
-                    <h3 className="tool-name">{tool.name}</h3>
-                    <p className="tool-description">{tool.description}</p>
-                    {tool.status === 'coming-soon' && (
-                      <span className="coming-soon-badge">Coming Soon</span>
-                    )}
-                    {tool.status === 'active' && (
-                      <button className="tool-button">Launch Tool →</button>
-                    )}
-                  </div>
-                ))}
+              <div className="hero-stat">
+                <span className="hero-stat-value">{activeCount}</span>
+                <span className="hero-stat-label">Active Modules</span>
               </div>
-            </section>
-          )}
-
-          {/* All Tools by Category */}
-          <section className="all-tools-section">
-            {!searchQuery && <div className="section-header">
-              <h2 className="section-title">All Tools</h2>
-              <p className="section-description">Browse by category</p>
-            </div>}
-            
-            {categories.map(category => {
-              const categoryTools = filteredTools.filter(t => t.category === category)
-              if (categoryTools.length === 0) return null
-
-              return (
-                <div key={category} className="category-group">
-                  <h3 className="category-title">{category}</h3>
-                  <div className="tools-grid">
-                    {categoryTools.map(tool => (
-                      <div 
-                        key={tool.id} 
-                        className={`tool-card ${tool.status}`}
-                        onClick={() => tool.status === 'active' && setSelectedTool(tool)}
-                      >
-                        <div className="tool-icon">{tool.icon}</div>
-                        <h3 className="tool-name">{tool.name}</h3>
-                        <p className="tool-description">{tool.description}</p>
-                        {tool.status === 'coming-soon' && (
-                          <span className="coming-soon-badge">Coming Soon</span>
-                        )}
-                        {tool.status === 'active' && (
-                          <button className="tool-button">Launch Tool →</button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
+            </div>
           </section>
+
+          {categories.map(category => {
+            const categoryTools = filteredTools.filter(t => t.category === category)
+            if (categoryTools.length === 0) return null
+
+            return (
+              <section key={category} className="category-section">
+                <div className="section-header">
+                  <h2 className="section-title">{category}</h2>
+                </div>
+                <div className="tools-grid">
+                  {categoryTools.map(tool => (
+                    <div
+                      key={tool.id}
+                      className={`tool-card ${tool.status}`}
+                      onClick={() => handleToolClick(tool)}
+                    >
+                      <div className="status-indicator">
+                        <div className={`status-dot ${tool.status === 'active' ? 'status-active' : 'status-soon'}`} />
+                        {tool.status === 'coming-soon' && <span>Soon</span>}
+                      </div>
+
+                      <div className="tool-icon-wrapper">
+                        {tool.icon}
+                      </div>
+
+                      <div className="tool-info">
+                        <h3>{tool.name}</h3>
+                        <p>{tool.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )
+          })}
         </main>
       ) : (
-        <main className="tool-view">
-          <div className="tool-header">
-            <button 
+        <main className="main-content">
+          <div className="tool-view-wrapper">
+            <button
               className="back-button"
-              onClick={() => setSelectedTool(null)}
+              onClick={() => navigate('')}
             >
-              ← Back to Tools
+              <ArrowLeft size={20} />
+              <span>Back to Tools</span>
             </button>
-            <h2>{selectedTool.name}</h2>
-          </div>
-          <div className="tool-content">
-            {selectedTool.component}
+
+            <div className="tool-workspace">
+              <div style={{ marginBottom: '3rem' }}>
+                <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{selectedTool.name}</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{selectedTool.description}</p>
+              </div>
+              {selectedTool.component}
+            </div>
           </div>
         </main>
       )}
 
       <footer className="footer">
-        <p>© 2025 Quantum Tools by MTM. All rights reserved.</p>
-        <p className="footer-note">Enterprise-grade utilities for modern workflows</p>
+        <div className="footer-content">
+          <p>© 2025 Quantum Tools</p>
+          <div className="footer-links">
+            <span>Refined Engineering</span>
+            <span className="separator">•</span>
+            <span>v1.0.0</span>
+          </div>
+        </div>
       </footer>
     </div>
   )
