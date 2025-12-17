@@ -11,7 +11,16 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces"
   },
-  "keywords": ["enterprise", "tools", "utilities", "dmn", "document-converter"],
+  "keywords": [
+    "enterprise",
+    "tools",
+    "utilities",
+    "dmn",
+    "document-converter"
+  ],
   "author": "MTM",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "d3-sankey": "^0.12.3"
+  }
 }

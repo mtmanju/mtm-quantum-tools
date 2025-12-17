@@ -1,8 +1,20 @@
-import { useState, useEffect } from 'react'
-import { FileText, Zap, Code, Calculator, Layout, FileJson, GitCompare, Table, Workflow, Database, FileCode, Shield, Clock, Moon, Sun, ArrowLeft } from 'lucide-react'
-import MarkdownConverter from './tools/MarkdownConverter'
+import { useState, useMemo, useCallback, lazy, Suspense, memo } from 'react'
+import { 
+  FileText, Zap, Code, Calculator, FileJson, GitCompare, 
+  Table, Workflow, Database, FileCode, Shield, Clock, ArrowLeft 
+} from 'lucide-react'
+import { useTheme } from './context/ThemeContext'
+import { useHashLocation } from './hooks/useHashLocation'
+import { useScrollPosition } from './hooks/useScrollPosition'
+import { getViewType } from './constants/routes'
+import Header from './components/Header'
+import Footer from './components/Footer'
 import './App.css'
-import type { ReactElement } from 'react'
+import type { ReactElement, ComponentType } from 'react'
+
+// Lazy load tool components and pages for code splitting
+const MarkdownConverter = lazy(() => import('./tools/MarkdownConverter'))
+const About = lazy(() => import('./pages/About'))
 
 interface Tool {
   id: string
@@ -11,7 +23,7 @@ interface Tool {
   icon: ReactElement
   category: string
   status: 'active' | 'coming-soon'
-  component?: ReactElement
+  component?: ComponentType
   featured?: boolean
 }
 
@@ -24,7 +36,7 @@ const tools: Tool[] = [
     icon: <FileText size={24} />,
     category: 'Document Processing',
     status: 'active',
-    component: <MarkdownConverter />,
+    component: MarkdownConverter,
     featured: true
   },
   {
@@ -127,181 +139,183 @@ const tools: Tool[] = [
   }
 ]
 
-// Custom hook for hash-based routing
-const useHashLocation = () => {
-  const [hash, setHash] = useState(window.location.hash)
+// Memoized tool card component
+const ToolCard = memo(({ tool, onClick }: { tool: Tool; onClick: (tool: Tool) => void }) => (
+  <div
+    className={`tool-card ${tool.status}`}
+    onClick={() => onClick(tool)}
+  >
+    <div className="status-indicator">
+      <div className={`status-dot ${tool.status === 'active' ? 'status-active' : 'status-soon'}`} />
+      {tool.status === 'coming-soon' && <span>Soon</span>}
+    </div>
+    <div className="tool-icon-wrapper">
+      {tool.icon}
+    </div>
+    <div className="tool-info">
+      <h3>{tool.name}</h3>
+      <p>{tool.description}</p>
+    </div>
+  </div>
+))
 
-  useEffect(() => {
-    const handleHashChange = () => setHash(window.location.hash)
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
+ToolCard.displayName = 'ToolCard'
 
-  const navigate = (newHash: string) => {
-    window.location.hash = newHash
-  }
+// Component renderer for lazy-loaded tools
+const ToolRenderer = memo(({ component: ToolComponent }: { component: ComponentType }) => {
+  if (!ToolComponent) return null
+  return <ToolComponent />
+})
 
-  return { hash, navigate }
-}
+ToolRenderer.displayName = 'ToolRenderer'
 
 function App() {
+  // Use custom hooks for routing, theme, and scroll detection
   const { hash, navigate } = useHashLocation()
+  const { isDarkMode, toggleTheme } = useTheme()
+  const scrolled = useScrollPosition()
   const [searchQuery, setSearchQuery] = useState('')
-  const [isDarkMode, setIsDarkMode] = useState(false)
 
-  // Derive selected tool from hash
-  const getSelectedTool = (): Tool | null => {
+  // Determine current view using utility function
+  const currentView = useMemo(() => getViewType(hash), [hash])
+
+  // Memoize selected tool
+  const selectedTool = useMemo((): Tool | null => {
     if (!hash.startsWith('#tool/')) return null
     const toolId = hash.replace('#tool/', '')
     return tools.find(t => t.id === toolId) || null
-  }
+  }, [hash])
 
-  const selectedTool = getSelectedTool()
+  // Memoize filtered tools with debounced search
+  const filteredTools = useMemo(() => {
+    if (!searchQuery.trim()) return tools
+    const query = searchQuery.toLowerCase()
+    return tools.filter(tool =>
+      tool.name.toLowerCase().includes(query) ||
+      tool.description.toLowerCase().includes(query) ||
+      tool.category.toLowerCase().includes(query)
+    )
+  }, [searchQuery])
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light'
-    setIsDarkMode(savedTheme === 'dark')
-    document.documentElement.setAttribute('data-theme', savedTheme)
-  }, [])
-
-  const toggleTheme = () => {
-    const newTheme = isDarkMode ? 'light' : 'dark'
-    setIsDarkMode(!isDarkMode)
-    document.documentElement.setAttribute('data-theme', newTheme)
-    localStorage.setItem('theme', newTheme)
-  }
-
-  const filteredTools = tools.filter(tool =>
-    tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tool.category.toLowerCase().includes(searchQuery.toLowerCase())
+  // Memoize categories
+  const categories = useMemo(() => 
+    Array.from(new Set(tools.map(t => t.category))), 
+    []
   )
 
-  const categories = Array.from(new Set(tools.map(t => t.category)))
-  const activeCount = tools.filter(t => t.status === 'active').length
+  // Memoize active count
+  const activeCount = useMemo(() => 
+    tools.filter(t => t.status === 'active').length, 
+    []
+  )
 
-  const handleToolClick = (tool: Tool) => {
+  // Memoize tool click handler
+  const handleToolClick = useCallback((tool: Tool) => {
     if (tool.status === 'active') {
       navigate(`#tool/${tool.id}`)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }
+  }, [navigate])
+
+  // Memoize category sections
+  const categorySections = useMemo(() => 
+    categories.map(category => {
+      const categoryTools = filteredTools.filter(t => t.category === category)
+      if (categoryTools.length === 0) return null
+
+      return (
+        <section key={category} className="category-section">
+          <div className="section-header">
+            <h2 className="section-title">{category}</h2>
+          </div>
+          <div className="tools-grid">
+            {categoryTools.map(tool => (
+              <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} />
+            ))}
+          </div>
+        </section>
+      )
+    }), 
+    [categories, filteredTools, handleToolClick]
+  )
 
   return (
     <div className="app">
-      <header className={`header ${window.scrollY > 10 ? 'scrolled' : ''}`}>
-        <div className="header-content">
-          <div className="logo" onClick={() => navigate('')}>
-            <Layout size={28} strokeWidth={1.5} />
-            <div>
-              <h1>Quantum</h1>
-              <span className="logo-subtitle">Tools</span>
-            </div>
-          </div>
-          <div className="header-actions">
-            <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-              {isDarkMode ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header
+        scrolled={scrolled}
+        isDarkMode={isDarkMode}
+        searchQuery={searchQuery}
+        currentView={currentView}
+        onNavigate={navigate}
+        onSearchChange={setSearchQuery}
+        onToggleTheme={toggleTheme}
+      />
 
-      {!selectedTool ? (
+      {currentView === 'about' ? (
         <main className="main-content">
-          <section className="hero-section">
-            <h1 className="hero-title">Essential Utilities<br />For Modern Development.</h1>
-            <p className="hero-subtitle">A curated collection of developer tools designed for performance and precision.</p>
-
-            <div className="search-container">
-              <input
-                type="text"
-                placeholder="Find a tool..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
+          <Suspense fallback={
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading...</p>
             </div>
-
-            <div className="hero-stats">
-              <div className="hero-stat">
-                <span className="hero-stat-value">{tools.length}</span>
-                <span className="hero-stat-label">Tools Available</span>
-              </div>
-              <div className="hero-stat">
-                <span className="hero-stat-value">{activeCount}</span>
-                <span className="hero-stat-label">Active Modules</span>
-              </div>
-            </div>
+          }>
+            <About 
+              totalTools={tools.length}
+              activeTools={activeCount}
+              totalCategories={categories.length}
+            />
+          </Suspense>
+        </main>
+      ) : currentView === 'home' ? (
+        <main className="main-content">
+          <section className="home-intro">
+            <h1 className="intro-title">Essential Developer Tools</h1>
+            <p className="intro-subtitle">
+              Choose from our collection of professional utilities designed to streamline your workflow.
+            </p>
           </section>
 
-          {categories.map(category => {
-            const categoryTools = filteredTools.filter(t => t.category === category)
-            if (categoryTools.length === 0) return null
-
-            return (
-              <section key={category} className="category-section">
-                <div className="section-header">
-                  <h2 className="section-title">{category}</h2>
-                </div>
-                <div className="tools-grid">
-                  {categoryTools.map(tool => (
-                    <div
-                      key={tool.id}
-                      className={`tool-card ${tool.status}`}
-                      onClick={() => handleToolClick(tool)}
-                    >
-                      <div className="status-indicator">
-                        <div className={`status-dot ${tool.status === 'active' ? 'status-active' : 'status-soon'}`} />
-                        {tool.status === 'coming-soon' && <span>Soon</span>}
-                      </div>
-
-                      <div className="tool-icon-wrapper">
-                        {tool.icon}
-                      </div>
-
-                      <div className="tool-info">
-                        <h3>{tool.name}</h3>
-                        <p>{tool.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )
-          })}
+          {categorySections}
         </main>
       ) : (
-        <main className="main-content">
+        <main className="main-content tool-view">
           <div className="tool-view-wrapper">
             <button
               className="back-button"
               onClick={() => navigate('')}
+              aria-label="Back to tools"
             >
               <ArrowLeft size={20} />
               <span>Back to Tools</span>
             </button>
 
-            <div className="tool-workspace">
-              <div style={{ marginBottom: '3rem' }}>
-                <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{selectedTool.name}</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{selectedTool.description}</p>
+            {selectedTool && (
+              <div className="tool-workspace">
+                <div style={{ marginBottom: '3rem' }}>
+                  <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{selectedTool.name}</h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{selectedTool.description}</p>
+                </div>
+                {selectedTool.component && (
+                  <Suspense fallback={
+                    <div className="loading-container">
+                      <div className="loading-spinner"></div>
+                      <p>Loading tool...</p>
+                    </div>
+                  }>
+                    <ToolRenderer component={selectedTool.component} />
+                  </Suspense>
+                )}
               </div>
-              {selectedTool.component}
-            </div>
+            )}
           </div>
         </main>
       )}
 
-      <footer className="footer">
-        <div className="footer-content">
-          <p>© 2025 Quantum Tools</p>
-          <div className="footer-links">
-            <span>Refined Engineering</span>
-            <span className="separator">•</span>
-            <span>v1.0.0</span>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        toolsCount={tools.length}
+        activeCount={activeCount}
+        categoriesCount={categories.length}
+      />
     </div>
   )
 }

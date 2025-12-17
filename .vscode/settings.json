@@ -1,0 +1,91 @@
+{
+  "cursor.cpp.disabledLanguages": [],
+  "cursor.general.enableShadowWorkspace": true,
+  
+  // AI Rules and Context
+  "cursor.general.aiRules": [
+    "Always read and follow .cursorrules file in the project root",
+    "NO CODE DUPLICATION - If you write the same code twice, extract it into a utility/component/hook",
+    "NO HARDCODING - All values must come from constants/theme/config files",
+    "ALWAYS REUSE - Check existing components/utils/hooks before creating new ones",
+    "STRICT DESIGN PATTERNS - Follow established patterns without exception",
+    "UTILITY FIRST - Extract reusable logic into utility functions in utils/ directory",
+    "COMPONENT REUSABILITY - Create generic, composable components instead of specific ones",
+    "DRY PRINCIPLE - Don't Repeat Yourself - ever",
+    "ALWAYS use TypeScript - no .js or .jsx files",
+    "ALWAYS use CSS variables from theme - never hardcode colors/spacing",
+    "ALWAYS provide dark mode styles - every component needs [data-theme='dark'] overrides",
+    "ALWAYS lazy load tools and pages - use React.lazy() and Suspense",
+    "ALWAYS memoize - use useMemo, useCallback, and memo appropriately",
+    "ALWAYS use theme context - use useTheme() hook, never useState for theme",
+    "ALWAYS follow naming conventions - PascalCase for components, camelCase for hooks, UPPER_SNAKE_CASE for constants",
+    "Before writing code: Check if logic exists, can be extracted to utility, or can reuse existing component",
+    "Button contrast rules: Light theme uses white text on black accent, dark theme uses black text on white accent"
+  ],
+  
+  // TypeScript Configuration
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  
+  // Editor Configuration
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  
+  // File Associations
+  "files.associations": {
+    "*.css": "css",
+    "*.tsx": "typescriptreact",
+    "*.ts": "typescript"
+  },
+  
+  // Search Exclusions
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/coverage": true
+  },
+  
+  // Files to Watch
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true
+  },
+  
+  // CSS Linting
+  "css.lint.unknownAtRules": "ignore",
+  "css.validate": true,
+  
+  // Emmet
+  "emmet.includeLanguages": {
+    "typescript": "typescriptreact",
+    "javascript": "javascriptreact"
+  },
+  
+  // ESLint
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  
+  // Path Intellisense
+  "typescript.suggest.paths": true,
+  "javascript.suggest.paths": true,
+  
+  // Auto Import
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  
+  // Cursor Specific Settings
+  "cursor.chat.useDefaultRules": false,
+  "cursor.chat.customRules": "Read and strictly follow .cursorrules file. Focus on code reusability, no duplication, no hardcoding, proper design patterns, and DRY principles."
+}
+

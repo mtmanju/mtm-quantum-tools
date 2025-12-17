@@ -1,0 +1,859 @@
+# Quantum Tools - Cursor AI Rules
+
+## 🚨 CRITICAL RULES - READ FIRST
+
+### Absolute Requirements (Non-Negotiable)
+
+1. **NO CODE DUPLICATION** - If you write the same code twice, extract it
+2. **NO HARDCODING** - All values must come from constants/theme/config
+3. **ALWAYS REUSE** - Check existing components/utils/hooks before creating new ones
+4. **STRICT DESIGN PATTERNS** - Follow established patterns without exception
+5. **UTILITY FIRST** - Extract reusable logic into utility functions
+6. **COMPONENT REUSABILITY** - Create generic, composable components
+7. **DRY PRINCIPLE** - Don't Repeat Yourself - ever
+
+### Before Writing Any Code, Ask:
+
+1. ❓ Does this logic already exist somewhere?
+2. ❓ Can I extract this into a reusable utility?
+3. ❓ Is there a similar component I can extend?
+4. ❓ Am I hardcoding any values that should be constants?
+5. ❓ Will this code need to be used elsewhere?
+6. ❓ Can this be made more generic/reusable?
+
+## Project Overview
+
+Quantum Tools is a modern web application providing professional-grade developer utilities. Built with React 19, TypeScript, and Vite in a monorepo structure.
+
+## Technology Stack
+
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite 7.3.0
+- **Package Manager**: npm with workspaces
+- **Styling**: CSS with CSS Variables (no CSS-in-JS)
+- **Icons**: Lucide React
+- **Font**: Aptos (system font)
+- **Routing**: Hash-based client-side routing
+
+## Architecture Principles
+
+### 1. Design Patterns
+- **Component Architecture**: Separation of container and presentational components
+- **Context Pattern**: ThemeContext for global state (no Redux/Zustand yet)
+- **Custom Hooks Pattern**: Reusable logic in dedicated hooks
+- **Lazy Loading**: Code splitting with React.lazy() and Suspense
+- **Memoization**: Use useMemo, useCallback, and memo for optimization
+
+### 2. File Structure
+```
+packages/web/src/
+├── components/       # Reusable UI components (each with .tsx + .css)
+│   ├── ui/          # Generic UI components (Button, Card, Input, etc.)
+│   └── layout/      # Layout components (Header, Footer, Sidebar, etc.)
+├── constants/        # Design tokens, theme values, routes
+│   ├── theme.ts     # Design tokens (NEVER hardcode these values)
+│   ├── routes.ts    # Route constants
+│   └── config.ts    # App configuration
+├── context/          # React Context providers
+├── hooks/            # Custom React hooks (reusable logic ONLY)
+├── utils/            # Pure utility functions (NO React dependencies)
+│   ├── string.ts    # String manipulation utilities
+│   ├── array.ts     # Array utilities
+│   ├── format.ts    # Formatting utilities
+│   └── validation.ts # Validation utilities
+├── pages/            # Page-level components
+├── tools/            # Tool components (lazy loaded)
+├── types/            # TypeScript type definitions
+├── App.tsx          # Main application
+└── main.tsx         # Entry point with providers
+```
+
+### 3. Naming Conventions
+- **Components**: PascalCase (e.g., `Header.tsx`, `MarkdownConverter.tsx`)
+- **Hooks**: camelCase with 'use' prefix (e.g., `useTheme`, `useHashLocation`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `COLORS`, `ROUTES`)
+- **CSS Classes**: kebab-case (e.g., `.header-nav-btn`, `.tool-card`)
+
+## Code Style Guidelines
+
+### TypeScript
+- **Always use TypeScript** - no .js or .jsx files
+- **Define interfaces** for all component props
+- **Use const assertions** for constants (`as const`)
+- **Prefer type over interface** for simple types
+- **Export types** alongside components
+
+```typescript
+// Good
+interface HeaderProps {
+  scrolled: boolean
+  isDarkMode: boolean
+  onToggleTheme: () => void
+}
+
+export const Header = memo(({ scrolled, isDarkMode, onToggleTheme }: HeaderProps) => {
+  // component code
+})
+```
+
+### React Patterns
+
+#### Component Structure
+```typescript
+// 1. Imports
+import { memo, useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
+import './Component.css'
+
+// 2. Types/Interfaces
+interface ComponentProps {
+  title: string
+}
+
+// 3. Component
+export const Component = memo(({ title }: ComponentProps) => {
+  // Hooks first
+  const { isDarkMode } = useTheme()
+  const [state, setState] = useState('')
+  
+  // Handlers
+  const handleClick = () => { }
+  
+  // Render
+  return <div>{title}</div>
+})
+
+// 4. Display name for debugging
+Component.displayName = 'Component'
+```
+
+#### Hooks Usage
+- **Context**: Use `useTheme()` for theme access (NOT useState for theme)
+- **Routing**: Use `useHashLocation()` for navigation
+- **Scroll**: Use `useScrollPosition()` for scroll detection
+- **Memoization**: Use `useMemo` for expensive calculations, `useCallback` for event handlers
+
+### CSS Guidelines
+
+#### Theme Variables
+**ALWAYS use CSS variables** - never hardcode colors, spacing, or shadows
+
+```css
+/* Good */
+.button {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 1rem 2rem;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Bad - DO NOT hardcode values */
+.button {
+  background: #FAFAFA;
+  color: #000000;
+  padding: 16px 32px;
+}
+```
+
+#### Dark Mode Support
+**ALWAYS provide dark mode styles** using `[data-theme="dark"]`
+
+```css
+.component {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .component {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+```
+
+#### Button Contrast Rules
+The accent color changes between themes:
+- **Light theme**: `--accent: #000000` → Use white text (`#FFFFFF`) on accent backgrounds
+- **Dark theme**: `--accent: #FFFFFF` → Use black text (`#000000`) on accent backgrounds
+
+```css
+.button-primary {
+  background: var(--accent);
+  color: #FFFFFF; /* White text in light mode */
+}
+
+[data-theme="dark"] .button-primary {
+  color: #000000; /* Black text in dark mode */
+}
+```
+
+#### Component-Scoped CSS
+- Each component has its own CSS file (e.g., `Header.tsx` + `Header.css`)
+- Use specific class names to avoid conflicts
+- Import CSS in component: `import './Component.css'`
+
+### Theme System
+
+#### Using Theme Context
+```typescript
+import { useTheme } from '../context/ThemeContext'
+
+const Component = () => {
+  const { isDarkMode, toggleTheme, colors, theme } = useTheme()
+  
+  // Access theme colors programmatically if needed
+  const accentColor = colors.accent.primary
+  
+  return (
+    <button onClick={toggleTheme}>
+      Toggle Theme
+    </button>
+  )
+}
+```
+
+#### Adding New Theme Values
+1. Add to `constants/theme.ts` in both light and dark objects
+2. Add CSS variable in `App.css` in both `:root` and `[data-theme="dark"]`
+3. Use the CSS variable in components
+
+### Performance Optimization
+
+#### Lazy Loading
+**ALWAYS lazy load** tool components and pages:
+
+```typescript
+const MarkdownConverter = lazy(() => import('./tools/MarkdownConverter'))
+
+// Wrap in Suspense with fallback
+<Suspense fallback={<LoadingSpinner />}>
+  <MarkdownConverter />
+</Suspense>
+```
+
+#### Memoization Rules
+- **Components**: Wrap with `memo()` if they receive props and are rendered frequently
+- **Callbacks**: Use `useCallback` for event handlers passed to child components
+- **Expensive calculations**: Use `useMemo` for filtering, sorting, transformations
+- **Context values**: Memoize context value objects
+
+```typescript
+// Memoize expensive filtering
+const filteredTools = useMemo(() => {
+  return tools.filter(tool => tool.name.includes(searchQuery))
+}, [searchQuery, tools])
+
+// Memoize event handlers
+const handleClick = useCallback((id: string) => {
+  navigate(ROUTES.TOOL(id))
+}, [navigate])
+```
+
+### Routing
+
+#### Using Routes
+```typescript
+import { ROUTES, getViewType } from '../constants/routes'
+import { useHashLocation } from '../hooks/useHashLocation'
+
+const Component = () => {
+  const { hash, navigate } = useHashLocation()
+  const currentView = getViewType(hash)
+  
+  // Navigate programmatically
+  navigate(ROUTES.ABOUT)
+  navigate(ROUTES.TOOL('md-converter'))
+  navigate(ROUTES.HOME)
+}
+```
+
+## Adding New Features
+
+### Adding a New Tool
+1. Create component in `packages/web/src/tools/ToolName.tsx`
+2. Add lazy import in `App.tsx`: `const ToolName = lazy(() => import('./tools/ToolName'))`
+3. Add tool definition to `tools` array in `App.tsx`
+4. Tool automatically appears in the grid
+
+### Adding a New Page
+1. Create component in `packages/web/src/pages/PageName.tsx` + `PageName.css`
+2. Add lazy import in `App.tsx`
+3. Add route to `constants/routes.ts`
+4. Update `getViewType` function
+5. Add route handling in `App.tsx` render logic
+
+### Adding a New Component
+1. Create `Component.tsx` + `Component.css` in `components/`
+2. Define props interface
+3. Use theme context and hooks as needed
+4. Wrap with `memo()` if appropriate
+5. Export from component file
+
+## Common Patterns
+
+### Buttons
+```typescript
+// Primary button (accent color)
+<button className="button-primary">
+  <span>Button Text</span>
+  <Icon size={20} />
+</button>
+
+// CSS
+.button-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+}
+
+[data-theme="dark"] .button-primary {
+  color: #000000;
+}
+```
+
+### Loading States
+```typescript
+<Suspense fallback={
+  <div className="loading-container">
+    <div className="loading-spinner"></div>
+    <p>Loading...</p>
+  </div>
+}>
+  <LazyComponent />
+</Suspense>
+```
+
+### Icons
+- Use lucide-react for all icons
+- Consistent sizing: 20px for buttons, 24px for cards, 28px for logos
+- Icons inherit color: `color: inherit` or use `var(--text-primary)`
+
+## 🚫 STRICT PROHIBITIONS
+
+### Absolutely Forbidden Practices
+
+1. **NEVER duplicate code** - Extract to utility/component/hook
+2. **NEVER hardcode values** - Use constants/theme/config
+3. **NEVER hardcode colors** - Always use CSS variables from theme
+4. **NEVER hardcode strings** - Use constants for any repeated text
+5. **NEVER hardcode numbers** - Magic numbers belong in constants
+6. **NEVER create similar components** - Make one generic component instead
+7. **NEVER copy-paste code** - If you copy-paste, you're doing it wrong
+8. **NEVER write inline logic** - Extract to utils or hooks
+9. **NEVER use inline styles** - Use CSS files with variables
+10. **NEVER skip dark mode** - Every component needs dark mode styles
+11. **NEVER manage theme locally** - Use `useTheme()` context
+12. **NEVER eagerly load tools** - Use `lazy()` for code splitting
+13. **NEVER skip memoization** - Use memo, useMemo, useCallback appropriately
+14. **NEVER ignore TypeScript errors** - Fix them, don't suppress them
+15. **NEVER use `any` type** - Be specific with types
+
+## Code Reusability Rules
+
+### 1. Utility Functions
+
+**ALWAYS extract reusable logic into utilities**
+
+```typescript
+// ❌ BAD - Duplicated logic
+const formatDate1 = (date: Date) => date.toLocaleDateString()
+const formatDate2 = (date: Date) => date.toLocaleDateString()
+
+// ✅ GOOD - Single utility function
+// utils/format.ts
+export const formatDate = (date: Date): string => date.toLocaleDateString()
+
+// Multiple places import and use it
+import { formatDate } from '../utils/format'
+```
+
+### 2. Reusable Components
+
+**ALWAYS create generic components instead of specific ones**
+
+```typescript
+// ❌ BAD - Specific components
+const PrimaryButton = ({ onClick, children }) => (
+  <button className="primary" onClick={onClick}>{children}</button>
+)
+const SecondaryButton = ({ onClick, children }) => (
+  <button className="secondary" onClick={onClick}>{children}</button>
+)
+
+// ✅ GOOD - Generic component with variants
+interface ButtonProps {
+  variant: 'primary' | 'secondary' | 'ghost'
+  onClick: () => void
+  children: ReactNode
+}
+
+const Button = ({ variant, onClick, children }: ButtonProps) => (
+  <button className={`button button-${variant}`} onClick={onClick}>
+    {children}
+  </button>
+)
+```
+
+### 3. Custom Hooks
+
+**ALWAYS extract repeated React logic into custom hooks**
+
+```typescript
+// ❌ BAD - Repeated logic in components
+const Component1 = () => {
+  const [isOpen, setIsOpen] = useState(false)
+  const toggle = () => setIsOpen(!isOpen)
+  // ... use isOpen and toggle
+}
+
+const Component2 = () => {
+  const [isOpen, setIsOpen] = useState(false)
+  const toggle = () => setIsOpen(!isOpen)
+  // ... use isOpen and toggle
+}
+
+// ✅ GOOD - Custom hook
+const useToggle = (initialValue = false) => {
+  const [isOpen, setIsOpen] = useState(initialValue)
+  const toggle = useCallback(() => setIsOpen(prev => !prev), [])
+  const open = useCallback(() => setIsOpen(true), [])
+  const close = useCallback(() => setIsOpen(false), [])
+  return { isOpen, toggle, open, close }
+}
+
+// Use in multiple components
+const Component1 = () => {
+  const { isOpen, toggle } = useToggle()
+  // ...
+}
+```
+
+### 4. Constants Extraction
+
+**ALWAYS extract repeated values to constants**
+
+```typescript
+// ❌ BAD - Hardcoded values
+const Button1 = () => <button style={{ borderRadius: '100px' }}>Click</button>
+const Button2 = () => <button style={{ borderRadius: '100px' }}>Submit</button>
+
+// ✅ GOOD - Constants file
+// constants/styles.ts
+export const BORDER_RADIUS = {
+  sm: '8px',
+  md: '12px',
+  lg: '16px',
+  full: '100px',
+} as const
+
+// Use in CSS variables or components
+```
+
+### 5. Type Reusability
+
+**ALWAYS reuse and extend types**
+
+```typescript
+// ❌ BAD - Duplicate type definitions
+interface User1 {
+  id: string
+  name: string
+  email: string
+}
+
+interface User2 {
+  id: string
+  name: string
+  email: string
+  avatar: string
+}
+
+// ✅ GOOD - Base type with extensions
+// types/user.ts
+export interface BaseUser {
+  id: string
+  name: string
+  email: string
+}
+
+export interface UserWithAvatar extends BaseUser {
+  avatar: string
+}
+
+export interface UserWithProfile extends BaseUser {
+  profile: Profile
+}
+```
+
+## Utility Function Guidelines
+
+### When to Create a Utility
+
+Create a utility function when:
+- Logic is used in 2+ places
+- Logic is complex and can be isolated
+- Logic is pure (no side effects)
+- Logic can be tested independently
+
+### Utility Organization
+
+```typescript
+// utils/string.ts
+export const capitalize = (str: string): string => 
+  str.charAt(0).toUpperCase() + str.slice(1)
+
+export const truncate = (str: string, length: number): string =>
+  str.length > length ? `${str.slice(0, length)}...` : str
+
+export const slugify = (str: string): string =>
+  str.toLowerCase().replace(/\s+/g, '-')
+
+// utils/array.ts
+export const unique = <T>(arr: T[]): T[] => [...new Set(arr)]
+
+export const groupBy = <T>(arr: T[], key: keyof T): Record<string, T[]> =>
+  arr.reduce((acc, item) => {
+    const group = String(item[key])
+    return { ...acc, [group]: [...(acc[group] || []), item] }
+  }, {} as Record<string, T[]>)
+
+// utils/validation.ts
+export const isValidEmail = (email: string): boolean =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+export const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+```
+
+## Component Reusability Guidelines
+
+### Generic Component Pattern
+
+```typescript
+// components/ui/Card.tsx
+interface CardProps {
+  title?: string
+  children: ReactNode
+  variant?: 'default' | 'elevated' | 'outlined'
+  padding?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+export const Card = memo(({ 
+  title, 
+  children, 
+  variant = 'default',
+  padding = 'md',
+  className 
+}: CardProps) => (
+  <div className={`card card-${variant} card-padding-${padding} ${className || ''}`}>
+    {title && <h3 className="card-title">{title}</h3>}
+    <div className="card-content">{children}</div>
+  </div>
+))
+
+Card.displayName = 'Card'
+```
+
+### Composition Pattern
+
+```typescript
+// ✅ GOOD - Composable components
+<Card variant="elevated">
+  <CardHeader>
+    <CardTitle>My Title</CardTitle>
+    <CardDescription>Description</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Content goes here
+  </CardContent>
+  <CardFooter>
+    <Button>Action</Button>
+  </CardFooter>
+</Card>
+```
+
+## Design Pattern Enforcement
+
+### 1. Container/Presentational Pattern
+```typescript
+// ❌ BAD - Logic mixed with presentation
+const ToolCard = ({ tool }) => {
+  const [isHovered, setIsHovered] = useState(false)
+  const navigate = useNavigate()
+  const { theme } = useTheme()
+  
+  return (
+    <div 
+      onMouseEnter={() => setIsHovered(true)}
+      onClick={() => navigate(`/tool/${tool.id}`)}
+    >
+      {/* Complex JSX */}
+    </div>
+  )
+}
+
+// ✅ GOOD - Separated concerns
+// Container
+const ToolCardContainer = ({ tool }: { tool: Tool }) => {
+  const navigate = useNavigate()
+  const handleClick = useCallback(() => {
+    navigate(ROUTES.TOOL(tool.id))
+  }, [tool.id, navigate])
+  
+  return <ToolCard tool={tool} onClick={handleClick} />
+}
+
+// Presentational
+interface ToolCardProps {
+  tool: Tool
+  onClick: () => void
+}
+
+const ToolCard = memo(({ tool, onClick }: ToolCardProps) => (
+  <div className="tool-card" onClick={onClick}>
+    {/* Simple JSX */}
+  </div>
+))
+```
+
+### 2. Render Props Pattern
+```typescript
+// For sharing stateful logic
+interface ToggleProps {
+  children: (state: {
+    isOpen: boolean
+    toggle: () => void
+  }) => ReactNode
+}
+
+const Toggle = ({ children }: ToggleProps) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const toggle = useCallback(() => setIsOpen(prev => !prev), [])
+  
+  return <>{children({ isOpen, toggle })}</>
+}
+
+// Usage
+<Toggle>
+  {({ isOpen, toggle }) => (
+    <div>
+      <button onClick={toggle}>Toggle</button>
+      {isOpen && <div>Content</div>}
+    </div>
+  )}
+</Toggle>
+```
+
+### 3. Compound Components Pattern
+```typescript
+// For complex, related components
+const Tabs = ({ children }) => {
+  const [activeTab, setActiveTab] = useState(0)
+  return (
+    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
+      {children}
+    </TabsContext.Provider>
+  )
+}
+
+Tabs.List = ({ children }) => <div className="tabs-list">{children}</div>
+Tabs.Tab = ({ index, children }) => {
+  const { activeTab, setActiveTab } = useTabsContext()
+  return (
+    <button 
+      className={activeTab === index ? 'active' : ''}
+      onClick={() => setActiveTab(index)}
+    >
+      {children}
+    </button>
+  )
+}
+Tabs.Panel = ({ index, children }) => {
+  const { activeTab } = useTabsContext()
+  return activeTab === index ? <div>{children}</div> : null
+}
+```
+
+## Error Prevention
+
+### Common Mistakes to Avoid
+
+1. **DON'T duplicate code** - Extract to utility/component/hook
+2. **DON'T hardcode values** - Use constants/theme/config  
+3. **DON'T create similar components** - Make one generic component
+4. **DON'T copy-paste logic** - Extract to reusable function
+5. **DON'T hardcode theme colors** - Use CSS variables
+6. **DON'T manage theme with useState** - Use `useTheme()` context
+7. **DON'T forget dark mode styles** - Every component needs `[data-theme="dark"]` overrides
+8. **DON'T use inline styles** - Use CSS files with component
+9. **DON'T eagerly load tools** - Use `lazy()` for code splitting
+10. **DON'T skip memoization** - Wrap callbacks, expensive calculations, and frequently rendered components
+11. **DON'T mix light/dark text** - Follow accent color contrast rules
+12. **DON'T use absolute imports** - Use relative imports (`./`, `../`)
+
+### Accessibility
+- Use semantic HTML (`<button>`, `<nav>`, `<main>`)
+- Add `aria-label` to icon-only buttons
+- Ensure color contrast meets WCAG AA standards
+- Support reduced motion: `@media (prefers-reduced-motion: reduce)`
+- Make interactive elements keyboard accessible
+
+## Testing (Future)
+- Unit tests: Vitest
+- Component tests: React Testing Library
+- E2E tests: Playwright
+- Test files: `*.test.tsx` or `*.spec.tsx`
+
+## Documentation
+- Complex functions: JSDoc comments
+- Components: Props interface serves as documentation
+- Hooks: Brief comment explaining purpose
+- Constants: Comment explaining usage
+
+## Git Practices
+- Commit messages: Conventional Commits format
+  - `feat: add markdown converter tool`
+  - `fix: resolve button contrast in light theme`
+  - `refactor: extract theme context`
+  - `docs: update architecture documentation`
+  - `style: improve button hover states`
+  - `perf: add memoization to tool filtering`
+
+## Checklist Before Every Code Change
+
+### Pre-Implementation Checklist
+
+- [ ] Have I checked if this logic already exists?
+- [ ] Have I searched for similar components/utilities?
+- [ ] Can I extract this into a reusable utility function?
+- [ ] Can I make this component more generic?
+- [ ] Am I hardcoding any values? (Should be in constants)
+- [ ] Am I duplicating any code? (Should be extracted)
+- [ ] Have I considered using existing hooks/utilities?
+- [ ] Is this the most reusable implementation?
+
+### Post-Implementation Checklist
+
+- [ ] No hardcoded values (colors, sizes, strings, numbers)
+- [ ] No duplicated code anywhere
+- [ ] All repeated logic extracted to utilities
+- [ ] Component is as generic/reusable as possible
+- [ ] Types are properly defined and reused
+- [ ] Dark mode styles are present
+- [ ] Component is memoized if appropriate
+- [ ] Expensive operations are memoized
+- [ ] Using theme context (not managing theme locally)
+- [ ] Using proper hooks (useHashLocation, useScrollPosition)
+- [ ] CSS uses variables (not hardcoded values)
+- [ ] Tested in both light and dark themes
+- [ ] Responsive on all screen sizes
+- [ ] Accessibility requirements met
+
+## When Making Changes
+
+### Code Review Questions
+
+1. **Reusability Check**
+   - Can this be used elsewhere?
+   - Is it generic enough?
+   - Should it be in a utility file?
+
+2. **DRY Check**
+   - Am I repeating any code?
+   - Does similar logic exist elsewhere?
+   - Can I consolidate this with existing code?
+
+3. **Constants Check**
+   - Are all values from constants?
+   - Should this be added to theme?
+   - Is this configuration?
+
+4. **Pattern Check**
+   - Does this follow established patterns?
+   - Am I using the right design pattern?
+   - Is this the most maintainable approach?
+
+5. **Quality Check**
+   - **Update types** - Keep TypeScript definitions current
+   - **Test both themes** - Verify light and dark mode
+   - **Check responsiveness** - Test on mobile/tablet/desktop
+   - **Add to constants** - New values go in appropriate constants file
+   - **Document if needed** - Update ARCHITECTURE.md for significant changes
+   - **No duplication** - Absolutely no repeated code
+
+## File Conventions
+- Component files: `.tsx` extension
+- CSS files: `.css` extension (no modules, no styled-components)
+- Hooks: Separate `.ts` files in `hooks/`
+- Constants: `.ts` files in `constants/`
+- Types: Define inline with components or in same file
+
+## Design Philosophy
+- **Minimalist & Modern**: Clean lines, subtle shadows, ample spacing
+- **Performance First**: Lazy loading, memoization, optimized animations
+- **Type Safe**: TypeScript everywhere
+- **Accessible**: WCAG AA compliance, keyboard navigation
+- **Consistent**: Design tokens ensure visual harmony
+- **Maintainable**: Clear patterns, documented architecture
+
+## Critical Questions Before Writing ANY Code
+
+### Reusability Questions (MOST IMPORTANT)
+1. ❓ Does this code/logic/component already exist?
+2. ❓ Am I about to duplicate any existing code?
+3. ❓ Can I extract this into a reusable utility?
+4. ❓ Is there a more generic way to implement this?
+5. ❓ Will this need to be reused later?
+6. ❓ Can I use an existing component/hook/utility instead?
+
+### Constants & Configuration Questions
+7. ❓ Am I hardcoding any values that should be constants?
+8. ❓ Are all colors coming from CSS variables?
+9. ❓ Are all strings/numbers that appear multiple times in constants?
+10. ❓ Should this be configurable?
+
+### Pattern & Quality Questions
+11. ❓ Does this follow established patterns in the codebase?
+12. ❓ Have I provided dark mode styles?
+13. ❓ Have I used CSS variables instead of hardcoded values?
+14. ❓ Is this component memoized if appropriate?
+15. ❓ Are expensive calculations wrapped in useMemo?
+16. ❓ Have I used the theme context instead of managing theme locally?
+17. ❓ Is the component properly typed with TypeScript?
+18. ❓ Have I tested in both light and dark themes?
+19. ❓ Is this the simplest, most maintainable solution?
+20. ❓ Would another developer understand this code?
+
+### Red Flags (If YES to any, STOP and refactor)
+- 🚩 Am I copying and pasting code?
+- 🚩 Am I writing similar logic to something that already exists?
+- 🚩 Am I hardcoding colors, sizes, or strings?
+- 🚩 Am I using magic numbers without constants?
+- 🚩 Could this be more generic/reusable?
+- 🚩 Am I creating a component very similar to an existing one?
+- 🚩 Am I managing state that should be in context?
+- 🚩 Am I writing inline styles?
+- 🚩 Am I skipping TypeScript types?
+- 🚩 Am I not thinking about dark mode?
+
+## Resources
+- Design tokens: `src/constants/theme.ts`
+- Theme context: `src/context/ThemeContext.tsx`
+- Architecture guide: `packages/web/ARCHITECTURE.md`
+- Custom hooks: `src/hooks/`
+
+---
+
+**Remember**: Consistency is key. When in doubt, look at existing components for patterns to follow.
+
