@@ -1,0 +1,17 @@
+{
+  "name": "@mtm/quantum-tools",
+  "version": "1.0.0",
+  "description": "Quantum Tools by MTM - Enterprise utility platform for document conversion, DMN evaluation, and more",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@mtm/web",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  },
+  "keywords": ["enterprise", "tools", "utilities", "dmn", "document-converter"],
+  "author": "MTM",
+  "license": "MIT"
+}

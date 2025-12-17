@@ -1,0 +1,21 @@
+{
+  "name": "@mtm/md-converter",
+  "version": "1.0.0",
+  "description": "Markdown to DOCX converter utility",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "mammoth": "^1.6.0",
+    "docx": "^8.5.0",
+    "markdown-it": "^14.0.0",
+    "mermaid": "^10.6.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.5"
+  }
+}
