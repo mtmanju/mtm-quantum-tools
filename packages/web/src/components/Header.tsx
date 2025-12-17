@@ -2,6 +2,16 @@ import { Info, Layout, Moon, Sun } from 'lucide-react'
 import { memo } from 'react'
 import './Header.css'
 
+// Prefetch route chunks on hover for faster navigation
+const prefetchRoute = (path: string) => {
+  // Prefetch the route chunk
+  if (path === '/about') {
+    // Prefetch About page component
+    import('./../pages/About').catch(() => {})
+  }
+  // Tools page is already in main bundle, no need to prefetch
+}
+
 interface HeaderProps {
   scrolled: boolean
   isDarkMode: boolean
@@ -59,6 +69,7 @@ const Header = memo(({
           <button 
             className={`header-nav-btn ${currentView === 'tools' ? 'active' : ''}`}
             onClick={() => onNavigate('/tools')}
+            onMouseEnter={() => prefetchRoute('/tools')}
             aria-label="Tools"
           >
             <Layout size={20} strokeWidth={1.5} />
@@ -67,6 +78,7 @@ const Header = memo(({
           <button 
             className={`header-nav-btn ${currentView === 'about' ? 'active' : ''}`}
             onClick={() => onNavigate('/about')}
+            onMouseEnter={() => prefetchRoute('/about')}
             aria-label="About"
           >
             <Info size={20} strokeWidth={1.5} />

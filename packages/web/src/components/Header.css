@@ -184,13 +184,13 @@
 
 .header-nav-btn.active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: #0B0D17;
   border-color: var(--accent);
 }
 
 [data-theme="dark"] .header-nav-btn.active {
   background: var(--accent);
-  color: #000000;
+  color: #0B0D17;
   border-color: var(--accent);
 }
 

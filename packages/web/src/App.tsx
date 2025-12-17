@@ -1,16 +1,15 @@
 import { useState, useMemo, useCallback, lazy, Suspense, memo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { 
-  FileText, Zap, Code, Calculator, FileJson, GitCompare, 
-  Table, Workflow, Database, FileCode, Shield, Clock, ArrowLeft 
-} from 'lucide-react'
+// Only import ArrowLeft for back button - other icons loaded lazily
+import { ArrowLeft } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import { useScrollPosition } from './hooks/useScrollPosition'
 import { getViewType, getToolId, ROUTES } from './constants/routes'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import { LazyIcon } from './hooks/useLazyIcon'
 import './App.css'
-import type { ReactElement, ComponentType } from 'react'
+import type { ComponentType } from 'react'
 
 // Lazy load tool components and pages for code splitting
 const MarkdownConverter = lazy(() => import('./tools/MarkdownConverter'))
@@ -20,7 +19,7 @@ interface Tool {
   id: string
   name: string
   description: string
-  icon: ReactElement
+  iconName: string
   category: string
   status: 'active' | 'coming-soon'
   component?: ComponentType
@@ -33,7 +32,7 @@ const tools: Tool[] = [
     id: 'md-converter',
     name: 'Markdown to DOCX',
     description: 'Convert Markdown files to professional Word documents with full Mermaid diagram support',
-    icon: <FileText size={24} />,
+    iconName: 'FileText',
     category: 'Document Processing',
     status: 'active',
     component: MarkdownConverter,
@@ -43,7 +42,7 @@ const tools: Tool[] = [
     id: 'pdf-merger',
     name: 'PDF Merger',
     description: 'Merge multiple PDF files into a single document',
-    icon: <FileCode size={24} />,
+    iconName: 'FileCode',
     category: 'Document Processing',
     status: 'coming-soon'
   },
@@ -53,7 +52,7 @@ const tools: Tool[] = [
     id: 'json-formatter',
     name: 'JSON Formatter',
     description: 'Format, validate, and beautify JSON data with syntax highlighting',
-    icon: <FileJson size={24} />,
+    iconName: 'FileJson',
     category: 'Data & API',
     status: 'coming-soon',
     featured: true
@@ -62,7 +61,7 @@ const tools: Tool[] = [
     id: 'api-tester',
     name: 'API Tester',
     description: 'Test REST APIs with custom headers, authentication, and request bodies',
-    icon: <Zap size={24} />,
+    iconName: 'Zap',
     category: 'Data & API',
     status: 'coming-soon'
   },
@@ -70,7 +69,7 @@ const tools: Tool[] = [
     id: 'sql-formatter',
     name: 'SQL Formatter',
     description: 'Format and beautify SQL queries with proper indentation',
-    icon: <Database size={24} />,
+    iconName: 'Database',
     category: 'Data & API',
     status: 'coming-soon'
   },
@@ -80,7 +79,7 @@ const tools: Tool[] = [
     id: 'dmn-evaluator',
     name: 'DMN Evaluator',
     description: 'Evaluate DMN (Decision Model and Notation) decision tables for business rules',
-    icon: <Table size={24} />,
+    iconName: 'Table',
     category: 'Business Logic',
     status: 'coming-soon',
     featured: true
@@ -89,7 +88,7 @@ const tools: Tool[] = [
     id: 'workflow-validator',
     name: 'Workflow Validator',
     description: 'Validate BPMN workflows and process definitions',
-    icon: <Workflow size={24} />,
+    iconName: 'Workflow',
     category: 'Business Logic',
     status: 'coming-soon'
   },
@@ -99,7 +98,7 @@ const tools: Tool[] = [
     id: 'diff-checker',
     name: 'Diff Checker',
     description: 'Compare text, code, or JSON with side-by-side view',
-    icon: <GitCompare size={24} />,
+    iconName: 'GitCompare',
     category: 'Developer Tools',
     status: 'coming-soon'
   },
@@ -107,7 +106,7 @@ const tools: Tool[] = [
     id: 'regex-tester',
     name: 'Regex Tester',
     description: 'Test and debug regular expressions with live matching',
-    icon: <Code size={24} />,
+    iconName: 'Code',
     category: 'Developer Tools',
     status: 'coming-soon'
   },
@@ -115,7 +114,7 @@ const tools: Tool[] = [
     id: 'jwt-decoder',
     name: 'JWT Decoder',
     description: 'Decode and validate JSON Web Tokens',
-    icon: <Shield size={24} />,
+    iconName: 'Shield',
     category: 'Developer Tools',
     status: 'coming-soon'
   },
@@ -125,7 +124,7 @@ const tools: Tool[] = [
     id: 'timestamp-converter',
     name: 'Timestamp Converter',
     description: 'Convert between Unix timestamps and human-readable dates',
-    icon: <Clock size={24} />,
+    iconName: 'Clock',
     category: 'Utilities',
     status: 'coming-soon'
   },
@@ -133,7 +132,7 @@ const tools: Tool[] = [
     id: 'calculator',
     name: 'Advanced Calculator',
     description: 'Scientific and business calculations with formula support',
-    icon: <Calculator size={24} />,
+    iconName: 'Calculator',
     category: 'Utilities',
     status: 'coming-soon'
   }
@@ -150,7 +149,7 @@ const ToolCard = memo(({ tool, onClick }: { tool: Tool; onClick: (tool: Tool) =>
       {tool.status === 'coming-soon' && <span>Soon</span>}
     </div>
     <div className="tool-icon-wrapper">
-      {tool.icon}
+      <LazyIcon name={tool.iconName} size={24} />
     </div>
     <div className="tool-info">
       <h3>{tool.name}</h3>
@@ -221,21 +220,21 @@ function App() {
   // Memoize category sections
   const categorySections = useMemo(() => 
     categories.map(category => {
-      const categoryTools = filteredTools.filter(t => t.category === category)
-      if (categoryTools.length === 0) return null
+            const categoryTools = filteredTools.filter(t => t.category === category)
+            if (categoryTools.length === 0) return null
 
-      return (
-        <section key={category} className="category-section">
-          <div className="section-header">
-            <h2 className="section-title">{category}</h2>
-          </div>
-          <div className="tools-grid">
-            {categoryTools.map(tool => (
+            return (
+              <section key={category} className="category-section">
+                <div className="section-header">
+                  <h2 className="section-title">{category}</h2>
+                </div>
+                <div className="tools-grid">
+                  {categoryTools.map(tool => (
               <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} />
-            ))}
-          </div>
-        </section>
-      )
+                  ))}
+                </div>
+              </section>
+            )
     }), 
     [categories, filteredTools, handleToolClick]
   )
@@ -293,21 +292,21 @@ function App() {
           <section className="landing-features">
             <div className="feature-card">
               <div className="feature-icon">
-                <Zap size={24} />
+                <LazyIcon name="Zap" size={24} />
               </div>
               <h3>Lightning Fast</h3>
               <p>Optimized for performance with instant results</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">
-                <Clock size={24} />
+                <LazyIcon name="Clock" size={24} />
               </div>
               <h3>24/7 Available</h3>
               <p>Access your tools anytime, anywhere</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">
-                <Shield size={24} />
+                <LazyIcon name="Shield" size={24} />
               </div>
               <h3>Secure & Private</h3>
               <p>Your data never leaves your browser</p>
@@ -331,11 +330,11 @@ function App() {
             </button>
 
             {selectedTool && (
-              <div className="tool-workspace">
-                <div style={{ marginBottom: '3rem' }}>
-                  <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{selectedTool.name}</h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{selectedTool.description}</p>
-                </div>
+            <div className="tool-workspace">
+              <div style={{ marginBottom: '3rem' }}>
+                <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{selectedTool.name}</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>{selectedTool.description}</p>
+              </div>
                 {selectedTool.component && (
                   <Suspense fallback={
                     <div className="loading-container">
@@ -346,7 +345,7 @@ function App() {
                     <ToolRenderer component={selectedTool.component} />
                   </Suspense>
                 )}
-              </div>
+            </div>
             )}
           </div>
         </main>

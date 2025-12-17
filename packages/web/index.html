@@ -10,11 +10,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
+    <!-- DNS prefetch for faster resource loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     
-    <!-- Preload critical resources -->
+    <!-- Preload critical resources for faster initial load -->
     <link rel="modulepreload" href="/src/main.tsx" />
+    
+    <!-- Prefetch likely next routes -->
+    <link rel="prefetch" href="/tools" />
+    <link rel="prefetch" href="/about" />
     
     <title>Quantum Tools - Essential Utilities for Modern Development</title>
   </head>
