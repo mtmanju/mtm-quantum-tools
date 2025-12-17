@@ -175,6 +175,11 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   width: 100%;
 }
 
+/* Tools page (no hero) - cleaner spacing */
+.main-content.tools-page {
+  padding-top: 2rem;
+}
+
 /* Reduce padding when viewing a tool - using class for better browser support */
 .main-content.tool-view {
   padding-top: 1.5rem;
@@ -186,46 +191,280 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
     padding: 2rem 1.5rem;
   }
   
+  .main-content.tools-page {
+    padding-top: 1.5rem;
+  }
+  
   .main-content.tool-view {
     padding-top: 1rem;
     padding-bottom: 1.5rem;
   }
 }
 
-/* Home Intro - Simplified */
-.home-intro {
+/* Landing Page (Home) */
+.landing-hero {
   text-align: center;
-  padding: 1rem 0 2.5rem;
-  max-width: 800px;
+  padding: 5rem 0 4rem;
+  max-width: 900px;
   margin: 0 auto;
   opacity: 0;
   animation: fadeInUp 1s var(--ease-out) forwards;
 }
 
-.intro-title {
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.2;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-  letter-spacing: -0.04em;
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 100px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
-.intro-subtitle {
-  font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+[data-theme="dark"] .hero-badge {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.hero-title {
+  font-size: clamp(3rem, 7vw, 5rem);
+  line-height: 1.1;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  letter-spacing: -0.045em;
+}
+
+.hero-subtitle {
+  font-size: clamp(1.0625rem, 2.5vw, 1.25rem);
   color: var(--text-secondary);
-  margin-bottom: 0;
+  margin-bottom: 3rem;
   font-weight: 400;
-  line-height: 1.6;
-  max-width: 600px;
+  line-height: 1.7;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  letter-spacing: -0.015em;
+}
+
+/* Hero CTAs */
+.hero-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.125rem 2.5rem;
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 100px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  letter-spacing: -0.01em;
+  font-family: 'Aptos', system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .cta-primary {
+  color: #000000;
+}
+
+.cta-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out);
+}
+
+.cta-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .cta-primary:hover {
+  box-shadow: 0 12px 32px rgba(255, 255, 255, 0.1);
+}
+
+.cta-primary:hover::before {
+  opacity: 1;
+}
+
+.cta-primary span,
+.cta-primary svg {
+  position: relative;
+  z-index: 1;
+}
+
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.125rem 2.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 100px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  letter-spacing: -0.01em;
+  font-family: 'Aptos', system-ui, sans-serif;
+}
+
+[data-theme="dark"] .cta-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.cta-secondary:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-medium);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Landing Features - Pillar Card Style */
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 0;
+  opacity: 0;
+  animation: fadeInUp 1s var(--ease-out) 0.3s forwards;
+}
+
+.landing-features .feature-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  transition: all 0.4s var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .landing-features .feature-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Top accent bar */
+.landing-features .feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out);
+}
+
+.landing-features .feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: var(--border-medium);
+}
+
+[data-theme="dark"] .landing-features .feature-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+.landing-features .feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+.landing-features .feature-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #FFFFFF;
+  border-radius: 50%;
+  transition: all 0.4s var(--ease-spring);
+}
+
+[data-theme="dark"] .landing-features .feature-icon {
+  color: #000000;
+}
+
+.landing-features .feature-card:hover .feature-icon {
+  transform: scale(1.05) rotate(5deg);
+}
+
+.landing-features .feature-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.landing-features .feature-card p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
   letter-spacing: -0.01em;
 }
 
 @media (max-width: 768px) {
-  .home-intro {
-    padding: 0.5rem 0 2rem;
+  .landing-hero {
+    padding: 3rem 0 2rem;
+  }
+  
+  .hero-cta {
+    flex-direction: column;
+  }
+  
+  .cta-primary,
+  .cta-secondary {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+  
+  .landing-features {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 3rem 0;
+  }
+  
+  .landing-features .feature-card {
+    padding: 2rem 1.5rem;
   }
 }
 
@@ -248,10 +487,18 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 }
 
 .section-title {
-  font-size: clamp(1.375rem, 2.5vw, 1.75rem);
+  font-size: clamp(1.125rem, 2vw, 1.375rem);
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
+  margin-bottom: 0;
+}
+
+.section-description {
+  font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  letter-spacing: -0.01em;
 }
 
 .tools-grid {
@@ -273,20 +520,20 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   }
 }
 
-/* Tool Cards */
+/* Tool Cards - Pillar Style Design */
 .tool-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  padding: 2rem;
+  padding: 2.5rem 2rem;
   cursor: pointer;
-  transition: all 0.5s var(--ease-out);
+  transition: all 0.4s var(--ease-out);
   position: relative;
   overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: column;
   border-radius: 16px;
-  box-shadow: var(--shadow-xs);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 [data-theme="dark"] .tool-card {
@@ -294,29 +541,31 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Top accent bar - pillar style */
 .tool-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 4px;
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.5s var(--ease-out);
+  transition: transform 0.4s var(--ease-out);
 }
 
 .tool-card:hover {
-  background: var(--bg-hover);
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-hover);
+  background: var(--bg-secondary);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
   border-color: var(--border-medium);
 }
 
 [data-theme="dark"] .tool-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 .tool-card:hover::before {
@@ -489,14 +738,15 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   background: var(--accent);
   color: #FFFFFF;
   border-color: var(--accent);
-  transform: scale(1.05) rotate(5deg);
-  box-shadow: var(--shadow-md);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="dark"] .tool-card:hover .tool-icon-wrapper {
   background: var(--accent);
   color: #000000;
   border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
 .tool-card:hover .tool-icon-wrapper::before {
@@ -504,7 +754,7 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 }
 
 .tool-card:hover .tool-icon-wrapper svg {
-  transform: scale(1.1);
+  transform: scale(1.05);
   color: #FFFFFF;
 }
 
@@ -513,8 +763,8 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 }
 
 .tool-info h3 {
-  font-size: clamp(1.125rem, 2vw, 1.375rem);
-  margin-bottom: 0.625rem;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  margin-bottom: 0.75rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text-primary);
@@ -535,8 +785,8 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 
 .tool-info p {
   color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 0.875rem;
+  line-height: 1.7;
+  font-size: 0.9375rem;
   flex: 1;
   letter-spacing: -0.01em;
 }

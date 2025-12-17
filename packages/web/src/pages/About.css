@@ -240,6 +240,120 @@
   letter-spacing: -0.01em;
 }
 
+/* Three Pillars Section - LGM Aviation Inspired */
+.pillars-section {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .pillars-section {
+  background: var(--bg-primary);
+}
+
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.pillar-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+  transition: all 0.4s var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .pillar-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.pillar-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out);
+}
+
+.pillar-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: var(--border-medium);
+}
+
+[data-theme="dark"] .pillar-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+.pillar-card:hover::before {
+  transform: scaleX(1);
+}
+
+.pillar-number {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.15;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.pillar-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.pillar-card p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.pillar-tag {
+  display: inline-flex;
+  padding: 0.5rem 1rem;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  transition: all 0.3s var(--ease-out);
+}
+
+[data-theme="dark"] .pillar-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--accent);
+}
+
+.pillar-card:hover .pillar-tag {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .pillar-card:hover .pillar-tag {
+  background: var(--accent);
+  color: #000000;
+}
+
 /* Vision Section */
 .vision-section {
   background: var(--bg-primary);
@@ -285,6 +399,19 @@
 
   .section-header-centered {
     margin-bottom: 3rem;
+  }
+
+  .pillars-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pillar-card {
+    padding: 2.5rem 2rem;
+  }
+
+  .pillar-number {
+    font-size: 2.5rem;
   }
 }
 

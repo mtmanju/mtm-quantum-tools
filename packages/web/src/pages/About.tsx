@@ -136,6 +136,50 @@ const About = memo(({ totalTools, activeTools, totalCategories }: AboutProps) =>
         </div>
       </section>
 
+      {/* Three Core Pillars - LGM Style */}
+      <section className="about-section pillars-section">
+        <div className="section-content">
+          <div className="section-header-centered">
+            <h2 className="section-title">Three Core Pillars</h2>
+            <p className="section-description">
+              Our approach to building developer tools
+            </p>
+          </div>
+
+          <div className="pillars-grid">
+            <div className="pillar-card">
+              <div className="pillar-number">01</div>
+              <h3>Simplicity</h3>
+              <p>
+                Clean, intuitive interfaces that get out of your way. No clutter, 
+                no confusion—just tools that work exactly as you expect them to.
+              </p>
+              <div className="pillar-tag">User-First Design</div>
+            </div>
+
+            <div className="pillar-card">
+              <div className="pillar-number">02</div>
+              <h3>Performance</h3>
+              <p>
+                Lightning-fast processing with optimized algorithms. Built for speed 
+                without compromising quality or accuracy.
+              </p>
+              <div className="pillar-tag">Blazing Fast</div>
+            </div>
+
+            <div className="pillar-card">
+              <div className="pillar-number">03</div>
+              <h3>Privacy</h3>
+              <p>
+                Everything runs locally in your browser. Your files and data never 
+                touch our servers—complete control and peace of mind.
+              </p>
+              <div className="pillar-tag">Zero Tracking</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Vision Section */}
       <section className="about-section vision-section">
         <div className="section-content">
@@ -145,10 +189,6 @@ const About = memo(({ totalTools, activeTools, totalCategories }: AboutProps) =>
               We envision a world where developers have instant access to the tools they need, 
               without complexity or compromise. Quantum Tools is our commitment to that future—
               a growing collection of utilities that respect your time, data, and workflow.
-            </p>
-            <p className="vision-text">
-              Every tool we create is designed with three principles: simplicity, performance, 
-              and privacy. As we continue to grow, these principles will guide everything we build.
             </p>
           </div>
         </div>

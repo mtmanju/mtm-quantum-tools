@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback, lazy, Suspense, memo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { 
   FileText, Zap, Code, Calculator, FileJson, GitCompare, 
   Table, Workflow, Database, FileCode, Shield, Clock, ArrowLeft 
 } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
-import { useHashLocation } from './hooks/useHashLocation'
 import { useScrollPosition } from './hooks/useScrollPosition'
-import { getViewType } from './constants/routes'
+import { getViewType, getToolId, ROUTES } from './constants/routes'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import './App.css'
@@ -170,21 +170,22 @@ const ToolRenderer = memo(({ component: ToolComponent }: { component: ComponentT
 ToolRenderer.displayName = 'ToolRenderer'
 
 function App() {
-  // Use custom hooks for routing, theme, and scroll detection
-  const { hash, navigate } = useHashLocation()
+  // Use React Router hooks for clean URLs
+  const location = useLocation()
+  const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
   const scrolled = useScrollPosition()
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Determine current view using utility function
-  const currentView = useMemo(() => getViewType(hash), [hash])
+  // Determine current view from pathname
+  const currentView = useMemo(() => getViewType(location.pathname), [location.pathname])
 
   // Memoize selected tool
   const selectedTool = useMemo((): Tool | null => {
-    if (!hash.startsWith('#tool/')) return null
-    const toolId = hash.replace('#tool/', '')
+    const toolId = getToolId(location.pathname)
+    if (!toolId) return null
     return tools.find(t => t.id === toolId) || null
-  }, [hash])
+  }, [location.pathname])
 
   // Memoize filtered tools with debounced search
   const filteredTools = useMemo(() => {
@@ -212,7 +213,7 @@ function App() {
   // Memoize tool click handler
   const handleToolClick = useCallback((tool: Tool) => {
     if (tool.status === 'active') {
-      navigate(`tool/${tool.id}`)
+      navigate(ROUTES.TOOL(tool.id))
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [navigate])
@@ -268,13 +269,53 @@ function App() {
         </main>
       ) : currentView === 'home' ? (
         <main className="main-content">
-          <section className="home-intro">
-            <h1 className="intro-title">Essential Developer Tools</h1>
-            <p className="intro-subtitle">
-              Choose from our collection of professional utilities designed to streamline your workflow.
+          <section className="landing-hero">
+            <div className="hero-badge">
+              <span>Professional Grade</span>
+            </div>
+            <h1 className="hero-title">Developer Tools<br />Simplified</h1>
+            <p className="hero-subtitle">
+              Trusted by developers worldwide. Professional utilities designed to streamline your workflow and boost productivity.
             </p>
+            <div className="hero-cta">
+              <button className="cta-primary" onClick={() => navigate(ROUTES.TOOLS)}>
+                <span>Explore Tools</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <button className="cta-secondary" onClick={() => navigate(ROUTES.ABOUT)}>
+                <span>Learn More</span>
+              </button>
+            </div>
           </section>
 
+          <section className="landing-features">
+            <div className="feature-card">
+              <div className="feature-icon">
+                <Zap size={24} />
+              </div>
+              <h3>Lightning Fast</h3>
+              <p>Optimized for performance with instant results</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <Clock size={24} />
+              </div>
+              <h3>24/7 Available</h3>
+              <p>Access your tools anytime, anywhere</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <Shield size={24} />
+              </div>
+              <h3>Secure & Private</h3>
+              <p>Your data never leaves your browser</p>
+            </div>
+          </section>
+        </main>
+      ) : currentView === 'tools' ? (
+        <main className="main-content tools-page">
           {categorySections}
         </main>
       ) : (
@@ -282,7 +323,7 @@ function App() {
           <div className="tool-view-wrapper">
             <button
               className="back-button"
-              onClick={() => navigate('')}
+              onClick={() => navigate(ROUTES.TOOLS)}
               aria-label="Back to tools"
             >
               <ArrowLeft size={20} />

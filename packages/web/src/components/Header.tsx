@@ -6,8 +6,8 @@ interface HeaderProps {
   scrolled: boolean
   isDarkMode: boolean
   searchQuery: string
-  currentView: 'home' | 'about' | 'tool'
-  onNavigate: (hash: string) => void
+  currentView: 'home' | 'tools' | 'about' | 'tool'
+  onNavigate: (path: string) => void
   onSearchChange: (query: string) => void
   onToggleTheme: () => void
 }
@@ -25,7 +25,7 @@ const Header = memo(({
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-content">
         <div className="header-left">
-          <div className="logo" onClick={() => onNavigate('')}>
+          <div className="logo" onClick={() => onNavigate('/')}>
             <Layout size={28} strokeWidth={1.5} />
             <div className="logo-text">
               <h1>Quantum</h1>
@@ -48,7 +48,7 @@ const Header = memo(({
               aria-label="Search tools"
               onClick={() => {
                 if (currentView !== 'home') {
-                  onNavigate('')
+                  onNavigate('/')
                 }
               }}
             />
@@ -57,8 +57,16 @@ const Header = memo(({
 
         <div className="header-right">
           <button 
+            className={`header-nav-btn ${currentView === 'tools' ? 'active' : ''}`}
+            onClick={() => onNavigate('/tools')}
+            aria-label="Tools"
+          >
+            <Layout size={20} strokeWidth={1.5} />
+            <span>Tools</span>
+          </button>
+          <button 
             className={`header-nav-btn ${currentView === 'about' ? 'active' : ''}`}
-            onClick={() => onNavigate(currentView === 'about' ? '' : 'about')}
+            onClick={() => onNavigate('/about')}
             aria-label="About"
           >
             <Info size={20} strokeWidth={1.5} />
