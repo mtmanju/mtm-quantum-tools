@@ -58,7 +58,7 @@ const Header = memo(({
         <div className="header-right">
           <button 
             className={`header-nav-btn ${currentView === 'about' ? 'active' : ''}`}
-            onClick={() => onNavigate(currentView === 'about' ? '' : '#about')}
+            onClick={() => onNavigate(currentView === 'about' ? '' : 'about')}
             aria-label="About"
           >
             <Info size={20} strokeWidth={1.5} />

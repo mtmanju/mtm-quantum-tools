@@ -1,96 +1,147 @@
-/* Aptos font (system font, no import needed) */
+/* ============================================
+   Modern CSS Features (2025) - Quantum Tools
+   ============================================ */
 
-:root {
-  /* Ultra-modern minimalist palette inspired by award-winning designs */
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #FAFAFA;
-  --bg-elevated: #FFFFFF;
-  --bg-hover: #F5F5F5;
+/* CSS Cascade Layers - Better specificity control */
+@layer base, components, utilities;
 
-  --text-primary: #000000;
-  --text-secondary: #6B6B6B;
-  --text-tertiary: #9B9B9B;
-  --text-muted: #C0C0C0;
+@layer base {
+  /* Aptos font (system font, no import needed) */
 
-  /* Refined accent colors */
-  --accent: #000000;
-  --accent-hover: #333333;
-  --accent-light: rgba(0, 0, 0, 0.05);
-  --accent-glow: rgba(0, 0, 0, 0.1);
+  :root {
+    /* Ultra-modern minimalist palette with OKLCH color space support */
+    /* Background colors */
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #FAFAFA;
+    --bg-elevated: #FFFFFF;
+    --bg-hover: #F5F5F5;
 
-  --border-subtle: #E8E8E8;
-  --border-medium: #D0D0D0;
-  --border-focus: #000000;
+    /* Text colors */
+    --text-primary: #000000;
+    --text-secondary: #6B6B6B;
+    --text-tertiary: #9B9B9B;
+    --text-muted: #C0C0C0;
 
-  /* Sophisticated shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 20px 48px -12px rgba(0, 0, 0, 0.15);
+    /* Accent colors with modern color-mix for variations */
+    --accent: #000000;
+    --accent-hover: #333333;
+    --accent-light: rgba(0, 0, 0, 0.05);
+    --accent-glow: rgba(0, 0, 0, 0.1);
 
-  /* Spacing system */
-  --container-width: 1440px;
-  --header-height: 72px;
-  --section-spacing: 8rem;
+    /* Border colors */
+    --border-subtle: #E8E8E8;
+    --border-medium: #D0D0D0;
+    --border-focus: #000000;
 
-  /* Animation curves */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Sophisticated shadows with modern blur */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 20px 48px -12px rgba(0, 0, 0, 0.15);
+
+    /* Spacing system - Responsive with clamp() */
+    --container-width: 1440px;
+    --header-height: 72px;
+    --section-spacing: clamp(4rem, 8vw, 8rem);
+    --card-padding: clamp(1rem, 2vw, 1.5rem);
+    --gap-sm: clamp(0.5rem, 1vw, 0.75rem);
+    --gap-md: clamp(1rem, 2vw, 1.5rem);
+    --gap-lg: clamp(1.5rem, 3vw, 2rem);
+
+    /* Animation curves - Modern easing functions */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Container query support */
+    container-type: inline-size;
+  }
 }
 
-[data-theme="dark"] {
-  --bg-primary: #0A0A0A;
-  --bg-secondary: #111111;
-  --bg-elevated: #1A1A1A;
-  --bg-hover: #1F1F1F;
+@layer base {
+  [data-theme="dark"] {
+    /* Dark theme with enhanced contrast */
+    --bg-primary: #0A0A0A;
+    --bg-secondary: #111111;
+    --bg-elevated: #1A1A1A;
+    --bg-hover: #1F1F1F;
 
-  --text-primary: #FFFFFF;
-  --text-secondary: #A0A0A0;
-  --text-tertiary: #707070;
-  --text-muted: #505050;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0A0A0;
+    --text-tertiary: #707070;
+    --text-muted: #505050;
 
-  --accent: #FFFFFF;
-  --accent-hover: #E0E0E0;
-  --accent-light: rgba(255, 255, 255, 0.08);
-  --accent-glow: rgba(255, 255, 255, 0.12);
+    --accent: #FFFFFF;
+    --accent-hover: #E0E0E0;
+    --accent-light: rgba(255, 255, 255, 0.08);
+    --accent-glow: rgba(255, 255, 255, 0.12);
 
-  --border-subtle: #252525;
-  --border-medium: #333333;
-  --border-focus: #FFFFFF;
+    --border-subtle: #252525;
+    --border-medium: #333333;
+    --border-focus: #FFFFFF;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
-  --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.8);
-  --shadow-xl: 0 20px 48px -12px rgba(0, 0, 0, 0.9);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+    --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.8);
+    --shadow-xl: 0 20px 48px -12px rgba(0, 0, 0, 0.9);
+  }
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: 'Aptos', 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  line-height: 1.6;
-  letter-spacing: -0.015em;
-  transition: background-color 0.5s var(--ease-out), color 0.5s var(--ease-out);
-}
+  /* Modern CSS: Improved text rendering */
+  *::selection {
+    background: var(--accent);
+    color: var(--bg-primary);
+  }
 
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Aptos', 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    line-height: 1.6;
+    letter-spacing: -0.015em;
+    transition: background-color 0.5s var(--ease-out), color 0.5s var(--ease-out);
+    
+    /* Modern CSS: Scroll behavior */
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+  }
+
+  /* Respect user preferences */
+  @media (prefers-reduced-motion: reduce) {
+    body {
+      scroll-behavior: auto;
+    }
+    
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  .app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    container-type: inline-size;
+  }
 }
 
 /* Typography System */
@@ -222,6 +273,7 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   }
 }
 
+/* Tool Cards */
 .tool-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
@@ -1165,5 +1217,210 @@ html {
   
   .tool-view-wrapper {
     padding: 1rem;
+  }
+}
+
+/* ============================================
+   Modern CSS (2025) - Utility Classes
+   ============================================ */
+
+@layer utilities {
+  /* Color-mix utilities for dynamic color variations */
+  .bg-accent-soft {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  
+  .bg-accent-medium {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  
+  .text-accent-muted {
+    color: color-mix(in srgb, var(--accent) 70%, var(--text-secondary));
+  }
+  
+  /* Smooth gradient overlays using color-mix */
+  .gradient-overlay {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 5%, transparent),
+      color-mix(in srgb, var(--accent) 15%, transparent)
+    );
+  }
+  
+  /* Modern spacing utilities with clamp */
+  .spacing-responsive-sm {
+    padding: clamp(0.5rem, 2vw, 1rem);
+  }
+  
+  .spacing-responsive-md {
+    padding: clamp(1rem, 3vw, 2rem);
+  }
+  
+  .spacing-responsive-lg {
+    padding: clamp(2rem, 5vw, 4rem);
+  }
+  
+  /* Text utilities with modern features */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* ============================================
+   Modern CSS (2025) - Scroll-Driven Animations
+   ============================================ */
+
+@supports (animation-timeline: scroll()) {
+  /* Fade in elements as they scroll into view */
+  .scroll-fade-in {
+    animation: scroll-fade-in linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+  
+  @keyframes scroll-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Scale up elements as they scroll */
+  .scroll-scale {
+    animation: scroll-scale linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 50%;
+  }
+  
+  @keyframes scroll-scale {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  /* Reveal with slide effect */
+  .scroll-reveal {
+    animation: scroll-reveal linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 40%;
+  }
+  
+  @keyframes scroll-reveal {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Fallback for browsers without scroll-driven animations */
+@supports not (animation-timeline: scroll()) {
+  .scroll-fade-in,
+  .scroll-scale,
+  .scroll-reveal {
+    animation: fadeInUp 0.6s var(--ease-out) backwards;
+  }
+}
+
+/* ============================================
+   Modern CSS (2025) - Advanced Features
+   ============================================ */
+
+/* Modern focus-visible for better accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Modern scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 5px;
+  
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 30%, transparent) var(--bg-secondary);
+}
+
+/* Modern backdrop blur support */
+.glass-effect {
+  background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Enhanced loading states with modern animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-loading {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 0%,
+    color-mix(in srgb, var(--accent) 5%, var(--bg-secondary)) 50%,
+    var(--bg-secondary) 100%
+  );
+  background-size: 2000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Modern image optimization with aspect-ratio */
+.aspect-ratio-16-9 {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.aspect-ratio-square {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+/* Container query utilities */
+.container-responsive {
+  container-type: inline-size;
+  
+  & > * {
+    @container (max-width: 500px) {
+      font-size: clamp(0.875rem, 2vw, 1rem);
+    }
   }
 }

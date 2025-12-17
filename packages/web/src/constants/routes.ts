@@ -4,8 +4,8 @@
 
 export const ROUTES = {
   HOME: '',
-  ABOUT: '#about',
-  TOOL: (toolId: string) => `#tool/${toolId}`,
+  ABOUT: 'about',
+  TOOL: (toolId: string) => `tool/${toolId}`,
 } as const
 
 export type ViewType = 'home' | 'about' | 'tool'

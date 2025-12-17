@@ -212,7 +212,7 @@ function App() {
   // Memoize tool click handler
   const handleToolClick = useCallback((tool: Tool) => {
     if (tool.status === 'active') {
-      navigate(`#tool/${tool.id}`)
+      navigate(`tool/${tool.id}`)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [navigate])

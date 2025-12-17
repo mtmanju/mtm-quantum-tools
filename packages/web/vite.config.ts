@@ -10,6 +10,7 @@ export default defineConfig({
     cssMinify: true,
     sourcemap: false,
     rollupOptions: {
+      external: ['d3-sankey'],
       output: {
         manualChunks: {
           // Vendor chunks

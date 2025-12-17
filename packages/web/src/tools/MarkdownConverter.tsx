@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx'
 import { saveAs } from 'file-saver'
 import { FileText, Download, Upload, AlertCircle } from 'lucide-react'
+import './MarkdownConverter.css'
 
 // Dynamic import of mermaid
 let mermaid: any = null;
