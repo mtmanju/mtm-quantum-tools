@@ -776,7 +776,7 @@ const MarkdownConverter = () => {
       <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
         <input {...getInputProps()} />
         <div className="dropzone-icon-circle">
-          <Upload size={32} strokeWidth={1.5} />
+          <Upload size={32} strokeWidth={2} />
         </div>
         {isDragActive ? (
           <p className="primary-text">Drop the Markdown file here...</p>
