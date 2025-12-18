@@ -29,7 +29,11 @@ export const EditorPanel = memo(({
             <button
               type="button"
               className="editor-panel-copy-btn"
-              onClick={onCopy}
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                onCopy()
+              }}
               title="Copy"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}

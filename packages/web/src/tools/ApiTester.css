@@ -1,0 +1,209 @@
+/* API Tester Tool Styles */
+
+.api-request-config {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.api-url-method {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.api-method-select {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  min-width: 100px;
+}
+
+.api-method-select:hover {
+  border-color: var(--accent);
+}
+
+.api-method-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.api-url-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  transition: all 0.2s var(--ease-out);
+}
+
+.api-url-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.api-request-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.api-request-panel .editor-panel-wrapper {
+  flex: 1;
+  min-height: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.api-request-panel .editor-panel-wrapper:last-child {
+  border-bottom: none;
+}
+
+.api-response {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  background: var(--bg-elevated);
+  min-height: 0;
+}
+
+.api-loading,
+.api-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.api-response-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.api-response-status.status-success {
+  background: rgba(34, 197, 94, 0.1);
+  border-bottom-color: rgba(34, 197, 94, 0.2);
+}
+
+.api-response-status.status-redirect {
+  background: rgba(251, 191, 36, 0.1);
+  border-bottom-color: rgba(251, 191, 36, 0.2);
+}
+
+.api-response-status.status-client-error,
+.api-response-status.status-server-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+.api-status-code {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.api-response-status.status-success .api-status-code {
+  color: #22C55E;
+}
+
+.api-response-status.status-redirect .api-status-code {
+  color: #FBBF24;
+}
+
+.api-response-status.status-client-error .api-status-code,
+.api-response-status.status-server-error .api-status-code {
+  color: #EF4444;
+}
+
+.api-status-text {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.api-response-time {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.api-response-headers,
+.api-response-body {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.api-response-body {
+  border-bottom: none;
+  flex: 1;
+  overflow: auto;
+}
+
+.api-response-headers h4,
+.api-response-body h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.api-response-headers pre,
+.api-response-body pre {
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+}
+
+.api-response-body pre {
+  max-height: none;
+}
+
+@media (max-width: 1024px) {
+  .api-request-panel .editor-panel-wrapper {
+    min-height: 200px;
+  }
+
+  .api-url-method {
+    flex-direction: column;
+  }
+
+  .api-method-select {
+    width: 100%;
+  }
+}
+

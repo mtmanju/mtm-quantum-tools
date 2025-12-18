@@ -29,7 +29,11 @@ export const Toolbar = memo(({ left, right, className = '' }: ToolbarProps) => {
               <button
                 type="button"
                 className="toolbar-btn"
-                onClick={btn.onClick}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  btn.onClick()
+                }}
                 disabled={btn.disabled}
                 title={btn.title}
               >

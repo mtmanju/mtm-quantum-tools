@@ -1,0 +1,140 @@
+/* Timestamp Converter Tool Styles */
+
+.timestamp-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.timestamp-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timestamp-info-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.timestamp-info-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.timestamp-results {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 1rem;
+  background: var(--bg-elevated);
+  min-height: 0;
+}
+
+.timestamp-empty-state,
+.timestamp-error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.timestamp-error-state {
+  color: #EF4444;
+}
+
+.timestamp-hint {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+}
+
+.timestamp-formatted {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.timestamp-formatted-section {
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.timestamp-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timestamp-formatted-value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  word-break: break-word;
+}
+
+.timestamp-unix-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.timestamp-unix-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-elevated);
+  border-radius: 6px;
+}
+
+.timestamp-unix-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.timestamp-unix-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+@media (max-width: 1024px) {
+  .timestamp-info-bar {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .timestamp-unix-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+

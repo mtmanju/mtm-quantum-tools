@@ -1,0 +1,154 @@
+/* Workflow Validator Tool Styles */
+
+.workflow-validation-bar {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.workflow-validation-bar.valid {
+  background: rgba(34, 197, 94, 0.1);
+  border-bottom-color: rgba(34, 197, 94, 0.2);
+}
+
+.workflow-validation-bar.invalid {
+  background: rgba(239, 68, 68, 0.1);
+  border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+.workflow-validation-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.workflow-validation-bar.valid .workflow-validation-status {
+  color: #22C55E;
+}
+
+.workflow-validation-bar.invalid .workflow-validation-status {
+  color: #EF4444;
+}
+
+.workflow-validation-counts {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+  font-size: 0.8125rem;
+}
+
+.workflow-error-count {
+  color: #EF4444;
+}
+
+.workflow-warning-count {
+  color: #FBBF24;
+}
+
+.workflow-results {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 1rem;
+  background: var(--bg-elevated);
+  min-height: 0;
+}
+
+.workflow-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.workflow-validation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.workflow-errors,
+.workflow-warnings,
+.workflow-info {
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.workflow-errors {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.workflow-warnings {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.workflow-info {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.workflow-errors h4,
+.workflow-warnings h4,
+.workflow-info h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.workflow-errors h4 {
+  color: #EF4444;
+}
+
+.workflow-warnings h4 {
+  color: #FBBF24;
+}
+
+.workflow-info h4 {
+  color: #3B82F6;
+}
+
+.workflow-errors ul,
+.workflow-warnings ul,
+.workflow-info ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.workflow-errors li,
+.workflow-warnings li,
+.workflow-info li {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.workflow-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: #22C55E;
+}
+
