@@ -1,23 +1,22 @@
-import { useState, useCallback, useMemo } from 'react'
+import { saveAs } from 'file-saver'
+import { Check, Copy, Download, FileText, Upload, X } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, Download, Copy, Check, X, FileText } from 'lucide-react'
-import { ToolContainer } from '../components/ui/ToolContainer'
-import { Toolbar } from '../components/ui/Toolbar'
-import { ErrorBar } from '../components/ui/ErrorBar'
+import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
-import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
+import { ErrorBar } from '../components/ui/ErrorBar'
+import { ToolContainer } from '../components/ui/ToolContainer'
+import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
-import { 
-  encodeToBase64, 
-  decodeFromBase64, 
-  fileToBase64, 
-  base64ToBlob, 
-  formatBase64, 
-  minifyBase64,
-  bytesToBase64
+import {
+  bytesToBase64,
+  decodeFromBase64,
+  encodeToBase64,
+  fileToBase64,
+  formatBase64,
+  minifyBase64
 } from '../utils/base64'
-import { saveAs } from 'file-saver'
 import './Base64Converter.css'
 
 const Base64Converter = () => {
@@ -172,12 +171,8 @@ const Base64Converter = () => {
   }, [input, mode, decodeResult, output])
 
   const displayOutput = useMemo(() => {
-    if (mode === 'encode') {
-      return output
-    } else {
-      return output
-    }
-  }, [mode, output])
+    return output
+  }, [output])
 
   const handleDownload = useCallback(() => {
     if (mode !== 'decode' || !decodeResult) return
@@ -185,7 +180,12 @@ const Base64Converter = () => {
     if (!decodeResult.isValid || !decodeResult.decodedBytes) return
 
     const mimeType = detectedType || decodeResult.mimeType || 'application/octet-stream'
-    const blob = base64ToBlob(input, mimeType)
+    
+    // Use the decoded bytes directly to create the blob (more reliable than re-decoding)
+    // Create a new Uint8Array by copying the bytes to ensure proper type compatibility
+    const bytes = new Uint8Array(decodeResult.decodedBytes.length)
+    bytes.set(decodeResult.decodedBytes)
+    const blob = new Blob([bytes], { type: mimeType })
     
     // Determine file extension from MIME type
     let extension = 'bin'
@@ -202,7 +202,7 @@ const Base64Converter = () => {
     }
 
     saveAs(blob, `decoded.${extension}`)
-  }, [input, mode, detectedType, decodeResult])
+  }, [mode, detectedType, decodeResult])
 
   const handleClear = useCallback(() => {
     setInput('')
@@ -447,7 +447,11 @@ const Base64Converter = () => {
                 <button
                   type="button"
                   className="editor-panel-copy-btn"
-                  onClick={handleDownload}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    handleDownload()
+                  }}
                   title={isImage ? 'Download image' : 'Download file'}
                 >
                   <Download size={14} />
@@ -473,17 +477,65 @@ const Base64Converter = () => {
                   }}
                 />
               </div>
-            ) : mode === 'decode' && isBinaryFile && decodeResult && !isImage ? (
+            ) : mode === 'decode' && isBinaryFile && decodeResult && decodeResult.isValid && decodeResult.decodedBytes && !isImage ? (
               <div className="base64-binary-preview">
                 <FileText size={48} />
-                <h3>{detectedType || 'Binary File'}</h3>
-                <p>This is a binary file ({decodeResult.decodedBytes?.length || 0} bytes)</p>
-                <p className="base64-binary-hint">Use the download button above to save the file</p>
-                {detectedType === 'application/pdf' && (
-                  <p className="base64-binary-note">PDF files cannot be previewed in the browser</p>
+                <h3>{(() => {
+                  const mimeType = detectedType || decodeResult.mimeType || ''
+                  if (mimeType === 'application/pdf') return 'PDF Document'
+                  if (mimeType === 'application/zip') return 'ZIP Archive'
+                  if (mimeType === 'application/octet-stream') return 'Binary File'
+                  if (mimeType) {
+                    // Extract file type from MIME type (e.g., "application/json" -> "JSON File")
+                    const parts = mimeType.split('/')
+                    if (parts.length === 2) {
+                      const subtype = parts[1].split(';')[0].charAt(0).toUpperCase() + parts[1].split(';')[0].slice(1)
+                      return `${subtype} File`
+                    }
+                  }
+                  return 'Binary File'
+                })()}</h3>
+                <p className="base64-binary-size">File size: {(() => {
+                  const bytes = decodeResult.decodedBytes.length
+                  if (bytes < 1024) return `${bytes} bytes`
+                  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
+                  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+                })()}</p>
+                {detectedType === 'application/pdf' ? (
+                  <>
+                    <p className="base64-binary-hint">PDF files cannot be previewed in the browser</p>
+                    <button
+                      type="button"
+                      className="base64-download-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        handleDownload()
+                      }}
+                    >
+                      <Download size={18} />
+                      <span>Download PDF</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="base64-binary-hint">Use the download button above to save the file</p>
+                    <button
+                      type="button"
+                      className="base64-download-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        handleDownload()
+                      }}
+                    >
+                      <Download size={18} />
+                      <span>Download File</span>
+                    </button>
+                  </>
                 )}
               </div>
-            ) : !displayOutput.trim() ? (
+            ) : !displayOutput.trim() && (mode === 'encode' || (mode === 'decode' && (!decodeResult || !isBinaryFile || isImage))) ? (
               <div className="base64-empty-state">
                 <FileText size={48} />
                 <p>{mode === 'encode' ? 'Upload a file to convert to Base64' : 'Enter Base64 string to decode'}</p>

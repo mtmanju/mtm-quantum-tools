@@ -203,6 +203,13 @@
   margin: 0;
 }
 
+.base64-binary-size {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin: 0.25rem 0;
+}
+
 .base64-binary-hint {
   font-size: 0.875rem;
   color: var(--text-tertiary);
@@ -211,9 +218,40 @@
 }
 
 .base64-binary-note {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--accent);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.base64-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  margin-top: 1rem;
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.base64-download-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.base64-download-btn:active {
+  transform: translateY(0);
+}
+
+[data-theme="dark"] .base64-download-btn {
+  color: #000000;
 }
 
 @media (max-width: 1024px) {
