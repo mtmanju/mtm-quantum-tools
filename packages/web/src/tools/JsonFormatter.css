@@ -1,0 +1,294 @@
+/* Use ToolContainer styles - no need for container styles here */
+
+/* Toolbar */
+.json-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.json-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.json-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.json-toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.json-toolbar-btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  color: var(--accent);
+}
+
+.json-toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.json-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+  margin: 0 0.25rem;
+}
+
+.json-toolbar-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.json-indent-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 0.125rem;
+}
+
+.json-indent-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s var(--ease-out);
+}
+
+.json-indent-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--accent);
+}
+
+.json-indent-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.json-indent-value {
+  min-width: 20px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+}
+
+/* Error/Success bars */
+.json-error-bar,
+.json-success-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.json-error-bar {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.json-success-bar {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22C55E;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+/* Editor Layout */
+.json-editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  overflow: hidden;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.json-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.json-panel:last-child {
+  border-right: none;
+}
+
+.json-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.json-panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.json-panel-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.json-panel-error {
+  font-size: 0.75rem;
+  color: #EF4444;
+}
+
+.json-panel-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.json-panel-copy-btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  color: var(--accent);
+}
+
+.json-panel-copy-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.dropzone-textarea.json-editor,
+.json-formatted {
+  flex: 1;
+  width: 100%;
+  padding: 1rem;
+  margin: 0;
+  border: none;
+  background: var(--bg-elevated);
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  resize: none;
+  overflow: auto;
+  outline: none;
+}
+
+.dropzone-textarea.json-editor::placeholder {
+  color: var(--text-tertiary);
+}
+
+.dropzone-textarea.json-editor.invalid {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.json-formatted {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  margin: 0;
+  background: var(--bg-elevated);
+  white-space: pre;
+  word-wrap: normal;
+  overflow: auto;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.json-formatted code {
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .json-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .json-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .json-panel:last-child {
+    border-bottom: none;
+  }
+
+  .json-formatter-container {
+    height: auto;
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .json-toolbar {
+    flex-wrap: wrap;
+    padding: 0.5rem;
+  }
+
+  .json-toolbar-left,
+  .json-toolbar-right {
+    flex-wrap: wrap;
+  }
+
+  .json-toolbar-btn span {
+    display: none;
+  }
+
+  .json-toolbar-btn {
+    padding: 0.5rem;
+    min-width: 36px;
+    justify-content: center;
+  }
+}

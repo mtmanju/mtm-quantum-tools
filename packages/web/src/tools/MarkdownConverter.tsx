@@ -1,9 +1,18 @@
-import { useState, useCallback } from 'react'
-import { useDropzone } from 'react-dropzone'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx'
+import { BorderStyle, Document, HeadingLevel, ImageRun, Packer, Paragraph, Table, TableCell, TableRow, TextRun, WidthType } from 'docx'
 import { saveAs } from 'file-saver'
-import { FileText, Download, Upload, AlertCircle } from 'lucide-react'
+import { AlertCircle, Check, Copy, Download, Upload, X } from 'lucide-react'
+import MarkdownIt from 'markdown-it'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useDropzone } from 'react-dropzone'
 import './MarkdownConverter.css'
+
+// Initialize markdown parser
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: true
+})
 
 // Dynamic import of mermaid
 let mermaid: any = null;
@@ -28,16 +37,108 @@ const MarkdownConverter = () => {
   const [fileName, setFileName] = useState('')
   const [isConverting, setIsConverting] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+  const previewRef = useRef<HTMLDivElement>(null)
+
+  // Render markdown to HTML and process mermaid blocks
+  const htmlPreview = useMemo(() => {
+    if (!markdownContent.trim()) return ''
+    try {
+      // First, render markdown normally - markdown-it will create <pre><code class="language-mermaid">...</code></pre>
+      let html = md.render(markdownContent)
+      
+      // Use DOM parser to reliably extract mermaid code blocks
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(html, 'text/html')
+      const mermaidCodeBlocks = doc.querySelectorAll('pre code.language-mermaid')
+      
+      if (mermaidCodeBlocks.length > 0) {
+        mermaidCodeBlocks.forEach((codeBlock, index) => {
+          const code = codeBlock.textContent || ''
+          if (!code.trim()) return
+          
+          // Replace the parent <pre> element with mermaid diagram div
+          const preElement = codeBlock.parentElement
+          if (preElement) {
+            const mermaidDiv = doc.createElement('div')
+            mermaidDiv.className = 'mermaid-diagram'
+            mermaidDiv.setAttribute('data-mermaid-code', encodeURIComponent(code.trim()))
+            mermaidDiv.setAttribute('data-mermaid-index', index.toString())
+            preElement.replaceWith(mermaidDiv)
+          }
+        })
+        
+        // Get the updated HTML
+        html = doc.body.innerHTML
+      }
+      
+      return html
+    } catch (err) {
+      console.error('Error rendering markdown:', err)
+      return '<p>Error rendering markdown</p>'
+    }
+  }, [markdownContent])
+
+  // Render mermaid diagrams in preview
+  useEffect(() => {
+    if (!htmlPreview || !previewRef.current) return
+
+    const renderMermaidDiagrams = async () => {
+      const mermaidDivs = previewRef.current?.querySelectorAll('.mermaid-diagram')
+      if (!mermaidDivs || mermaidDivs.length === 0) return
+
+      const m = await initMermaid()
+      
+      // Use Promise.all to wait for all diagrams to render
+      await Promise.all(
+        Array.from(mermaidDivs).map(async (div, index) => {
+          const encodedCode = div.getAttribute('data-mermaid-code')
+          if (!encodedCode) return
+          
+          const code = decodeURIComponent(encodedCode)
+          if (!code.trim()) return
+
+          try {
+            const id = `mermaid-${index}-${Date.now()}`
+            const { svg } = await m.render(id, code)
+            
+            if (div) {
+              div.innerHTML = `<div class="mermaid-preview">${svg}</div>`
+            }
+          } catch (err) {
+            console.error('Mermaid render error:', err)
+            if (div) {
+              div.innerHTML = `<div class="mermaid-error">Error rendering Mermaid diagram: ${err instanceof Error ? err.message : 'Unknown error'}</div>`
+            }
+          }
+        })
+      )
+    }
+
+    // Use requestAnimationFrame to ensure DOM is updated
+    const rafId = requestAnimationFrame(() => {
+      setTimeout(() => {
+        renderMermaidDiagrams()
+      }, 50)
+    })
+
+    return () => {
+      cancelAnimationFrame(rafId)
+    }
+  }, [htmlPreview])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (file) {
-      setFileName(file.name.replace('.md', ''))
+      setFileName(file.name.replace(/\.(md|markdown)$/i, ''))
       setError('')
       const reader = new FileReader()
       reader.onload = (e) => {
         const text = e.target?.result as string
         setMarkdownContent(text)
+      }
+      reader.onerror = () => {
+        setError('Failed to read file')
       }
       reader.readAsText(file)
     }
@@ -48,23 +149,61 @@ const MarkdownConverter = () => {
     accept: {
       'text/markdown': ['.md', '.markdown']
     },
-    multiple: false
+    multiple: false,
+    noClick: true
   })
+
+  const handleUploadClick = useCallback(() => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.md,.markdown'
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        setFileName(file.name.replace(/\.(md|markdown)$/i, ''))
+        setError('')
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          const text = event.target?.result as string
+          setMarkdownContent(text)
+        }
+        reader.onerror = () => {
+          setError('Failed to read file')
+        }
+        reader.readAsText(file)
+      }
+    }
+    input.click()
+  }, [])
+
+  const handleCopy = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('Failed to copy to clipboard')
+    }
+  }, [])
+
+  const handleClear = useCallback(() => {
+    setMarkdownContent('')
+    setFileName('')
+    setError('')
+    setCopied(false)
+  }, [])
 
   const renderMermaidToImage = async (code: string, index: number): Promise<{ data: Uint8Array, width: number, height: number, base64: string } | null> => {
     try {
       const m = await initMermaid();
       const id = `mermaid-diagram-${index}-${Date.now()}`;
 
-      // Render mermaid to SVG
       const { svg } = await m.render(id, code);
 
-      // Parse SVG to get dimensions
       const parser = new DOMParser();
       const svgDoc = parser.parseFromString(svg, 'image/svg+xml');
       const svgElement = svgDoc.documentElement;
 
-      // Get dimensions from viewBox or default
       let width = 800;
       let height = 600;
 
@@ -75,7 +214,6 @@ const MarkdownConverter = () => {
         height = Math.ceil(parseFloat(parts[3])) || 600;
       }
 
-      // Scale UP small diagrams for better quality (2x minimum)
       const minWidth = 400;
       const minHeight = 300;
       if (width < minWidth || height < minHeight) {
@@ -84,7 +222,6 @@ const MarkdownConverter = () => {
         height = Math.ceil(height * scale);
       }
 
-      // Ensure maximum dimensions (for very large diagrams)
       const maxWidth = 1200;
       const maxHeight = 1000;
       if (width > maxWidth || height > maxHeight) {
@@ -93,11 +230,8 @@ const MarkdownConverter = () => {
         height = Math.ceil(height * scale);
       }
 
-
-      // Embed SVG in an HTML img with proper encoding to avoid CORS
       const svgString = new XMLSerializer().serializeToString(svgElement);
 
-      // Create high-quality canvas
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -107,758 +241,494 @@ const MarkdownConverter = () => {
       });
 
       if (!ctx) {
-        console.error('❌ Could not get canvas context');
         return null;
       }
 
-      // Enable high-quality rendering
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
 
-      // Fill white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-
-      // Use data URL instead of blob URL to avoid CORS
-      const encodedSvg = encodeURIComponent(svgString)
-        .replace(/'/g, '%27')
-        .replace(/"/g, '%22');
-      const dataUrl = `data:image/svg+xml,${encodedSvg}`;
-
-      return new Promise((resolve) => {
-        const img = new Image();
-
-        const timeout = setTimeout(() => {
-          resolve(null);
-        }, 5000);
-
+      return new Promise((resolve, reject) => {
         img.onload = () => {
-          clearTimeout(timeout);
-          try {
-            ctx.drawImage(img, 0, 0, width, height);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
 
-            // Use canvas.toDataURL as alternative to toBlob
-            try {
-              const dataUrl = canvas.toDataURL('image/png', 1.0);
-              // Convert data URL to Uint8Array
-              const base64 = dataUrl.split(',')[1];
-              const binaryString = atob(base64);
-              const len = binaryString.length;
-              const bytes = new Uint8Array(len);
-              for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-              }
-
-              // Verify PNG signature (first 8 bytes should be: 137 80 78 71 13 10 26 10)
-              const isPNG = bytes.length > 8 &&
-                bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71;
-
-              if (!isPNG) {
-                resolve(null);
-                return;
-              }
-
-              resolve({ data: bytes, width, height, base64 });
-            } catch (dataUrlError) {
-              resolve(null);
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
             }
-          } catch (error) {
-            clearTimeout(timeout);
-            resolve(null);
-          }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+              const arrayBuffer = reader.result as ArrayBuffer;
+              const uint8Array = new Uint8Array(arrayBuffer);
+              const base64 = canvas.toDataURL('image/png');
+              URL.revokeObjectURL(url);
+              resolve({ data: uint8Array, width, height, base64 });
+            };
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsArrayBuffer(blob);
+          }, 'image/png');
         };
 
         img.onerror = () => {
-          clearTimeout(timeout);
-          resolve(null);
+          URL.revokeObjectURL(url);
+          reject(new Error('Failed to load SVG image'));
         };
 
-        // Set image source
-        img.src = dataUrl;
+        img.src = url;
       });
     } catch (error) {
+      console.error('Error rendering mermaid diagram:', error);
       return null;
     }
-  }
+  };
 
-  // Helper function to parse inline markdown (bold, italic, code, links, strikethrough)
-  const parseInlineMarkdown = (text: string): TextRun[] => {
-    const runs: TextRun[] = []
-
-    // Enhanced regex to capture: **bold**, *italic*, `code`, [link](url), ~~strikethrough~~
-    const regex = /(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[([^\]]+)\]\(([^)]+)\)|~~[^~]+~~)/g
-
-    let lastIndex = 0
-    let match
-
-    while ((match = regex.exec(text)) !== null) {
-      // Add text before the match
-      if (match.index > lastIndex) {
-        runs.push(new TextRun({
-          text: text.substring(lastIndex, match.index),
-          font: 'Calibri',
-          size: 22,
-        }))
-      }
-
-      const matched = match[0]
-
-      // ***Bold + Italic***
-      if (matched.startsWith('***') && matched.endsWith('***')) {
-        runs.push(new TextRun({
-          text: matched.slice(3, -3),
-          bold: true,
-          italics: true,
-          font: 'Calibri',
-          size: 22,
-        }))
-      }
-      // **Bold**
-      else if (matched.startsWith('**') && matched.endsWith('**')) {
-        runs.push(new TextRun({
-          text: matched.slice(2, -2),
-          bold: true,
-          font: 'Calibri',
-          size: 22,
-        }))
-      }
-      // *Italic*
-      else if (matched.startsWith('*') && matched.endsWith('*')) {
-        runs.push(new TextRun({
-          text: matched.slice(1, -1),
-          italics: true,
-          font: 'Calibri',
-          size: 22,
-        }))
-      }
-      // `Code`
-      else if (matched.startsWith('`') && matched.endsWith('`')) {
-        runs.push(new TextRun({
-          text: matched.slice(1, -1),
-          font: 'Courier New',
-          size: 20,
-          color: 'C83200',
-          shading: {
-            fill: 'F5F5F5',
-          },
-        }))
-      }
-      // [Link](url)
-      else if (match[2] && match[3]) {
-        runs.push(new TextRun({
-          text: match[2],
-          font: 'Calibri',
-          size: 22,
-          color: '0563C1',
-          underline: {},
-        }))
-      }
-      // ~~Strikethrough~~
-      else if (matched.startsWith('~~') && matched.endsWith('~~')) {
-        runs.push(new TextRun({
-          text: matched.slice(2, -2),
-          strike: true,
-          font: 'Calibri',
-          size: 22,
-        }))
-      }
-
-      lastIndex = regex.lastIndex
+  const convertToDocx = useCallback(async () => {
+    if (!markdownContent.trim()) {
+      setError('Please upload or enter markdown content')
+      return
     }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      runs.push(new TextRun({
-        text: text.substring(lastIndex),
-        font: 'Calibri',
-        size: 22,
-      }))
-    }
-
-    return runs.length > 0 ? runs : [new TextRun({ text, font: 'Calibri', size: 22 })]
-  }
-
-  const convertToDocx = async () => {
-    if (!markdownContent) return
 
     setIsConverting(true)
     setError('')
 
     try {
       const lines = markdownContent.split('\n')
-
       const children: (Paragraph | Table)[] = []
-      let i = 0
-      let mermaidIndex = 0
       let inCodeBlock = false
       let codeBlockContent: string[] = []
-      let codeBlockLanguage = ''
+      let inTable = false
+      let tableRows: string[][] = []
+      let tableHeaders: string[] = []
+      let listItems: string[] = []
+      let listType: 'ul' | 'ol' | null = null
 
-      while (i < lines.length) {
+      for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
+        const trimmedLine = line.trim()
 
-        // Handle code blocks (including Mermaid)
-        if (line.trim().startsWith('```')) {
-          const language = line.trim().substring(3).trim()
-
-          // Start of code block
-          if (!inCodeBlock) {
-            inCodeBlock = true
-            codeBlockLanguage = language
-            codeBlockContent = []
-            i++
-            continue
-          }
-        }
-
-        // Inside code block - collect lines
-        if (inCodeBlock && !line.trim().startsWith('```')) {
-          codeBlockContent.push(line)
-          i++
-          continue
-        }
-
-        // End of code block
-        if (inCodeBlock && line.trim().startsWith('```')) {
-          inCodeBlock = false
-
-          // Handle Mermaid diagrams
-          if (codeBlockLanguage === 'mermaid') {
-            const mermaidCode = codeBlockContent.join('\n').trim()
-
-            if (mermaidCode) {
-              const imageResult = await renderMermaidToImage(mermaidCode, mermaidIndex++);
-
-              if (imageResult && imageResult.data && imageResult.data.length > 0) {
-                try {
-                  // Calculate display dimensions to fit within page margins
-                  // A4: 210mm (8.27") wide, minus 1" margins (0.5" each side) = 7.27" usable
-                  // Convert to pixels for docx (96 DPI): 7.27" × 96 = 698px usable width
-                  // A4 height: 297mm (11.69"), minus 1" margins = 10.69" = 1026px usable
-                  const pageWidth = 680; // Max width to fit in A4 margins (with padding)
-                  const pageHeight = 1000; // Max height before page break on A4
-
-                  // Get aspect ratio from actual image
-                  const aspectRatio = imageResult.width / imageResult.height;
-
-                  let displayWidth = Math.min(imageResult.width, pageWidth);
-                  let displayHeight = Math.round(displayWidth / aspectRatio);
-
-                  // If height exceeds page, scale down based on height
-                  if (displayHeight > pageHeight) {
-                    displayHeight = pageHeight;
-                    displayWidth = Math.round(displayHeight * aspectRatio);
-                  }
-
-                  // Create image run using base64 data URL (most compatible with docx library)
-
-                  // @ts-expect-error - docx library accepts Uint8Array despite type definition
-                  const imageRun = new ImageRun({
-                    data: imageResult.data,
-                    transformation: {
-                      width: displayWidth,
-                      height: displayHeight,
-                    },
-                  });
-
-                  const imageParagraph = new Paragraph({
-                    children: [imageRun],
-                    spacing: { before: 120, after: 120 },
-                    keepNext: false, // Don't keep with next paragraph
-                    keepLines: false, // Allow page breaks within
-                  });
-
-                  children.push(imageParagraph);
-                } catch (error) {
-                  children.push(
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: '📊 [Mermaid Diagram - Failed to insert]',
-                          italics: true,
-                          color: '666666'
-                        })
-                      ],
-                      spacing: { before: 240, after: 240 },
-                    })
-                  );
-                }
-              } else {
-                children.push(
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: '📊 [Mermaid Diagram - Render failed]',
-                        italics: true,
-                        color: '666666'
-                      })
-                    ],
-                    spacing: { before: 240, after: 240 },
-                  })
-                );
-              }
-            }
-          }
-          // Handle regular code blocks
-          else {
-            if (codeBlockContent.length > 0) {
-              // Add each line as a separate paragraph to preserve formatting
-              codeBlockContent.forEach((codeLine, idx) => {
-                children.push(
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: codeLine || ' ', // Empty lines need at least a space
-                        font: 'Courier New',
-                        size: 20, // 10pt
-                      })
-                    ],
-                    spacing: {
-                      before: idx === 0 ? 120 : 0,
-                      after: idx === codeBlockContent.length - 1 ? 120 : 0
-                    },
-                    shading: {
-                      fill: 'F5F5F5',
-                    },
-                  })
-                );
-              });
-            }
-          }
-
-          codeBlockContent = []
-          codeBlockLanguage = ''
-          i++
-          continue
-        }
-
-        // Handle Markdown tables
-        if (line.includes('|') && line.trim().startsWith('|')) {
-          const tableLines = []
-          while (i < lines.length && lines[i].includes('|')) {
-            // Skip separator lines (|---|, |---, etc.)
-            if (!lines[i].match(/^\s*\|[\s\-:]+\|\s*$/)) {
-              tableLines.push(lines[i])
-            }
-            i++
-          }
-
-          if (tableLines.length > 0) {
-            const rows = tableLines.map(tline =>
-              tline.split('|').slice(1, -1).map(cell => cell.trim())
-            )
-
-            const tableRows = rows.map((rowData, rowIndex) =>
-              new TableRow({
-                children: rowData.map(cellText =>
-                  new TableCell({
-                    children: [
-                      new Paragraph({
-                        children: [
-                          new TextRun({
-                            text: cellText,
-                            bold: rowIndex === 0,
-                            font: 'Calibri',
-                            size: 22, // 11pt
-                            color: rowIndex === 0 ? 'FFFFFF' : '000000', // White text for header
-                          }),
-                        ],
-                      }),
-                    ],
-                    shading: rowIndex === 0 ? { fill: '4472C4' } : undefined, // Blue header
-                    borders: {
-                      top: { style: BorderStyle.SINGLE, size: 6, color: rowIndex === 0 ? '4472C4' : 'D0D0D0' },
-                      bottom: { style: BorderStyle.SINGLE, size: 6, color: rowIndex === 0 ? '4472C4' : 'D0D0D0' },
-                      left: { style: BorderStyle.SINGLE, size: 6, color: rowIndex === 0 ? '4472C4' : 'D0D0D0' },
-                      right: { style: BorderStyle.SINGLE, size: 6, color: rowIndex === 0 ? '4472C4' : 'D0D0D0' },
-                    },
-                  })
-                ),
+        if (trimmedLine.startsWith('```')) {
+          if (inCodeBlock) {
+            const codeText = codeBlockContent.join('\n')
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: codeText,
+                    font: 'Courier New',
+                    size: 20,
+                  }),
+                ],
+                spacing: { after: 200 },
               })
             )
+            codeBlockContent = []
+            inCodeBlock = false
+          } else {
+            inCodeBlock = true
+          }
+          continue
+        }
+
+        if (inCodeBlock) {
+          codeBlockContent.push(line)
+          continue
+        }
+
+        if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
+          if (!inTable) {
+            inTable = true
+            tableRows = []
+            const headerRow = trimmedLine.split('|').map(c => c.trim()).filter(c => c && !c.match(/^:?-+:?$/))
+            tableHeaders = headerRow
+            continue
+          } else {
+            const cells = trimmedLine.split('|').map(c => c.trim()).filter(c => c)
+            if (cells.length > 0) {
+              tableRows.push(cells)
+            }
+            continue
+          }
+        } else if (inTable) {
+          if (tableRows.length > 0) {
+            const tableCells = [
+              new TableRow({
+                children: tableHeaders.map(header =>
+                  new TableCell({
+                    children: [new Paragraph(header)],
+                    width: { size: 100 / tableHeaders.length, type: WidthType.PERCENTAGE },
+                  })
+                ),
+              }),
+              ...tableRows.map(row =>
+                new TableRow({
+                  children: row.map(cell =>
+                    new TableCell({
+                      children: [new Paragraph(cell)],
+                      width: { size: 100 / row.length, type: WidthType.PERCENTAGE },
+                    })
+                  ),
+                })
+              ),
+            ]
 
             children.push(
               new Table({
-                rows: tableRows,
-                width: {
-                  size: 100,
-                  type: WidthType.PERCENTAGE,
-                },
+                rows: tableCells,
+                width: { size: 100, type: WidthType.PERCENTAGE },
               })
             )
-            children.push(new Paragraph({ text: '', spacing: { after: 120 } }))
-            continue
           }
+          inTable = false
+          tableRows = []
+          tableHeaders = []
         }
 
-        // Handle Headers
-        if (line.startsWith('# ')) {
+        if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+          if (listType !== 'ul') {
+            if (listItems.length > 0 && listType === 'ol') {
+              listItems.forEach(item => {
+                children.push(
+                  new Paragraph({
+                    text: item.replace(/^\d+\.\s*/, ''),
+                    bullet: { level: 0 },
+                  })
+                )
+              })
+            }
+            listItems = []
+            listType = 'ul'
+          }
+          listItems.push(trimmedLine)
+          continue
+        }
+
+        if (/^\d+\.\s/.test(trimmedLine)) {
+          if (listType !== 'ol') {
+            if (listItems.length > 0 && listType === 'ul') {
+              listItems.forEach(item => {
+                children.push(
+                  new Paragraph({
+                    text: item.replace(/^[-*]\s*/, ''),
+                    bullet: { level: 0 },
+                  })
+                )
+              })
+            }
+            listItems = []
+            listType = 'ol'
+          }
+          listItems.push(trimmedLine)
+          continue
+        }
+
+        if (listItems.length > 0) {
+          listItems.forEach(item => {
+            const text = item.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '')
+            children.push(
+              new Paragraph({
+                text,
+                bullet: { level: 0 },
+              })
+            )
+          })
+          listItems = []
+          listType = null
+        }
+
+        if (trimmedLine.startsWith('# ')) {
           children.push(
             new Paragraph({
-              text: line.replace(/^#\s+\d+\.\s*/, '').replace('# ', ''),
+              text: trimmedLine.replace(/^#\s+/, ''),
               heading: HeadingLevel.HEADING_1,
-              spacing: { before: 240, after: 120 },
-              style: 'Heading1',
             })
           )
-        } else if (line.startsWith('## ')) {
+        } else if (trimmedLine.startsWith('## ')) {
           children.push(
             new Paragraph({
-              text: line.replace(/^##\s+\d+\.\s*/, '').replace('## ', ''),
+              text: trimmedLine.replace(/^##\s+/, ''),
               heading: HeadingLevel.HEADING_2,
-              spacing: { before: 200, after: 100 },
-              style: 'Heading2',
             })
           )
-        } else if (line.startsWith('### ')) {
+        } else if (trimmedLine.startsWith('### ')) {
           children.push(
             new Paragraph({
-              text: line.replace(/^###\s+\d+\.\d+\s*/, '').replace('### ', ''),
+              text: trimmedLine.replace(/^###\s+/, ''),
               heading: HeadingLevel.HEADING_3,
-              spacing: { before: 160, after: 80 },
-              style: 'Heading3',
             })
           )
-        } else if (line.startsWith('#### ')) {
+        } else if (trimmedLine.startsWith('#### ')) {
           children.push(
             new Paragraph({
-              text: line.replace('#### ', ''),
+              text: trimmedLine.replace(/^####\s+/, ''),
               heading: HeadingLevel.HEADING_4,
-              spacing: { before: 120, after: 60 },
-              style: 'Heading4',
             })
           )
-        }
-        // Handle Bold text
-        else if (line.startsWith('**') && line.endsWith('**')) {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: line.replace(/\*\*/g, ''),
-                  bold: true,
-                }),
-              ],
-              spacing: { before: 120, after: 60 },
-            })
-          )
-        }
-        // Handle Bullet lists (nested support)
-        else if (line.match(/^\s*[-*+]\s+/)) {
-          const indent = line.match(/^\s*/)?.[0].length || 0
-          const level = Math.floor(indent / 2)
-          const text = line.replace(/^\s*[-*+]\s+/, '')
-          const runs = parseInlineMarkdown(text)
-
-          children.push(
-            new Paragraph({
-              children: runs,
-              bullet: { level: Math.min(level, 8) }, // Max 9 levels
-              spacing: { after: 60 },
-            })
-          )
-        }
-        // Handle Blockquotes
-        else if (line.startsWith('> ')) {
-          const text = line.replace(/^>\s*/, '')
-          const runs = parseInlineMarkdown(text)
-
-          children.push(
-            new Paragraph({
-              children: runs,
-              spacing: { after: 120 },
-              indent: { left: 720 }, // Indent 0.5 inch
-              shading: {
-                fill: 'F9F9F9',
-              },
-              border: {
-                left: {
-                  color: '4472C4',
-                  space: 1,
-                  style: BorderStyle.SINGLE,
-                  size: 24, // Thick blue left border
-                },
-              },
-            })
-          )
-        }
-        // Handle Horizontal rules
-        else if (line.trim() === '---') {
+        } else if (trimmedLine.startsWith('---') || trimmedLine.startsWith('***')) {
           children.push(
             new Paragraph({
               text: '',
-              spacing: { before: 120, after: 120 },
               border: {
                 bottom: {
-                  color: 'CCCCCC',
-                  space: 1,
-                  style: BorderStyle.SINGLE,
+                  color: '000000',
                   size: 6,
+                  style: BorderStyle.SINGLE,
                 },
               },
             })
           )
-        }
-        // Handle regular paragraphs
-        else if (line.trim()) {
-          const runs = parseInlineMarkdown(line)
-
+        } else if (trimmedLine.startsWith('> ')) {
           children.push(
             new Paragraph({
-              children: runs,
-              spacing: {
-                after: 120,
-                line: 240, // 1.0 line spacing (single)
-              },
+              text: trimmedLine.replace(/^>\s+/, ''),
+              indent: { left: 400 },
             })
           )
-        }
-        // Empty lines
-        else {
-          children.push(new Paragraph({ text: '' }))
-        }
+        } else if (trimmedLine) {
+          let text = trimmedLine
+          const runs: TextRun[] = []
 
-        i++
+          while (text) {
+            if (text.startsWith('**') && text.indexOf('**', 2) !== -1) {
+              const end = text.indexOf('**', 2)
+              runs.push(new TextRun({ text: text.substring(2, end), bold: true }))
+              text = text.substring(end + 2)
+            } else if (text.startsWith('*') && text.indexOf('*', 1) !== -1 && !text.startsWith('**')) {
+              const end = text.indexOf('*', 1)
+              runs.push(new TextRun({ text: text.substring(1, end), italics: true }))
+              text = text.substring(end + 1)
+            } else if (text.startsWith('`') && text.indexOf('`', 1) !== -1) {
+              const end = text.indexOf('`', 1)
+              runs.push(new TextRun({ text: text.substring(1, end), font: 'Courier New' }))
+              text = text.substring(end + 1)
+            } else {
+              const nextSpecial = Math.min(
+                text.indexOf('**') !== -1 ? text.indexOf('**') : Infinity,
+                text.indexOf('*') !== -1 && !text.startsWith('**') ? text.indexOf('*') : Infinity,
+                text.indexOf('`') !== -1 ? text.indexOf('`') : Infinity
+              )
+              if (nextSpecial !== Infinity) {
+                runs.push(new TextRun({ text: text.substring(0, nextSpecial) }))
+                text = text.substring(nextSpecial)
+              } else {
+                runs.push(new TextRun({ text }))
+                break
+              }
+            }
+          }
+
+          children.push(new Paragraph({ children: runs }))
+        } else {
+          children.push(new Paragraph(''))
+        }
       }
 
-      // Ensure we have at least one paragraph
-      if (children.length === 0) {
-        children.push(new Paragraph({ text: 'Empty document' }))
-      }
-
-      // Validate children - remove any undefined/null
-      const validChildren = children.filter(child => {
-        if (child == null) return false;
-        return child instanceof Paragraph || child instanceof Table;
-      });
-
-      try {
-        const doc = new Document({
-          creator: 'Quantum Tools by MTM',
-          description: 'Converted from Markdown',
-          title: fileName || 'Document',
-          compatibility: {
-            doNotExpandShiftReturn: true,
-            doNotUseIndentAsNumberingTabStop: true,
-          },
-          styles: {
-            paragraphStyles: [
-              {
-                id: 'Normal',
-                name: 'Normal',
-                run: {
-                  font: 'Calibri',
-                  size: 22, // 11pt
-                  color: '000000',
-                },
-                paragraph: {
-                  spacing: {
-                    line: 240, // 1.0 line spacing (single)
-                    after: 120,
-                  },
-                },
-              },
-              {
-                id: 'Heading1',
-                name: 'Heading 1',
-                basedOn: 'Normal',
-                next: 'Normal',
-                run: {
-                  font: 'Calibri Light',
-                  size: 32, // 16pt
-                  bold: true,
-                  color: '2E74B5',
-                },
-                paragraph: {
-                  spacing: {
-                    before: 240,
-                    after: 120,
-                  },
-                },
-              },
-              {
-                id: 'Heading2',
-                name: 'Heading 2',
-                basedOn: 'Normal',
-                next: 'Normal',
-                run: {
-                  font: 'Calibri Light',
-                  size: 28, // 14pt
-                  bold: true,
-                  color: '2E74B5',
-                },
-                paragraph: {
-                  spacing: {
-                    before: 200,
-                    after: 100,
-                  },
-                },
-              },
-              {
-                id: 'Heading3',
-                name: 'Heading 3',
-                basedOn: 'Normal',
-                next: 'Normal',
-                run: {
-                  font: 'Calibri',
-                  size: 26, // 13pt
-                  bold: true,
-                  color: '1F4D78',
-                },
-                paragraph: {
-                  spacing: {
-                    before: 160,
-                    after: 80,
-                  },
-                },
-              },
-              {
-                id: 'Heading4',
-                name: 'Heading 4',
-                basedOn: 'Normal',
-                next: 'Normal',
-                run: {
-                  font: 'Calibri',
-                  size: 24, // 12pt
-                  bold: true,
-                  color: '000000',
-                },
-                paragraph: {
-                  spacing: {
-                    before: 120,
-                    after: 60,
-                  },
-                },
-              },
-            ],
-          },
-          sections: [
-            {
-              properties: {
-                page: {
-                  size: {
-                    width: 11906,  // A4 width: 210mm = 8.27" = 11906 twips
-                    height: 16838, // A4 height: 297mm = 11.69" = 16838 twips
-                  },
-                  margin: {
-                    top: 720,     // 0.5 inches (12.7mm)
-                    right: 720,   // 0.5 inches (12.7mm)
-                    bottom: 720,  // 0.5 inches (12.7mm)
-                    left: 720,    // 0.5 inches (12.7mm)
-                  },
-                },
-              },
-              children: validChildren,
-            },
-          ],
+      if (listItems.length > 0) {
+        listItems.forEach(item => {
+          const text = item.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '')
+          children.push(
+            new Paragraph({
+              text,
+              bullet: { level: 0 },
+            })
+          )
         })
-
-        // Use toBlob for browser compatibility
-        const blob = await Packer.toBlob(doc);
-
-        const outputFileName = fileName.replace(/\.md$/i, '') + '.docx'
-        saveAs(blob, outputFileName)
-        setError('')
-      } catch (packError) {
-        throw packError;
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setError(`Error converting document: ${errorMessage}. Please check the console for details.`)
+
+      const mermaidRegex = /```mermaid\n([\s\S]*?)```/g
+      let mermaidMatch
+      let mermaidIndex = 0
+
+      while ((mermaidMatch = mermaidRegex.exec(markdownContent)) !== null) {
+        const mermaidCode = mermaidMatch[1]
+        const imageData = await renderMermaidToImage(mermaidCode, mermaidIndex++)
+
+        if (imageData) {
+          const imageParagraph = new Paragraph({
+            children: [
+              new ImageRun({
+                data: imageData.data,
+                transformation: {
+                  width: imageData.width * 0.75,
+                  height: imageData.height * 0.75,
+                },
+                type: 'png',
+              } as any),
+            ],
+          })
+
+          children.push(imageParagraph)
+        }
+      }
+
+      const doc = new Document({
+        sections: [
+          {
+            properties: {
+              page: {
+                size: {
+                  orientation: 'portrait',
+                  width: 12240,
+                  height: 15840,
+                },
+                margin: {
+                  top: 1440,
+                  right: 1440,
+                  bottom: 1440,
+                  left: 1440,
+                },
+              },
+            },
+            children,
+          },
+        ],
+      })
+
+      const blob = await Packer.toBlob(doc)
+      saveAs(blob, `${fileName || 'document'}.docx`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Conversion failed')
     } finally {
       setIsConverting(false)
     }
-  }
+  }, [markdownContent, fileName])
 
   return (
-    <div className="converter-container">
-      {/* Dropzone Area */}
-      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
-        <input {...getInputProps()} />
-        <div className="dropzone-icon-circle">
-          <Upload size={32} strokeWidth={2} />
+    <div className="converter-container" {...getRootProps()}>
+      <input {...getInputProps()} />
+      
+      <div className="converter-toolbar">
+        <div className="converter-toolbar-left">
+          <button
+            type="button"
+            className="converter-toolbar-btn"
+            onClick={handleUploadClick}
+            title="Upload Markdown file or drag & drop"
+          >
+            <Upload size={16} />
+            <span>Open</span>
+          </button>
+          <div className="converter-toolbar-divider" />
+          <button
+            type="button"
+            className="converter-toolbar-btn"
+            onClick={() => handleCopy(markdownContent)}
+            disabled={!markdownContent.trim()}
+            title="Copy Markdown"
+          >
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+            <span>{copied ? 'Copied!' : 'Copy'}</span>
+          </button>
+          <button
+            type="button"
+            className="converter-toolbar-btn"
+            onClick={convertToDocx}
+            disabled={!markdownContent.trim() || isConverting}
+            title="Convert to DOCX"
+          >
+            <Download size={16} />
+            <span>{isConverting ? 'Converting...' : 'Save'}</span>
+          </button>
+          <div className="converter-toolbar-divider" />
+          <button
+            type="button"
+            className="converter-toolbar-btn"
+            onClick={handleClear}
+            disabled={!markdownContent.trim()}
+            title="Clear"
+          >
+            <X size={16} />
+            <span>Clear</span>
+          </button>
         </div>
-        {isDragActive ? (
-          <p className="primary-text">Drop the Markdown file here...</p>
-        ) : (
-          <div>
-            <p className="primary-text">Upload Markdown File</p>
-            <p className="secondary-text">Drag & drop or click to select (.md)</p>
-          </div>
-        )}
       </div>
 
       {error && (
-        <div className="error-box">
-          <AlertCircle size={20} />
+        <div className="converter-error-bar">
+          <AlertCircle size={16} />
           <span>{error}</span>
         </div>
       )}
 
-      {markdownContent && (
-        <div className="preview-section">
-          <div className="preview-header">
-            <h4>Preview & Edit</h4>
-            <span className="file-name">{fileName}.md</span>
+      <div className="converter-editor-layout">
+        <div className="converter-panel converter-panel-left">
+          <div className="converter-panel-header">
+            <span className="converter-panel-title">Markdown</span>
+            <button
+              type="button"
+              className="converter-panel-copy-btn"
+              onClick={() => handleCopy(markdownContent)}
+              disabled={!markdownContent.trim()}
+              title="Copy Markdown"
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
           </div>
-          <textarea
-            className="markdown-preview"
-            value={markdownContent}
-            onChange={(e) => setMarkdownContent(e.target.value)}
-            placeholder="Your markdown content..."
-            rows={20}
-          />
-        </div>
-      )}
-
-      {markdownContent && (
-        <div className="converter-actions">
-          <button
-            className="convert-button"
-            onClick={convertToDocx}
-            disabled={isConverting}
-          >
-            <Download size={20} />
-            {isConverting ? 'Converting...' : 'Convert to DOCX'}
-          </button>
-          <button
-            className="clear-button"
-            onClick={() => {
-              setMarkdownContent('')
-              setFileName('')
-              setError('')
-            }}
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
-      {/* Features Grid - Only show when no content is loaded to keep interface clean */}
-      {!markdownContent && (
-        <div className="converter-features-grid">
-          <div className="feature-item">
-            <h4><FileText size={20} /> Supported Formatting</h4>
-            <ul className="feature-list">
-              <li>Headers (H1-H4) with professional styling</li>
-              <li>Bold, Italic, Strikethrough text</li>
-              <li>Code blocks with syntax highlighting</li>
-              <li>Blockquotes and Citations</li>
-              <li>Complex Tables with styling</li>
-            </ul>
-          </div>
-
-          <div className="feature-item">
-            <h4><Download size={20} /> Smart Conversion</h4>
-            <ul className="feature-list">
-              <li>Mermaid Diagrams to High-Res Images</li>
-              <li>Optimized layout for A4 printing</li>
-              <li>Automatic Table of Contents</li>
-              <li>Clean, professional topography</li>
-            </ul>
+          <div className="converter-dropzone-wrapper">
+            {isDragActive && (
+              <div {...getRootProps()} className="converter-dropzone active">
+                <input {...getInputProps()} />
+                <div className="converter-dropzone-icon">
+                  <Upload size={32} strokeWidth={2} />
+                </div>
+                <p className="converter-dropzone-text">Drop Markdown file here</p>
+                <p className="converter-dropzone-hint">Supports .md, .markdown files</p>
+              </div>
+            )}
+            <textarea
+              className="converter-editor"
+              value={markdownContent}
+              onChange={(e) => {
+                setMarkdownContent(e.target.value)
+                setError('')
+              }}
+              onPaste={(e) => {
+                const pastedText = e.clipboardData.getData('text')
+                if (pastedText && !markdownContent) {
+                  setMarkdownContent(pastedText)
+                  setError('')
+                }
+              }}
+              placeholder={markdownContent ? '' : 'Paste Markdown content here or drag & drop a file...'}
+              spellCheck={false}
+            />
           </div>
         </div>
-      )}
+
+        <div className="converter-panel converter-panel-right">
+          <div className="converter-panel-header">
+            <span className="converter-panel-title">Preview</span>
+            <div className="converter-panel-header-right">
+              {markdownContent && (
+                <button
+                  type="button"
+                  className="converter-panel-download-btn"
+                  onClick={convertToDocx}
+                  disabled={isConverting}
+                  title="Download DOCX"
+                >
+                  <Download size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="converter-preview" ref={previewRef}>
+            {htmlPreview ? (
+              <div 
+                className="converter-preview-content"
+                dangerouslySetInnerHTML={{ __html: htmlPreview }}
+              />
+            ) : (
+              <div className="converter-preview-placeholder">
+                Rendered preview will appear here...
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

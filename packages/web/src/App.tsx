@@ -10,6 +10,9 @@ import { getViewType, getToolId, ROUTES } from './constants/routes'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import MarkdownConverter from './tools/MarkdownConverter'
+import JsonFormatter from './tools/JsonFormatter'
+import JwtDecoder from './tools/JwtDecoder'
+import PdfMerger from './tools/PdfMerger'
 import About from './pages/About'
 import './App.css'
 import type { ComponentType, ReactElement, ReactNode } from 'react'
@@ -43,7 +46,8 @@ const tools: Tool[] = [
     description: 'Merge multiple PDF files into a single document',
     icon: <FileCode size={24} />,
     category: 'Document Processing',
-    status: 'coming-soon'
+    status: 'active',
+    component: PdfMerger
   },
 
   // Data Tools
@@ -53,7 +57,8 @@ const tools: Tool[] = [
     description: 'Format, validate, and beautify JSON data with syntax highlighting',
     icon: <FileJson size={24} />,
     category: 'Data & API',
-    status: 'coming-soon',
+    status: 'active',
+    component: JsonFormatter,
     featured: true
   },
   {
@@ -115,7 +120,8 @@ const tools: Tool[] = [
     description: 'Decode and validate JSON Web Tokens',
     icon: <Shield size={24} />,
     category: 'Developer Tools',
-    status: 'coming-soon'
+    status: 'active',
+    component: JwtDecoder
   },
 
   // Utilities
@@ -255,6 +261,9 @@ function App() {
 
       {currentView === 'about' ? (
         <main className="main-content">
+          <div className="page-header">
+            <h1 className="page-title">About</h1>
+          </div>
           <About 
             totalTools={tools.length}
             activeTools={activeCount}
@@ -288,54 +297,54 @@ function App() {
             <div className="feature-card">
               <div className="feature-icon">
                 <Zap size={24} />
-              </div>
+                </div>
               <h3>Lightning Fast</h3>
               <p>Optimized for performance with instant results</p>
-            </div>
+                      </div>
             <div className="feature-card">
               <div className="feature-icon">
                 <Clock size={24} />
-              </div>
+                      </div>
               <h3>24/7 Available</h3>
               <p>Access your tools anytime, anywhere</p>
-            </div>
+                      </div>
             <div className="feature-card">
               <div className="feature-icon">
                 <Shield size={24} />
-              </div>
+                    </div>
               <h3>Secure & Private</h3>
               <p>Your data never leaves your browser</p>
-            </div>
-          </section>
+                </div>
+              </section>
         </main>
       ) : currentView === 'tools' ? (
         <main className="main-content tools-page">
+          <div className="page-header">
+            <h1 className="page-title">Tools</h1>
+          </div>
           {categorySections}
         </main>
       ) : (
         <main className="main-content tool-view">
           <div className="tool-view-wrapper">
+            <div className="page-header-with-back">
             <button
               className="back-button"
-              onClick={() => navigate(ROUTES.TOOLS)}
-              aria-label="Back to tools"
+                onClick={() => navigate(ROUTES.TOOLS)}
+                aria-label="Back to tools"
             >
-              <ArrowLeft size={20} />
-              <span>Back to Tools</span>
+                <ArrowLeft size={18} />
+                <span>Back</span>
             </button>
-
-            {selectedTool && (
-            <div className="tool-workspace">
-              <div className="tool-header">
-                <h2 className="tool-title">{selectedTool.name}</h2>
-                <p className="tool-description">{selectedTool.description}</p>
-              </div>
-              {selectedTool.component && (
-                <div className="tool-content">
-                  <ToolRenderer component={selectedTool.component} />
-                </div>
+              {selectedTool && (
+                <h1 className="page-title">{selectedTool.name}</h1>
               )}
             </div>
+
+            {selectedTool && selectedTool.component && (
+            <div className="tool-workspace">
+                <ToolRenderer component={selectedTool.component} />
+              </div>
             )}
           </div>
         </main>

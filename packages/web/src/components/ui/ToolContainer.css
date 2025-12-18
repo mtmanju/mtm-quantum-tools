@@ -1,0 +1,8 @@
+.tool-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height) - var(--footer-height));
+  min-height: 600px;
+  background: var(--bg-primary);
+}
+

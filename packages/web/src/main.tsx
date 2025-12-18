@@ -17,7 +17,7 @@ createRoot(rootElement).render(
     <ErrorBoundary>
       <BrowserRouter>
         <ThemeProvider>
-          <App />
+    <App />
         </ThemeProvider>
       </BrowserRouter>
     </ErrorBoundary>
