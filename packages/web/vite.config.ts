@@ -47,7 +47,6 @@ export default defineConfig({
       },
     },
     rollupOptions: {
-      external: ['d3-sankey'],
       output: {
         manualChunks: (id) => {
           // React and core dependencies
