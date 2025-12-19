@@ -34,8 +34,11 @@ export const generatePassphrase = (wordCount: number = 4, separator: string = '-
   ]
 
   const selected: string[] = []
+  const randomArray = new Uint32Array(wordCount)
+  crypto.getRandomValues(randomArray)
+  
   for (let i = 0; i < wordCount; i++) {
-    const randomIndex = Math.floor(Math.random() * words.length)
+    const randomIndex = randomArray[i] % words.length
     selected.push(words[randomIndex])
   }
 

@@ -72,6 +72,17 @@ export const timestampToDate = (input: string | number, timezone?: string): Time
       }
     }
 
+    // Validate timestamp range (reasonable date range)
+    const minTimestamp = -8640000000000000 // Minimum valid date
+    const maxTimestamp = 8640000000000000 // Maximum valid date
+    
+    if (timestamp < minTimestamp || timestamp > maxTimestamp) {
+      return {
+        isValid: false,
+        error: 'Timestamp out of valid range'
+      }
+    }
+
     const date = new Date(timestamp)
 
     if (isNaN(date.getTime())) {
@@ -85,16 +96,20 @@ export const timestampToDate = (input: string | number, timezone?: string): Time
       ? date.toLocaleString('en-US', { timeZone: timezone })
       : date.toLocaleString()
     
+    // Round timestamp to avoid floating point issues
+    const unixSeconds = Math.floor(timestamp / 1000)
+    const milliseconds = Math.floor(timestamp)
+    
     return {
       isValid: true,
-      timestamp: Math.floor(timestamp / 1000), // Unix timestamp in seconds
+      timestamp: unixSeconds,
       date,
       formatted: {
         iso: date.toISOString(),
         local: localString,
         utc: date.toUTCString(),
-        unix: Math.floor(timestamp / 1000),
-        milliseconds: timestamp,
+        unix: unixSeconds,
+        milliseconds: milliseconds,
         timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
       }
     }

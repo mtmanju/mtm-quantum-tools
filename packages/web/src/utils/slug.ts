@@ -5,6 +5,30 @@ export interface SlugResult {
 }
 
 export const textToSlug = (text: string, separator: string = '-'): SlugResult => {
+  // Defensive: Handle null/undefined inputs
+  if (text == null) {
+    return {
+      isValid: false,
+      error: 'Text is null or undefined'
+    }
+  }
+  
+  if (typeof text !== 'string') {
+    try {
+      text = String(text)
+    } catch {
+      return {
+        isValid: false,
+        error: 'Text cannot be converted to string'
+      }
+    }
+  }
+  
+  // Validate separator
+  if (separator == null || typeof separator !== 'string') {
+    separator = '-'
+  }
+  
   if (!text.trim()) {
     return {
       isValid: false,
@@ -41,6 +65,25 @@ export const textToSlug = (text: string, separator: string = '-'): SlugResult =>
 }
 
 export const slugToText = (slug: string): SlugResult => {
+  // Defensive: Handle null/undefined inputs
+  if (slug == null) {
+    return {
+      isValid: false,
+      error: 'Slug is null or undefined'
+    }
+  }
+  
+  if (typeof slug !== 'string') {
+    try {
+      slug = String(slug)
+    } catch {
+      return {
+        isValid: false,
+        error: 'Slug cannot be converted to string'
+      }
+    }
+  }
+  
   if (!slug.trim()) {
     return {
       isValid: false,
@@ -55,7 +98,13 @@ export const slugToText = (slug: string): SlugResult => {
       .replace(/\s+/g, ' ')
       .trim()
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(word => {
+        if (!word) return ''
+        const firstChar = word.charAt(0)
+        if (!firstChar) return word
+        return firstChar.toUpperCase() + word.slice(1)
+      })
+      .filter(word => word.length > 0)
       .join(' ')
 
     return {

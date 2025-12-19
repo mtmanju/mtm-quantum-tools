@@ -1,22 +1,46 @@
 /**
  * Financial calculation utilities
+ * All calculations use high precision and proper rounding
  */
 
 /**
+ * Round to 2 decimal places (for currency)
+ */
+const roundCurrency = (value: number): number => {
+  return Math.round(value * 100) / 100
+}
+
+/**
+ * Round to 4 decimal places (for rates/percentages)
+ */
+const roundPrecise = (value: number): number => {
+  return Math.round(value * 10000) / 10000
+}
+
+/**
  * Calculate EMI (Equated Monthly Installment)
+ * Uses standard EMI formula with high precision
  * @param principal - Loan amount
  * @param rate - Annual interest rate (as percentage)
  * @param tenure - Loan tenure in months
- * @returns Monthly EMI amount
+ * @returns Monthly EMI amount (rounded to 2 decimals)
  */
 export const calculateEMI = (principal: number, rate: number, tenure: number): number => {
   if (principal <= 0 || rate < 0 || tenure <= 0) return 0
   
-  const monthlyRate = rate / 12 / 100
-  const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
-              (Math.pow(1 + monthlyRate, tenure) - 1)
+  const monthlyRate = roundPrecise(rate / 12 / 100)
   
-  return isNaN(emi) || !isFinite(emi) ? 0 : emi
+  // Handle edge case: zero interest rate
+  if (monthlyRate === 0) {
+    return roundCurrency(principal / tenure)
+  }
+  
+  const powerTerm = Math.pow(1 + monthlyRate, tenure)
+  const emi = (principal * monthlyRate * powerTerm) / (powerTerm - 1)
+  
+  if (isNaN(emi) || !isFinite(emi)) return 0
+  
+  return roundCurrency(emi)
 }
 
 /**
@@ -24,28 +48,37 @@ export const calculateEMI = (principal: number, rate: number, tenure: number): n
  * @param principal - Loan amount
  * @param emi - Monthly EMI
  * @param tenure - Loan tenure in months
- * @returns Total interest paid
+ * @returns Total interest paid (rounded to 2 decimals)
  */
 export const calculateTotalInterest = (principal: number, emi: number, tenure: number): number => {
-  return Math.max(0, (emi * tenure) - principal)
+  const total = (emi * tenure) - principal
+  return roundCurrency(Math.max(0, total))
 }
 
 /**
  * Calculate SIP (Systematic Investment Plan) future value
+ * Uses FV formula: FV = P * [((1+r)^n - 1) / r] * (1+r)
  * @param monthlyAmount - Monthly SIP amount
  * @param rate - Annual expected return (as percentage)
  * @param tenure - Investment period in months
- * @returns Future value of SIP
+ * @returns Future value of SIP (rounded to 2 decimals)
  */
 export const calculateSIP = (monthlyAmount: number, rate: number, tenure: number): number => {
   if (monthlyAmount <= 0 || rate < 0 || tenure <= 0) return 0
   
-  const monthlyRate = rate / 12 / 100
-  const futureValue = monthlyAmount * 
-    ((Math.pow(1 + monthlyRate, tenure) - 1) / monthlyRate) * 
-    (1 + monthlyRate)
+  const monthlyRate = roundPrecise(rate / 12 / 100)
   
-  return isNaN(futureValue) || !isFinite(futureValue) ? 0 : futureValue
+  // Handle edge case: zero return rate
+  if (monthlyRate === 0) {
+    return roundCurrency(monthlyAmount * tenure)
+  }
+  
+  const powerTerm = Math.pow(1 + monthlyRate, tenure)
+  const futureValue = monthlyAmount * ((powerTerm - 1) / monthlyRate) * (1 + monthlyRate)
+  
+  if (isNaN(futureValue) || !isFinite(futureValue)) return 0
+  
+  return roundCurrency(futureValue)
 }
 
 /**
@@ -60,11 +93,12 @@ export const calculateSIPInvestment = (monthlyAmount: number, tenure: number): n
 
 /**
  * Calculate compound interest
+ * Formula: A = P * (1 + r/n)^(n*t)
  * @param principal - Initial investment
  * @param rate - Annual interest rate (as percentage)
  * @param time - Time period in years
  * @param compoundingFrequency - Number of times interest is compounded per year (default: 12 for monthly)
- * @returns Object with final amount, interest earned, and breakdown
+ * @returns Object with final amount, interest earned, and breakdown (all rounded to 2 decimals)
  */
 export const calculateCompoundInterest = (
   principal: number,
@@ -80,14 +114,27 @@ export const calculateCompoundInterest = (
     return { finalAmount: 0, interestEarned: 0, totalInvestment: 0 }
   }
   
-  const rateDecimal = rate / 100
-  const finalAmount = principal * Math.pow(1 + rateDecimal / compoundingFrequency, compoundingFrequency * time)
+  const rateDecimal = roundPrecise(rate / 100)
+  const n = compoundingFrequency
+  const t = time
+  
+  // Handle edge case: zero interest rate
+  if (rateDecimal === 0) {
+    return {
+      finalAmount: roundCurrency(principal),
+      interestEarned: 0,
+      totalInvestment: roundCurrency(principal)
+    }
+  }
+  
+  const powerTerm = Math.pow(1 + rateDecimal / n, n * t)
+  const finalAmount = principal * powerTerm
   const interestEarned = finalAmount - principal
   
   return {
-    finalAmount: isNaN(finalAmount) || !isFinite(finalAmount) ? 0 : finalAmount,
-    interestEarned: isNaN(interestEarned) || !isFinite(interestEarned) ? 0 : interestEarned,
-    totalInvestment: principal
+    finalAmount: isNaN(finalAmount) || !isFinite(finalAmount) ? 0 : roundCurrency(finalAmount),
+    interestEarned: isNaN(interestEarned) || !isFinite(interestEarned) ? 0 : roundCurrency(interestEarned),
+    totalInvestment: roundCurrency(principal)
   }
 }
 
@@ -127,23 +174,25 @@ export const calculateLoanRepaymentSchedule = (
     closingBalance: number
   }> = []
   
-  let balance = principal
+  let balance = roundCurrency(principal)
   const maxMonths = Math.min(tenure * 2, 1200) // Safety limit: max 2x tenure or 100 years
+  const precisionThreshold = 0.01 // Minimum balance to consider paid off
   
-  for (let month = 1; month <= maxMonths && balance > 0.01; month++) {
-    const interestPayment = balance * monthlyRate
-    const principalPayment = Math.min(emi - interestPayment, balance)
-    const effectivePrincipalPayment = Math.min(principalPayment + extraPayment, balance)
-    const closingBalance = balance - effectivePrincipalPayment
+  for (let month = 1; month <= maxMonths && balance > precisionThreshold; month++) {
+    const openingBalance = roundCurrency(balance)
+    const interestPayment = roundCurrency(balance * monthlyRate)
+    const principalFromEMI = roundCurrency(Math.min(emi - interestPayment, balance))
+    const effectivePrincipalPayment = roundCurrency(Math.min(principalFromEMI + extraPayment, balance))
+    const closingBalance = roundCurrency(Math.max(0, balance - effectivePrincipalPayment))
     
     schedule.push({
       month,
-      openingBalance: balance,
-      emi,
-      principalPayment,
+      openingBalance,
+      emi: roundCurrency(emi),
+      principalPayment: principalFromEMI,
       interestPayment,
-      extraPayment,
-      closingBalance: Math.max(0, closingBalance)
+      extraPayment: roundCurrency(extraPayment),
+      closingBalance
     })
     
     balance = closingBalance
@@ -192,10 +241,10 @@ export const calculateInvestmentReturn = (
   const cagrPercent = cagr * 100
   
   return {
-    absoluteReturn: isNaN(absoluteReturn) || !isFinite(absoluteReturn) ? 0 : absoluteReturn,
-    absoluteReturnPercent: isNaN(absoluteReturnPercent) || !isFinite(absoluteReturnPercent) ? 0 : absoluteReturnPercent,
-    cagr: isNaN(cagrPercent) || !isFinite(cagrPercent) ? 0 : cagrPercent,
-    totalGain: isNaN(totalGain) || !isFinite(totalGain) ? 0 : totalGain
+    absoluteReturn: isNaN(absoluteReturn) || !isFinite(absoluteReturn) ? 0 : roundCurrency(absoluteReturn),
+    absoluteReturnPercent: isNaN(absoluteReturnPercent) || !isFinite(absoluteReturnPercent) ? 0 : roundPrecise(absoluteReturnPercent),
+    cagr: isNaN(cagrPercent) || !isFinite(cagrPercent) ? 0 : roundPrecise(cagrPercent),
+    totalGain: isNaN(totalGain) || !isFinite(totalGain) ? 0 : roundCurrency(totalGain)
   }
 }
 

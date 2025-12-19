@@ -109,8 +109,61 @@ export const validateSql = (sql: string): { isValid: boolean; error?: string } =
   }
 
   // Basic validation - check for balanced parentheses and quotes
-  const openParens = (sql.match(/\(/g) || []).length
-  const closeParens = (sql.match(/\)/g) || []).length
+  // Need to account for escaped quotes and comments
+  let openParens = 0
+  let closeParens = 0
+  let singleQuotes = 0
+  let doubleQuotes = 0
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let inComment = false
+  let commentType = ''
+  
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql[i]
+    const nextChar = sql[i + 1]
+    const prevChar = sql[i - 1]
+    
+    // Handle comments
+    if (!inSingleQuote && !inDoubleQuote) {
+      if (char === '-' && nextChar === '-' && !inComment) {
+        inComment = true
+        commentType = '--'
+        i++
+        continue
+      }
+      if (char === '/' && nextChar === '*' && !inComment) {
+        inComment = true
+        commentType = '/*'
+        i++
+        continue
+      }
+      if (inComment && commentType === '/*' && char === '*' && nextChar === '/') {
+        inComment = false
+        i++
+        continue
+      }
+      if (inComment && commentType === '--' && char === '\n') {
+        inComment = false
+        continue
+      }
+      if (inComment) continue
+    }
+    
+    // Handle quotes (account for escaped quotes)
+    if (!inComment) {
+      if (char === "'" && !inDoubleQuote && prevChar !== '\\') {
+        inSingleQuote = !inSingleQuote
+        singleQuotes++
+      } else if (char === '"' && !inSingleQuote && prevChar !== '\\') {
+        inDoubleQuote = !inDoubleQuote
+        doubleQuotes++
+      } else if (!inSingleQuote && !inDoubleQuote) {
+        if (char === '(') openParens++
+        else if (char === ')') closeParens++
+      }
+    }
+  }
   
   if (openParens !== closeParens) {
     return {
@@ -119,8 +172,6 @@ export const validateSql = (sql: string): { isValid: boolean; error?: string } =
     }
   }
 
-  // Check for balanced quotes
-  const singleQuotes = (sql.match(/'/g) || []).length
   if (singleQuotes % 2 !== 0) {
     return {
       isValid: false,
@@ -128,7 +179,6 @@ export const validateSql = (sql: string): { isValid: boolean; error?: string } =
     }
   }
 
-  const doubleQuotes = (sql.match(/"/g) || []).length
   if (doubleQuotes % 2 !== 0) {
     return {
       isValid: false,

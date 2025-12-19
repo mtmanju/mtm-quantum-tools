@@ -1,7 +1,8 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateLoanRepaymentSchedule, calculateEMI, formatCurrency, formatPercentage } from '../utils/finance'
+import { usePagination } from '../hooks/usePagination'
 import './LoanRepaymentCalculator.css'
 
 const LoanRepaymentCalculator = memo(() => {
@@ -40,7 +41,7 @@ const LoanRepaymentCalculator = memo(() => {
     const schedule = calculateLoanRepaymentSchedule(principalNum, rateNum, tenureMonths, extraPaymentNum)
     
     const totalInterest = schedule.reduce((sum, month) => sum + month.interestPayment, 0)
-    const totalPrincipal = schedule.reduce((sum, month) => sum + month.principalPayment, 0)
+    const totalPrincipalPaid = schedule.reduce((sum, month) => sum + (month.principalPayment + month.extraPayment), 0)
     const totalExtraPayment = schedule.reduce((sum, month) => sum + month.extraPayment, 0)
     const actualTenure = schedule.length
 
@@ -48,12 +49,23 @@ const LoanRepaymentCalculator = memo(() => {
       emi,
       schedule,
       totalInterest,
-      totalPrincipal,
+      totalPrincipal: principalNum, // Original principal amount
+      totalPrincipalPaid, // Total principal actually paid (from EMI + extra)
       totalExtraPayment,
       actualTenure,
       originalTenure: tenureMonths
     }
   }, [principal, rate, tenure, tenureUnit, extraPayment])
+
+  const schedulePagination = usePagination(
+    results?.schedule || [],
+    { initialPageSize: 12 }
+  )
+
+  // Reset pagination when results change
+  useEffect(() => {
+    schedulePagination.reset()
+  }, [principal, rate, tenure, tenureUnit, extraPayment, schedulePagination.reset])
 
   const handleDownload = () => {
     if (!results) return
@@ -82,13 +94,9 @@ Results:
       report += `Month | Opening Balance | EMI | Principal | Interest | Extra | Closing Balance\n`
       report += `-`.repeat(80) + `\n`
       
-      results.schedule.slice(0, 12).forEach(month => {
+      results.schedule.forEach(month => {
         report += `${month.month.toString().padStart(5)} | ${formatCurrency(month.openingBalance).padStart(15)} | ${formatCurrency(month.emi).padStart(10)} | ${formatCurrency(month.principalPayment).padStart(10)} | ${formatCurrency(month.interestPayment).padStart(10)} | ${formatCurrency(month.extraPayment).padStart(8)} | ${formatCurrency(month.closingBalance).padStart(15)}\n`
       })
-      
-      if (results.schedule.length > 12) {
-        report += `\n... (showing first 12 months, total ${results.schedule.length} months)\n`
-      }
     }
 
     report += `\nGenerated on: ${new Date().toLocaleString()}\n`
@@ -220,7 +228,11 @@ Results:
 
             {showSchedule && results.schedule.length > 0 && (
               <div className="repayment-schedule">
-                <h3>Repayment Schedule (First 12 Months)</h3>
+                <h3>
+                  Repayment Schedule
+                  {!schedulePagination.showAll && ` (${schedulePagination.pageSize} of ${schedulePagination.totalItems} months)`}
+                  {schedulePagination.showAll && ` (All ${schedulePagination.totalItems} months)`}
+                </h3>
                 <div className="schedule-table">
                   <div className="schedule-header">
                     <div>Month</div>
@@ -231,7 +243,7 @@ Results:
                     <div>Extra</div>
                     <div>Closing</div>
                   </div>
-                  {results.schedule.slice(0, 12).map(month => (
+                  {schedulePagination.currentItems.map(month => (
                     <div key={month.month} className="schedule-row">
                       <div>{month.month}</div>
                       <div>{formatCurrency(month.openingBalance)}</div>
@@ -243,10 +255,21 @@ Results:
                     </div>
                   ))}
                 </div>
-                {results.schedule.length > 12 && (
-                  <p className="schedule-note">
-                    Showing first 12 months of {results.schedule.length} total months
-                  </p>
+                {schedulePagination.hasMore && (
+                  <div className="schedule-pagination">
+                    <button
+                      className="load-more-btn"
+                      onClick={schedulePagination.loadMore}
+                    >
+                      Load More (Show {Math.min(schedulePagination.pageSize + 12, schedulePagination.totalItems)} of {schedulePagination.totalItems})
+                    </button>
+                    <button
+                      className="load-all-btn"
+                      onClick={schedulePagination.loadAll}
+                    >
+                      Show All {schedulePagination.totalItems} Months
+                    </button>
+                  </div>
                 )}
               </div>
             )}

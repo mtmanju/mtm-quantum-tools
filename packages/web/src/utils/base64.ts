@@ -15,10 +15,15 @@ export interface Base64Result {
  * Encodes a string to Base64
  */
 export const encodeToBase64 = (text: string): string => {
+  // Defensive: Handle null/undefined inputs
+  if (text == null) text = ''
+  if (typeof text !== 'string') text = String(text)
+  
   try {
     return btoa(unescape(encodeURIComponent(text)))
   } catch (error) {
-    throw new Error('Failed to encode to Base64')
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`Failed to encode to Base64: ${errorMsg}`)
   }
 }
 

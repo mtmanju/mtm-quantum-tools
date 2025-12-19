@@ -41,34 +41,67 @@ const Calculator = () => {
     }
   }, [display, previousValue, operation])
 
+  // Fix floating point precision issues
+  const fixPrecision = useCallback((num: number): number => {
+    // Handle very small numbers that are effectively zero
+    if (Math.abs(num) < Number.EPSILON) return 0
+    // Round to 10 decimal places to avoid floating point errors
+    return Math.round(num * 10000000000) / 10000000000
+  }, [])
+
   const calculate = useCallback((a: number, b: number, op: string | null): number | null => {
     if (op === null) return b
     
     try {
+      let result: number
       switch (op) {
         case '+':
-          return a + b
+          result = a + b
+          break
         case '-':
-          return a - b
+          result = a - b
+          break
         case '*':
-          return a * b
+          result = a * b
+          break
         case '/':
           if (b === 0) {
             setError('Division by zero')
             return null
           }
-          return a / b
+          result = a / b
+          break
         case '%':
-          return a % b
+          result = a % b
+          break
         case '^':
-          return Math.pow(a, b)
+          result = Math.pow(a, b)
+          break
         default:
           return b
       }
+      
+      // Fix floating point precision and check for invalid results
+      result = fixPrecision(result)
+      if (isNaN(result) || !isFinite(result)) {
+        setError('Invalid calculation result')
+        return null
+      }
+      
+      return result
     } catch {
       setError('Calculation error')
       return null
     }
+  }, [fixPrecision])
+
+  const formatResult = useCallback((num: number): string => {
+    // Format numbers to avoid scientific notation and unnecessary decimals
+    if (Number.isInteger(num)) {
+      return num.toString()
+    }
+    // Remove trailing zeros
+    return num.toString().replace(/\.?0+$/, '')
   }, [])
 
   const handleEquals = useCallback(() => {
@@ -78,12 +111,12 @@ const Calculator = () => {
       if (result !== null) {
         const expression = `${previousValue} ${operation} ${display} = ${result}`
         setHistory(prev => [expression, ...prev].slice(0, 10))
-        setDisplay(result.toString())
+        setDisplay(formatResult(result))
         setPreviousValue(null)
         setOperation(null)
       }
     }
-  }, [display, previousValue, operation, calculate])
+  }, [display, previousValue, operation, calculate, formatResult])
 
   const handleClear = useCallback(() => {
     setDisplay('0')
@@ -164,7 +197,14 @@ const Calculator = () => {
           return
       }
 
-      setDisplay(result.toString())
+      // Fix precision and validate
+      result = fixPrecision(result)
+      if (isNaN(result) || !isFinite(result)) {
+        setError('Invalid calculation result')
+        return
+      }
+      
+      setDisplay(formatResult(result))
       setHistory(prev => [`${func}(${value}) = ${result}`, ...prev].slice(0, 10))
     } catch {
       setError('Calculation error')

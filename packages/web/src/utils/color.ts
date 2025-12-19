@@ -35,6 +35,11 @@ export const rgbToHex = (r: number, g: number, b: number): string => {
 }
 
 export const rgbToHsl = (r: number, g: number, b: number): { h: number; s: number; l: number } => {
+  // Clamp values to valid range
+  r = Math.max(0, Math.min(255, Math.round(r)))
+  g = Math.max(0, Math.min(255, Math.round(g)))
+  b = Math.max(0, Math.min(255, Math.round(b)))
+  
   r /= 255
   g /= 255
   b /= 255
@@ -62,14 +67,20 @@ export const rgbToHsl = (r: number, g: number, b: number): { h: number; s: numbe
     }
   }
   
+  // Round to 1 decimal for precision
   return {
-    h: Math.round(h * 360),
-    s: Math.round(s * 100),
-    l: Math.round(l * 100)
+    h: Math.round(h * 3600) / 10,
+    s: Math.round(s * 1000) / 10,
+    l: Math.round(l * 1000) / 10
   }
 }
 
 export const hslToRgb = (h: number, s: number, l: number): { r: number; g: number; b: number } => {
+  // Clamp and normalize values for precision
+  h = ((h % 360) + 360) % 360 // Normalize to 0-360
+  s = Math.max(0, Math.min(100, s))
+  l = Math.max(0, Math.min(100, l))
+  
   h /= 360
   s /= 100
   l /= 100
@@ -98,10 +109,11 @@ export const hslToRgb = (h: number, s: number, l: number): { r: number; g: numbe
     b = hue2rgb(p, q, h - 1 / 3)
   }
   
+  // Clamp RGB values to valid range and round precisely
   return {
-    r: Math.round(r * 255),
-    g: Math.round(g * 255),
-    b: Math.round(b * 255)
+    r: Math.max(0, Math.min(255, Math.round(r * 255))),
+    g: Math.max(0, Math.min(255, Math.round(g * 255))),
+    b: Math.max(0, Math.min(255, Math.round(b * 255)))
   }
 }
 

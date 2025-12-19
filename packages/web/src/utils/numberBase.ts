@@ -78,10 +78,26 @@ export const convertNumberBase = (
         break
     }
     
+    // Validate decimal value
+    if (isNaN(decimal) || !isFinite(decimal)) {
+      return {
+        isValid: false,
+        error: 'Invalid number conversion result'
+      }
+    }
+    
     if (decimal < 0) {
       return {
         isValid: false,
         error: 'Negative numbers are not supported'
+      }
+    }
+    
+    // Handle very large numbers (JavaScript number precision limit)
+    if (decimal > Number.MAX_SAFE_INTEGER) {
+      return {
+        isValid: false,
+        error: 'Number too large for precise conversion'
       }
     }
     

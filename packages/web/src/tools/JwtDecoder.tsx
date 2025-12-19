@@ -26,13 +26,13 @@ const JwtDecoder = () => {
   const [expirationCountdown, setExpirationCountdown] = useState<string>('')
 
   useEffect(() => {
-    if (!decodeResult.valid || !decodeResult.payload || !isJwtExpired(decodeResult.payload)) {
+    if (!decodeResult.valid || !decodeResult.payload) {
       setExpirationCountdown('')
       return
     }
 
-    const exp = (decodeResult.payload as any).exp
-    if (!exp) {
+    const exp = decodeResult.payload.exp
+    if (!exp || typeof exp !== 'number') {
       setExpirationCountdown('')
       return
     }
@@ -52,7 +52,7 @@ const JwtDecoder = () => {
       const seconds = remaining % 60
 
       if (days > 0) {
-        setExpirationCountdown(`${days}d ${hours}h ${minutes}m`)
+        setExpirationCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`)
       } else if (hours > 0) {
         setExpirationCountdown(`${hours}h ${minutes}m ${seconds}s`)
       } else if (minutes > 0) {

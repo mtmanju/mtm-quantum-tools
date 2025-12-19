@@ -12,6 +12,19 @@ export interface JsonValidationResult {
  * Validates and parses JSON string
  */
 export const validateJson = (jsonString: string): JsonValidationResult => {
+  // Defensive: Handle null/undefined inputs
+  if (jsonString == null) {
+    return { isValid: false, error: 'JSON string is null or undefined' }
+  }
+  
+  if (typeof jsonString !== 'string') {
+    try {
+      jsonString = String(jsonString)
+    } catch {
+      return { isValid: false, error: 'JSON input cannot be converted to string' }
+    }
+  }
+  
   if (!jsonString.trim()) {
     return { isValid: false, error: 'JSON string is empty' }
   }

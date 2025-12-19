@@ -49,6 +49,12 @@ export const testRegex = (
   testString: string,
   flags: RegexFlags
 ): RegexTestResult => {
+  // Defensive: Handle null/undefined inputs
+  if (pattern == null) pattern = ''
+  if (testString == null) testString = ''
+  if (typeof pattern !== 'string') pattern = String(pattern)
+  if (typeof testString !== 'string') testString = String(testString)
+  
   if (!pattern.trim()) {
     return {
       isValid: false,
@@ -63,6 +69,18 @@ export const testRegex = (
   try {
     const flagStr = flagsToString(flags)
     const regex = new RegExp(pattern, flagStr)
+    
+    // Safety: Prevent catastrophic backtracking with very long strings
+    if (testString.length > 100000) {
+      return {
+        isValid: false,
+        error: 'Test string is too long (max 100,000 characters)',
+        matches: [],
+        testString: testString.substring(0, 100) + '...',
+        pattern,
+        flags: flagStr
+      }
+    }
     const matches: RegexMatch[] = []
 
     if (flags.global) {
@@ -70,8 +88,13 @@ export const testRegex = (
       let match: RegExpExecArray | null
       const regexClone = new RegExp(pattern, flagStr)
       
-      while ((match = regexClone.exec(testString)) !== null) {
+      // Safety: Limit number of matches to prevent performance issues
+      const maxMatches = 10000
+      let matchCount = 0
+      
+      while ((match = regexClone.exec(testString)) !== null && matchCount < maxMatches) {
         if (!match) break
+        matchCount++
         
         const groups: string[] = []
         for (let i = 1; i < match.length; i++) {
@@ -96,6 +119,25 @@ export const testRegex = (
         // Prevent infinite loop on zero-length matches
         if (match[0].length === 0) {
           regexClone.lastIndex++
+          // Additional safety: if lastIndex didn't change, force increment
+          if (regexClone.lastIndex === match.index) {
+            regexClone.lastIndex++
+          }
+        }
+        
+        // Safety: Prevent infinite loops by checking if we're stuck
+        if (regexClone.lastIndex === match.index && match[0].length > 0) {
+          regexClone.lastIndex++
+        }
+      }
+      
+      if (matchCount >= maxMatches) {
+        return {
+          isValid: true,
+          matches,
+          testString,
+          pattern,
+          flags: flagStr
         }
       }
     } else {
@@ -215,10 +257,29 @@ export const replaceRegex = (
   replacement: string,
   flags: RegexFlags
 ): RegexReplaceResult => {
+  // Defensive: Handle null/undefined inputs
+  if (pattern == null) pattern = ''
+  if (testString == null) testString = ''
+  if (replacement == null) replacement = ''
+  
+  if (typeof pattern !== 'string') pattern = String(pattern)
+  if (typeof testString !== 'string') testString = String(testString)
+  if (typeof replacement !== 'string') replacement = String(replacement)
+  
   if (!pattern.trim()) {
     return {
       isValid: false,
       error: 'Please enter a regex pattern',
+      replaced: testString,
+      replacements: 0
+    }
+  }
+  
+  // Safety: Prevent catastrophic backtracking with very long strings
+  if (testString.length > 100000) {
+    return {
+      isValid: false,
+      error: 'Test string is too long (max 100,000 characters)',
       replaced: testString,
       replacements: 0
     }

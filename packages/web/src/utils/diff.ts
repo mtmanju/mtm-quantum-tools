@@ -21,12 +21,26 @@ export interface DiffResult {
  * Simple line-based diff algorithm
  */
 export const computeDiff = (oldText: string, newText: string, ignoreWhitespace: boolean = false): DiffResult => {
+  // Defensive: Handle null/undefined inputs
+  if (oldText == null) oldText = ''
+  if (newText == null) newText = ''
+  
+  // Ensure inputs are strings
+  if (typeof oldText !== 'string') oldText = String(oldText)
+  if (typeof newText !== 'string') newText = String(newText)
+  
   let processedOld = oldText
   let processedNew = newText
   
-  if (ignoreWhitespace) {
-    processedOld = oldText.replace(/\s+/g, ' ').trim()
-    processedNew = newText.replace(/\s+/g, ' ').trim()
+  try {
+    if (ignoreWhitespace) {
+      processedOld = oldText.replace(/\s+/g, ' ').trim()
+      processedNew = newText.replace(/\s+/g, ' ').trim()
+    }
+  } catch {
+    // If regex fails, use original strings
+    processedOld = oldText
+    processedNew = newText
   }
   
   const oldLines = processedOld.split('\n')
@@ -38,25 +52,39 @@ export const computeDiff = (oldText: string, newText: string, ignoreWhitespace: 
   let insertions = 0
   let deletions = 0
 
-  while (oldIndex < oldLines.length || newIndex < newLines.length) {
+  // Safety limit to prevent infinite loops
+  const maxIterations = Math.max(oldLines.length, newLines.length) * 2
+  let iterations = 0
+  
+  while ((oldIndex < oldLines.length || newIndex < newLines.length) && iterations < maxIterations) {
+    iterations++
+    
     if (oldIndex >= oldLines.length) {
       // Only new lines remain
-      diffLines.push({
-        type: 'insert',
-        content: newLines[newIndex],
-        newLineNumber: newIndex + 1
-      })
-      insertions++
-      newIndex++
+      if (newIndex < newLines.length) {
+        diffLines.push({
+          type: 'insert',
+          content: newLines[newIndex] || '',
+          newLineNumber: newIndex + 1
+        })
+        insertions++
+        newIndex++
+      } else {
+        break
+      }
     } else if (newIndex >= newLines.length) {
       // Only old lines remain
-      diffLines.push({
-        type: 'delete',
-        content: oldLines[oldIndex],
-        oldLineNumber: oldIndex + 1
-      })
-      deletions++
-      oldIndex++
+      if (oldIndex < oldLines.length) {
+        diffLines.push({
+          type: 'delete',
+          content: oldLines[oldIndex] || '',
+          oldLineNumber: oldIndex + 1
+        })
+        deletions++
+        oldIndex++
+      } else {
+        break
+      }
     } else if (oldLines[oldIndex] === newLines[newIndex]) {
       // Lines are equal
       diffLines.push({
@@ -111,22 +139,29 @@ export const computeDiff = (oldText: string, newText: string, ignoreWhitespace: 
       }
       
       if (!foundMatch) {
-        // No match found - treat as change (delete old, insert new)
-        diffLines.push({
-          type: 'delete',
-          content: oldLines[oldIndex],
-          oldLineNumber: oldIndex + 1
-        })
-        deletions++
-        oldIndex++
+        // Lines differ and no match found - mark as change (delete + insert)
+        if (oldIndex < oldLines.length) {
+          diffLines.push({
+            type: 'delete',
+            content: oldLines[oldIndex] || '',
+            oldLineNumber: oldIndex + 1
+          })
+          deletions++
+          oldIndex++
+        }
         
-        diffLines.push({
-          type: 'insert',
-          content: newLines[newIndex],
-          newLineNumber: newIndex + 1
-        })
-        insertions++
-        newIndex++
+        if (newIndex < newLines.length) {
+          diffLines.push({
+            type: 'insert',
+            content: newLines[newIndex] || '',
+            newLineNumber: newIndex + 1
+          })
+          insertions++
+          newIndex++
+        } else {
+          // No more new lines, break
+          break
+        }
       }
     }
   }
@@ -143,20 +178,38 @@ export const computeDiff = (oldText: string, newText: string, ignoreWhitespace: 
  * Character-level diff for inline highlighting
  */
 export const computeCharDiff = (oldText: string, newText: string): Array<{ type: 'equal' | 'insert' | 'delete', text: string }> => {
+  // Defensive: Handle null/undefined inputs
+  if (oldText == null) oldText = ''
+  if (newText == null) newText = ''
+  
+  // Ensure inputs are strings
+  if (typeof oldText !== 'string') oldText = String(oldText)
+  if (typeof newText !== 'string') newText = String(newText)
+  
   const parts: Array<{ type: 'equal' | 'insert' | 'delete', text: string }> = []
   
   // Simple character-by-character comparison
   let oldIndex = 0
   let newIndex = 0
   
-  while (oldIndex < oldText.length || newIndex < newText.length) {
+  // Safety limit to prevent infinite loops
+  const maxIterations = Math.max(oldText.length, newText.length) * 2
+  let iterations = 0
+  
+  while ((oldIndex < oldText.length || newIndex < newText.length) && iterations < maxIterations) {
+    iterations++
+    
     if (oldIndex >= oldText.length) {
       // Only new text remains
-      parts.push({ type: 'insert', text: newText.substring(newIndex) })
+      if (newIndex < newText.length) {
+        parts.push({ type: 'insert', text: newText.substring(newIndex) || '' })
+      }
       break
     } else if (newIndex >= newText.length) {
       // Only old text remains
-      parts.push({ type: 'delete', text: oldText.substring(oldIndex) })
+      if (oldIndex < oldText.length) {
+        parts.push({ type: 'delete', text: oldText.substring(oldIndex) || '' })
+      }
       break
     } else if (oldText[oldIndex] === newText[newIndex]) {
       // Characters match - find longest common substring
@@ -199,10 +252,17 @@ export const computeCharDiff = (oldText: string, newText: string): Array<{ type:
       
       if (!foundMatch) {
         // No match found - treat as change
-        parts.push({ type: 'delete', text: oldText[oldIndex] })
-        oldIndex++
-        parts.push({ type: 'insert', text: newText[newIndex] })
-        newIndex++
+        if (oldIndex < oldText.length) {
+          parts.push({ type: 'delete', text: oldText[oldIndex] || '' })
+          oldIndex++
+        }
+        if (newIndex < newText.length) {
+          parts.push({ type: 'insert', text: newText[newIndex] || '' })
+          newIndex++
+        } else {
+          // No more new text, break
+          break
+        }
       }
     }
   }

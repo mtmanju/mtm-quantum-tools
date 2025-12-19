@@ -6,6 +6,25 @@ export interface HtmlEntityResult {
 }
 
 export const encodeHtmlEntities = (text: string): HtmlEntityResult => {
+  // Defensive: Handle null/undefined inputs
+  if (text == null) {
+    return {
+      isValid: false,
+      error: 'Text is null or undefined'
+    }
+  }
+  
+  if (typeof text !== 'string') {
+    try {
+      text = String(text)
+    } catch {
+      return {
+        isValid: false,
+        error: 'Text cannot be converted to string'
+      }
+    }
+  }
+  
   if (!text.trim()) {
     return {
       isValid: false,
@@ -62,6 +81,25 @@ export const encodeHtmlEntities = (text: string): HtmlEntityResult => {
 }
 
 export const decodeHtmlEntities = (text: string): HtmlEntityResult => {
+  // Defensive: Handle null/undefined inputs
+  if (text == null) {
+    return {
+      isValid: false,
+      error: 'Text is null or undefined'
+    }
+  }
+  
+  if (typeof text !== 'string') {
+    try {
+      text = String(text)
+    } catch {
+      return {
+        isValid: false,
+        error: 'Text cannot be converted to string'
+      }
+    }
+  }
+  
   if (!text.trim()) {
     return {
       isValid: false,
@@ -70,9 +108,17 @@ export const decodeHtmlEntities = (text: string): HtmlEntityResult => {
   }
 
   try {
+    // Safety: Check if we're in a browser environment
+    if (typeof document === 'undefined') {
+      return {
+        isValid: false,
+        error: 'HTML entity decoding requires browser environment'
+      }
+    }
+    
     const textarea = document.createElement('textarea')
     textarea.innerHTML = text
-    const decoded = textarea.value
+    const decoded = textarea.value || textarea.textContent || ''
 
     return {
       isValid: true,
