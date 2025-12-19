@@ -7,7 +7,9 @@ import {
   Clock,
   Code,
   CodeXml,
+  CreditCard,
   Database as DatabaseIcon,
+  DollarSign,
   FileCheck,
   FileCode,
   FileCode2 as FileCodeIcon,
@@ -23,10 +25,12 @@ import {
   Mail,
   Network,
   Palette,
+  Percent,
   Scissors,
   Shield,
   Sparkle,
   Table2,
+  TrendingUp,
   Type,
   Wand2,
   Zap
@@ -75,6 +79,11 @@ import WordCounter from './tools/WordCounter'
 import WorkflowValidator from './tools/WorkflowValidator'
 import XmlFormatter from './tools/XmlFormatter'
 import YamlFormatter from './tools/YamlFormatter'
+import LoanEmiCalculator from './tools/LoanEmiCalculator'
+import SipCalculator from './tools/SipCalculator'
+import CompoundInterestCalculator from './tools/CompoundInterestCalculator'
+import LoanRepaymentCalculator from './tools/LoanRepaymentCalculator'
+import InvestmentReturnCalculator from './tools/InvestmentReturnCalculator'
 
 interface Tool {
   id: string
@@ -450,6 +459,58 @@ const tools: Tool[] = [
     category: 'Utilities',
     status: 'active',
     component: Calculator
+  },
+
+  // Finance
+  {
+    id: 'loan-emi-calculator',
+    name: 'Loan EMI Calculator',
+    description: 'Calculate loan EMI & interest',
+    icon: <CreditCard size={64} strokeWidth={1.5} />,
+    iconColor: '#3B82F6', // Blue
+    category: 'Finance',
+    status: 'active',
+    component: LoanEmiCalculator
+  },
+  {
+    id: 'sip-calculator',
+    name: 'SIP Calculator',
+    description: 'Calculate SIP returns',
+    icon: <TrendingUp size={64} strokeWidth={1.5} />,
+    iconColor: '#10B981', // Green
+    category: 'Finance',
+    status: 'active',
+    component: SipCalculator
+  },
+  {
+    id: 'compound-interest-calculator',
+    name: 'Compound Interest',
+    description: 'Calculate compound interest',
+    icon: <Percent size={64} strokeWidth={1.5} />,
+    iconColor: '#8B5CF6', // Purple
+    category: 'Finance',
+    status: 'active',
+    component: CompoundInterestCalculator
+  },
+  {
+    id: 'loan-repayment-calculator',
+    name: 'Loan Repayment',
+    description: 'Plan loan repayment strategy',
+    icon: <DollarSign size={64} strokeWidth={1.5} />,
+    iconColor: '#F59E0B', // Amber
+    category: 'Finance',
+    status: 'active',
+    component: LoanRepaymentCalculator
+  },
+  {
+    id: 'investment-return-calculator',
+    name: 'Investment Return',
+    description: 'Calculate investment returns & CAGR',
+    icon: <TrendingUp size={64} strokeWidth={1.5} />,
+    iconColor: '#EC4899', // Pink
+    category: 'Finance',
+    status: 'active',
+    component: InvestmentReturnCalculator
   }
 ]
 
@@ -500,7 +561,7 @@ function App() {
     return tools.find(t => t.id === toolId) || null
   }, [location.pathname])
 
-  // Memoize categories
+  // Memoize categories - tools is a constant, so empty deps is fine
   const categories = useMemo(() => 
     Array.from(new Set(tools.map(t => t.category))), 
     []

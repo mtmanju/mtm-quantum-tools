@@ -21,19 +21,13 @@ export default defineConfig({
         drop_console: true, // Remove console.log in production
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        passes: 3, // Multiple passes for better compression
-        unsafe: true, // Enable unsafe optimizations
-        unsafe_comps: true,
-        unsafe_math: true,
-        unsafe_methods: true,
-        unsafe_proto: true,
-        unsafe_regexp: true,
-        unsafe_undefined: true,
+        passes: 1, // Reduced passes to prevent build hangs
+        unsafe: false, // Disable unsafe optimizations for stability
         dead_code: true,
         unused: true,
         collapse_vars: true,
         reduce_vars: true,
-        inline: 2, // Inline functions
+        inline: 1, // Reduced inlining
         keep_fargs: false, // Remove unused function arguments
       },
       format: {
@@ -101,18 +95,8 @@ export default defineConfig({
                 return `vendor-${packageName.substring(0, 8)}`
               }
               
-              // Split by package name more aggressively to prevent huge chunks
-              // Use first 4-5 characters for better distribution
-              const prefix = packageName.substring(0, Math.min(5, packageName.length)).toLowerCase()
-              
-              // For very common prefixes that create large chunks, use more characters
-              const largePrefixes = ['el', 'ex', 'en', 'es']
-              if (largePrefixes.includes(prefix.substring(0, 2))) {
-                // Use first 6 characters for these to split further
-                const extendedPrefix = packageName.substring(0, Math.min(6, packageName.length)).toLowerCase()
-                return `vendor-${extendedPrefix}`
-              }
-              
+              // Simplified chunking - group by first 3 characters to reduce chunk count
+              const prefix = packageName.substring(0, Math.min(3, packageName.length)).toLowerCase()
               return `vendor-${prefix}`
             }
             // Fallback for any unmatched packages
@@ -129,7 +113,7 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1500, // Increased for large dependencies like mermaid/elkjs
+    chunkSizeWarningLimit: 2000, // Increased to reduce warnings
     reportCompressedSize: true,
     cssCodeSplit: true
   },

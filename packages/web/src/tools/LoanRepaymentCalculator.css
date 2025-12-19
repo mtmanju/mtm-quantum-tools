@@ -1,0 +1,209 @@
+.loan-repayment-calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.calculator-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.input-group input,
+.input-group select {
+  padding: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.2s var(--ease-out);
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .input-group input:focus,
+[data-theme="dark"] .input-group select:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.tenure-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tenure-input input {
+  flex: 1;
+}
+
+.tenure-input select {
+  min-width: 100px;
+}
+
+.calculator-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.result-card {
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.result-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.result-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.result-value.savings {
+  color: #10B981;
+}
+
+.schedule-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.toggle-schedule-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.toggle-schedule-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+}
+
+.repayment-schedule {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.repayment-schedule h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.schedule-table {
+  overflow-x: auto;
+}
+
+.schedule-header,
+.schedule-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.schedule-header {
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border-radius: 4px 4px 0 0;
+}
+
+.schedule-row {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.schedule-row:last-child {
+  border-bottom: none;
+}
+
+.schedule-note {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.download-btn {
+  width: 100%;
+  padding: 0.875rem 1.75rem;
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  margin-top: 1rem;
+}
+
+[data-theme="dark"] .download-btn {
+  color: #000000;
+}
+
+.download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.download-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .calculator-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-results {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-header,
+  .schedule-row {
+    grid-template-columns: 50px 80px 80px 80px 80px 80px 80px;
+    font-size: 0.75rem;
+    gap: 0.5rem;
+  }
+}
+
