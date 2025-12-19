@@ -11,6 +11,7 @@ const Calculator = () => {
   const [previousValue, setPreviousValue] = useState<number | null>(null)
   const [operation, setOperation] = useState<string | null>(null)
   const [history, setHistory] = useState<string[]>([])
+  const [showHistory, setShowHistory] = useState(false)
   const [error, setError] = useState('')
 
   const copyHook = useCopy()
@@ -172,6 +173,13 @@ const Calculator = () => {
 
   const toolbarButtons = [
     {
+      icon: <History size={16} />,
+      label: showHistory ? 'Hide History' : 'Show History',
+      onClick: () => setShowHistory(!showHistory),
+      title: 'Toggle history',
+      showDividerBefore: true
+    },
+    {
       icon: copyHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyHook.copied ? 'Copied!' : 'Copy',
       onClick: () => copyHook.copy(display, (err) => setError(err)),
@@ -192,6 +200,39 @@ const Calculator = () => {
       <Toolbar left={toolbarButtons} />
 
       {error && <ErrorBar message={error} />}
+
+      {showHistory && history.length > 0 && (
+        <div className="calculator-history-panel">
+          <div className="calculator-history-header">
+            <h3>History</h3>
+            <button
+              type="button"
+              className="calculator-history-clear"
+              onClick={() => setHistory([])}
+              title="Clear history"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div className="calculator-history-list">
+            {history.map((item, index) => (
+              <div
+                key={index}
+                className="calculator-history-item"
+                onClick={() => {
+                  const result = item.split(' = ')[1]
+                  if (result) {
+                    setDisplay(result)
+                    setError('')
+                  }
+                }}
+              >
+                <code>{item}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="calculator-container">
         <div className="calculator-display">
@@ -242,16 +283,34 @@ const Calculator = () => {
           <button className="calculator-btn calculator-btn-equals" onClick={handleEquals}>=</button>
         </div>
 
-        {history.length > 0 && (
+        {showHistory && history.length > 0 && (
           <div className="calculator-history">
             <div className="calculator-history-header">
               <History size={16} />
               <span>History</span>
+              <button
+                type="button"
+                className="calculator-history-clear"
+                onClick={() => setHistory([])}
+                title="Clear history"
+              >
+                <X size={16} />
+              </button>
             </div>
             <div className="calculator-history-list">
               {history.map((item, index) => (
-                <div key={index} className="calculator-history-item">
-                  {item}
+                <div
+                  key={index}
+                  className="calculator-history-item"
+                  onClick={() => {
+                    const result = item.split(' = ')[1]
+                    if (result) {
+                      setDisplay(result)
+                      setError('')
+                    }
+                  }}
+                >
+                  <code>{item}</code>
                 </div>
               ))}
             </div>

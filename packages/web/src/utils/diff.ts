@@ -20,9 +20,17 @@ export interface DiffResult {
 /**
  * Simple line-based diff algorithm
  */
-export const computeDiff = (oldText: string, newText: string): DiffResult => {
-  const oldLines = oldText.split('\n')
-  const newLines = newText.split('\n')
+export const computeDiff = (oldText: string, newText: string, ignoreWhitespace: boolean = false): DiffResult => {
+  let processedOld = oldText
+  let processedNew = newText
+  
+  if (ignoreWhitespace) {
+    processedOld = oldText.replace(/\s+/g, ' ').trim()
+    processedNew = newText.replace(/\s+/g, ' ').trim()
+  }
+  
+  const oldLines = processedOld.split('\n')
+  const newLines = processedNew.split('\n')
   const diffLines: DiffLine[] = []
   
   let oldIndex = 0

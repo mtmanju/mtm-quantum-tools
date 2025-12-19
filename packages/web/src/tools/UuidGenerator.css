@@ -2,12 +2,19 @@
 
 .uuid-controls {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
   padding: 1rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+}
+
+.uuid-settings {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .uuid-count-control {
@@ -134,6 +141,38 @@
 .uuid-copy-btn:hover {
   background: var(--bg-hover);
   color: var(--accent);
+  border-color: var(--accent);
+}
+
+.uuid-version-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uuid-version-control label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.uuid-version-select {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.uuid-version-select:hover {
+  border-color: var(--border-medium);
+}
+
+.uuid-version-select:focus {
+  outline: none;
   border-color: var(--accent);
 }
 

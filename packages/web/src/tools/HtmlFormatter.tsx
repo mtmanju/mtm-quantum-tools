@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, FileCode } from 'lucide-react'
+import { Check, Copy, Download, Upload, X, FileCode } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -69,6 +69,21 @@ const HtmlFormatter = () => {
     setError('')
   }, [htmlContent, validation])
 
+  const handleDownload = useCallback(() => {
+    const content = formattedHtml || htmlContent
+    if (!content.trim()) return
+
+    const blob = new Blob([content], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'formatted.html'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [formattedHtml, htmlContent])
+
   const handleClear = useCallback(() => {
     setHtmlContent('')
     setError('')
@@ -83,11 +98,25 @@ const HtmlFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
       onClick: () => copyInputHook.copy(htmlContent, (err) => setError(err)),
       disabled: !htmlContent.trim(),
-      title: 'Copy HTML',
+      title: 'Copy input',
       showDividerBefore: true
+    },
+    {
+      icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      onClick: () => copyOutputHook.copy(formattedHtml, (err) => setError(err)),
+      disabled: !formattedHtml.trim(),
+      title: 'Copy output',
+    },
+    {
+      icon: <Download size={16} />,
+      label: 'Download',
+      onClick: handleDownload,
+      disabled: !htmlContent.trim(),
+      title: 'Download HTML file',
     },
     {
       icon: <X size={16} />,

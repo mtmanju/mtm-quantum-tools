@@ -14,6 +14,7 @@ import './DiffChecker.css'
 const DiffChecker = () => {
   const [oldText, setOldText] = useState('')
   const [newText, setNewText] = useState('')
+  const [ignoreWhitespace, setIgnoreWhitespace] = useState(false)
   const [error, setError] = useState('')
 
   const copyOldHook = useCopy()
@@ -24,8 +25,8 @@ const DiffChecker = () => {
     if (!oldText.trim() && !newText.trim()) {
       return null
     }
-    return computeDiff(oldText, newText)
-  }, [oldText, newText])
+    return computeDiff(oldText, newText, ignoreWhitespace)
+  }, [oldText, newText, ignoreWhitespace])
 
   const diffOutput = useMemo(() => {
     if (!diffResult) return ''
@@ -120,6 +121,17 @@ const DiffChecker = () => {
       <Toolbar left={toolbarButtons} />
 
       {error && <ErrorBar message={error} />}
+
+      <div className="diff-controls">
+        <label className="diff-whitespace-toggle">
+          <input
+            type="checkbox"
+            checked={ignoreWhitespace}
+            onChange={(e) => setIgnoreWhitespace(e.target.checked)}
+          />
+          <span>Ignore whitespace differences</span>
+        </label>
+      </div>
 
       {diffResult && diffResult.changes > 0 && (
         <div className="diff-summary-bar">

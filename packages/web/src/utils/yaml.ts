@@ -5,13 +5,12 @@
 /**
  * Formats YAML with proper indentation
  */
-export const formatYaml = (yaml: string): string => {
+export const formatYaml = (yaml: string, indentSize: number = 2): string => {
   if (!yaml.trim()) return ''
 
   const lines = yaml.split('\n')
   const formatted: string[] = []
   let indentLevel = 0
-  const indentSize = 2
 
   for (const line of lines) {
     const trimmed = line.trim()

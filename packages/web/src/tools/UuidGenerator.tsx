@@ -1,14 +1,15 @@
-import { Check, Copy, X, Hash, RefreshCw } from 'lucide-react'
+import { Check, Copy, Download, X, Hash, RefreshCw } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { useCopy } from '../hooks/useCopy'
-import { generateUUIDs } from '../utils/uuid'
+import { generateUUIDs, type UUIDVersion } from '../utils/uuid'
 import './UuidGenerator.css'
 
 const UuidGenerator = () => {
   const [count, setCount] = useState(1)
+  const [version, setVersion] = useState<'v4' | 'v1'>('v4')
   const [uuids, setUuids] = useState<string[]>([])
   const [error, setError] = useState('')
 
@@ -20,9 +21,9 @@ const UuidGenerator = () => {
       setError('Count must be between 1 and 100')
       return
     }
-    const generated = generateUUIDs(count)
+    const generated = generateUUIDs(count, version)
     setUuids(generated)
-  }, [count])
+  }, [count, version])
 
   const handleClear = useCallback(() => {
     setUuids([])
@@ -33,6 +34,21 @@ const UuidGenerator = () => {
     const allUuids = uuids.join('\n')
     copyHook.copy(allUuids, (err) => setError(err))
   }, [uuids, copyHook])
+
+  const handleDownload = useCallback(() => {
+    if (uuids.length === 0) return
+
+    const content = uuids.join('\n')
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `uuids-${uuids.length}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [uuids])
 
   const toolbarButtons = [
     {
@@ -48,6 +64,13 @@ const UuidGenerator = () => {
       disabled: uuids.length === 0,
       title: 'Copy all UUIDs',
       showDividerBefore: true
+    },
+    {
+      icon: <Download size={16} />,
+      label: 'Download',
+      onClick: handleDownload,
+      disabled: uuids.length === 0,
+      title: 'Download UUIDs as file',
     },
     {
       icon: <X size={16} />,
@@ -66,17 +89,31 @@ const UuidGenerator = () => {
       {error && <ErrorBar message={error} />}
 
       <div className="uuid-controls">
-        <div className="uuid-count-control">
-          <label htmlFor="uuid-count">Number of UUIDs:</label>
-          <input
-            id="uuid-count"
-            type="number"
-            min="1"
-            max="100"
-            value={count}
-            onChange={(e) => setCount(parseInt(e.target.value) || 1)}
-            className="uuid-count-input"
-          />
+        <div className="uuid-settings">
+          <div className="uuid-count-control">
+            <label htmlFor="uuid-count">Number of UUIDs:</label>
+            <input
+              id="uuid-count"
+              type="number"
+              min="1"
+              max="100"
+              value={count}
+              onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+              className="uuid-count-input"
+            />
+          </div>
+          <div className="uuid-version-control">
+            <label htmlFor="uuid-version">Version:</label>
+            <select
+              id="uuid-version"
+              value={version}
+              onChange={(e) => setVersion(e.target.value as UUIDVersion)}
+              className="uuid-version-select"
+            >
+              <option value="v4">v4 (Random)</option>
+              <option value="v1">v1 (Time-based)</option>
+            </select>
+          </div>
         </div>
         <button
           type="button"

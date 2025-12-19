@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, Database } from 'lucide-react'
+import { Check, Copy, Download, Upload, X, Database } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -69,6 +69,21 @@ const SqlFormatter = () => {
     setError('')
   }, [sqlContent, validation])
 
+  const handleDownload = useCallback(() => {
+    const content = formattedSql || sqlContent
+    if (!content.trim()) return
+
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'formatted.sql'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [formattedSql, sqlContent])
+
   const handleClear = useCallback(() => {
     setSqlContent('')
     setError('')
@@ -83,11 +98,25 @@ const SqlFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
       onClick: () => copyInputHook.copy(sqlContent, (err) => setError(err)),
       disabled: !sqlContent.trim(),
-      title: 'Copy SQL',
+      title: 'Copy input',
       showDividerBefore: true
+    },
+    {
+      icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      onClick: () => copyOutputHook.copy(formattedSql, (err) => setError(err)),
+      disabled: !formattedSql.trim(),
+      title: 'Copy output',
+    },
+    {
+      icon: <Download size={16} />,
+      label: 'Download',
+      onClick: handleDownload,
+      disabled: !sqlContent.trim(),
+      title: 'Download SQL file',
     },
     {
       icon: <X size={16} />,

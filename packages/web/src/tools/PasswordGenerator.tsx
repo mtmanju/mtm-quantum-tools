@@ -4,10 +4,11 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { useCopy } from '../hooks/useCopy'
-import { generatePassword, calculatePasswordStrength, type PasswordOptions } from '../utils/password'
+import { generatePassword, generatePassphrase, calculatePasswordStrength, type PasswordOptions } from '../utils/password'
 import './PasswordGenerator.css'
 
 const PasswordGenerator = () => {
+  const [mode, setMode] = useState<'password' | 'passphrase'>('password')
   const [options, setOptions] = useState<PasswordOptions>({
     length: 16,
     includeUppercase: true,
@@ -17,6 +18,8 @@ const PasswordGenerator = () => {
     excludeSimilar: false,
     excludeAmbiguous: false
   })
+  const [passphraseWords, setPassphraseWords] = useState(4)
+  const [passphraseSeparator, setPassphraseSeparator] = useState('-')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
@@ -30,12 +33,17 @@ const PasswordGenerator = () => {
   const handleGenerate = useCallback(() => {
     setError('')
     try {
-      const generated = generatePassword(options)
-      setPassword(generated)
+      if (mode === 'passphrase') {
+        const generated = generatePassphrase(passphraseWords, passphraseSeparator)
+        setPassword(generated)
+      } else {
+        const generated = generatePassword(options)
+        setPassword(generated)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Password generation failed')
+      setError(err instanceof Error ? err.message : 'Generation failed')
     }
-  }, [options])
+  }, [options, mode, passphraseWords, passphraseSeparator])
 
   const handleClear = useCallback(() => {
     setPassword('')
@@ -73,6 +81,23 @@ const PasswordGenerator = () => {
 
       {error && <ErrorBar message={error} />}
 
+      <div className="password-mode-selector">
+        <button
+          type="button"
+          className={`password-mode-btn ${mode === 'password' ? 'active' : ''}`}
+          onClick={() => setMode('password')}
+        >
+          Password
+        </button>
+        <button
+          type="button"
+          className={`password-mode-btn ${mode === 'passphrase' ? 'active' : ''}`}
+          onClick={() => setMode('passphrase')}
+        >
+          Passphrase
+        </button>
+      </div>
+
       <div className="password-generator">
         <div className="password-display-section">
           <div className="password-display">
@@ -99,21 +124,23 @@ const PasswordGenerator = () => {
         </div>
 
         <div className="password-options">
-          <div className="password-option-group">
-            <label className="password-option-label">
-              <span>Length: {options.length}</span>
-              <input
-                type="range"
-                min="8"
-                max="128"
-                value={options.length}
-                onChange={(e) => setOptions({ ...options, length: parseInt(e.target.value) })}
-                className="password-length-slider"
-              />
-            </label>
-          </div>
+          {mode === 'password' ? (
+            <>
+              <div className="password-option-group">
+                <label className="password-option-label">
+                  <span>Length: {options.length}</span>
+                  <input
+                    type="range"
+                    min="8"
+                    max="128"
+                    value={options.length}
+                    onChange={(e) => setOptions({ ...options, length: parseInt(e.target.value) })}
+                    className="password-length-slider"
+                  />
+                </label>
+              </div>
 
-          <div className="password-option-group">
+              <div className="password-option-group">
             <label className="password-option-checkbox">
               <input
                 type="checkbox"
@@ -166,6 +193,37 @@ const PasswordGenerator = () => {
               <span>Exclude Ambiguous (&#123; &#125; [ ] ( ) / \ ' " ` ~ , ; : . &lt; &gt;)</span>
             </label>
           </div>
+            </>
+          ) : (
+            <div className="password-option-group">
+              <label className="password-option-label">
+                <span>Word Count: {passphraseWords}</span>
+                <input
+                  type="range"
+                  min="3"
+                  max="10"
+                  value={passphraseWords}
+                  onChange={(e) => setPassphraseWords(parseInt(e.target.value))}
+                  className="password-length-slider"
+                />
+              </label>
+              <div className="password-option-group">
+                <label className="password-option-checkbox">
+                  <span>Separator:</span>
+                  <select
+                    value={passphraseSeparator}
+                    onChange={(e) => setPassphraseSeparator(e.target.value)}
+                    className="password-separator-select"
+                  >
+                    <option value="-">- (Hyphen)</option>
+                    <option value="_">_ (Underscore)</option>
+                    <option value=" "> (Space)</option>
+                    <option value=".">.(Dot)</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ToolContainer>

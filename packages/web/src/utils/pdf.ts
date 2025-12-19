@@ -154,3 +154,66 @@ export const formatFileSize = (bytes: number): string => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
+/**
+ * Splits a PDF into multiple PDFs based on page ranges
+ */
+export const splitPdf = async (file: File, pageRanges: Array<{ start: number; end: number; name: string }>): Promise<Array<{ name: string; data: Uint8Array }>> => {
+  if (pageRanges.length === 0) {
+    throw new Error('No page ranges provided')
+  }
+
+  const arrayBuffer = await file.arrayBuffer()
+  const sourcePdf = await PDFDocument.load(arrayBuffer)
+  const totalPages = sourcePdf.getPageCount()
+
+  const results: Array<{ name: string; data: Uint8Array }> = []
+
+  for (const range of pageRanges) {
+    if (range.start < 1 || range.end > totalPages || range.start > range.end) {
+      throw new Error(`Invalid page range: ${range.start}-${range.end} (PDF has ${totalPages} pages)`)
+    }
+
+    const newPdf = await PDFDocument.create()
+    const pageIndices = Array.from({ length: range.end - range.start + 1 }, (_, i) => range.start - 1 + i)
+    const pages = await newPdf.copyPages(sourcePdf, pageIndices)
+    
+    pages.forEach((page) => {
+      newPdf.addPage(page)
+    })
+
+    const pdfBytes = await newPdf.save()
+    results.push({
+      name: range.name,
+      data: pdfBytes
+    })
+  }
+
+  return results
+}
+
+/**
+ * Splits a PDF into individual pages
+ */
+export const splitPdfByPages = async (file: File): Promise<Array<{ name: string; data: Uint8Array }>> => {
+  const arrayBuffer = await file.arrayBuffer()
+  const sourcePdf = await PDFDocument.load(arrayBuffer)
+  const totalPages = sourcePdf.getPageCount()
+
+  const results: Array<{ name: string; data: Uint8Array }> = []
+  const baseName = file.name.replace(/\.pdf$/i, '')
+
+  for (let i = 1; i <= totalPages; i++) {
+    const newPdf = await PDFDocument.create()
+    const [page] = await newPdf.copyPages(sourcePdf, [i - 1])
+    newPdf.addPage(page)
+
+    const pdfBytes = await newPdf.save()
+    results.push({
+      name: `${baseName}_page_${i}.pdf`,
+      data: pdfBytes
+    })
+  }
+
+  return results
+}
+

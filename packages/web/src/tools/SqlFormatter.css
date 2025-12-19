@@ -18,6 +18,24 @@
   font-weight: 500;
 }
 
+.sql-validation-bar {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(34, 197, 94, 0.1);
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+  flex-shrink: 0;
+}
+
+.sql-validation-success {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #22C55E;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .sql-actions {
   display: flex;
   gap: 0.5rem;

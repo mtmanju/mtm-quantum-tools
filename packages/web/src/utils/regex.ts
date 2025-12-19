@@ -199,3 +199,50 @@ export const highlightMatches = (
   return parts
 }
 
+/**
+ * Replaces matches in text using regex pattern
+ */
+export interface RegexReplaceResult {
+  isValid: boolean
+  error?: string
+  replaced: string
+  replacements: number
+}
+
+export const replaceRegex = (
+  pattern: string,
+  testString: string,
+  replacement: string,
+  flags: RegexFlags
+): RegexReplaceResult => {
+  if (!pattern.trim()) {
+    return {
+      isValid: false,
+      error: 'Please enter a regex pattern',
+      replaced: testString,
+      replacements: 0
+    }
+  }
+
+  try {
+    const flagStr = flagsToString(flags)
+    const regex = new RegExp(pattern, flagStr)
+    const replaced = testString.replace(regex, replacement)
+    const matches = testString.match(regex)
+    const replacements = matches ? (flags.global ? matches.length : 1) : 0
+
+    return {
+      isValid: true,
+      replaced,
+      replacements
+    }
+  } catch (error) {
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : 'Invalid regex pattern',
+      replaced: testString,
+      replacements: 0
+    }
+  }
+}
+

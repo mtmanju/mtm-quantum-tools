@@ -13,6 +13,7 @@ import './TimestampConverter.css'
 
 const TimestampConverter = () => {
   const [input, setInput] = useState('')
+  const [timezone, setTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone)
   const [error, setError] = useState('')
 
   // Set default example on mount
@@ -30,14 +31,14 @@ const TimestampConverter = () => {
     if (!input.trim()) {
       return null
     }
-    const result = timestampToDate(input)
+    const result = timestampToDate(input, timezone)
     if (!result.isValid) {
       setError(result.error || 'Invalid input')
     } else {
       setError('')
     }
     return result
-  }, [input])
+  }, [input, timezone])
 
   const output = useMemo(() => {
     if (!conversionResult || !conversionResult.isValid) {
@@ -115,6 +116,31 @@ const TimestampConverter = () => {
 
       {error && <ErrorBar message={error} />}
 
+      <div className="timestamp-controls">
+        <div className="timestamp-timezone-selector">
+          <label htmlFor="timestamp-timezone">Timezone:</label>
+          <select
+            id="timestamp-timezone"
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="timestamp-timezone-select"
+          >
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">America/New_York (EST/EDT)</option>
+            <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+            <option value="Europe/London">Europe/London (GMT/BST)</option>
+            <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+            <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+            <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+            <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+            <option value="Australia/Sydney">Australia/Sydney (AEDT/AEST)</option>
+            <option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>
+              {Intl.DateTimeFormat().resolvedOptions().timeZone} (Local)
+            </option>
+          </select>
+        </div>
+      </div>
+
       {conversionResult && conversionResult.isValid && conversionResult.formatted && (
         <div className="timestamp-info-bar">
           <div className="timestamp-info-item">
@@ -125,6 +151,12 @@ const TimestampConverter = () => {
             <span className="timestamp-info-label">Unix (ms):</span>
             <span className="timestamp-info-value">{conversionResult.formatted.milliseconds}</span>
           </div>
+          {conversionResult.formatted.timezone && (
+            <div className="timestamp-info-item">
+              <span className="timestamp-info-label">Timezone:</span>
+              <span className="timestamp-info-value">{conversionResult.formatted.timezone}</span>
+            </div>
+          )}
         </div>
       )}
 

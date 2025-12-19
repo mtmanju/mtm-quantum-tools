@@ -20,6 +20,29 @@ const SIMILAR = 'il1Lo0O'
 const AMBIGUOUS = '{}[]()/\\\'"`~,;:.<>'
 
 /**
+ * Generates a passphrase from word list
+ */
+export const generatePassphrase = (wordCount: number = 4, separator: string = '-'): string => {
+  const words = [
+    'apple', 'banana', 'cherry', 'dragon', 'eagle', 'forest', 'garden', 'hammer',
+    'island', 'jungle', 'knight', 'lighthouse', 'mountain', 'ocean', 'palace', 'quasar',
+    'river', 'sunset', 'tiger', 'umbrella', 'violet', 'waterfall', 'xylophone', 'yacht', 'zebra',
+    'anchor', 'bridge', 'castle', 'diamond', 'elephant', 'falcon', 'galaxy', 'horizon',
+    'iceberg', 'jaguar', 'kangaroo', 'lighthouse', 'meadow', 'nebula', 'orchard', 'penguin',
+    'quartz', 'rainbow', 'sapphire', 'thunder', 'unicorn', 'volcano', 'whisper', 'xenon',
+    'yellow', 'zenith', 'alpine', 'breeze', 'cascade', 'dolphin', 'emerald', 'flamingo'
+  ]
+
+  const selected: string[] = []
+  for (let i = 0; i < wordCount; i++) {
+    const randomIndex = Math.floor(Math.random() * words.length)
+    selected.push(words[randomIndex])
+  }
+
+  return selected.join(separator)
+}
+
+/**
  * Generates a random password based on options
  */
 export const generatePassword = (options: PasswordOptions): string => {

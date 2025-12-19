@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, FileText } from 'lucide-react'
+import { Check, Copy, Download, FileText, Minus, Plus, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -13,6 +13,7 @@ import './YamlFormatter.css'
 
 const YamlFormatter = () => {
   const [yamlContent, setYamlContent] = useState('')
+  const [indentSize, setIndentSize] = useState(2)
   const [error, setError] = useState('')
 
   const copyInputHook = useCopy()
@@ -23,8 +24,8 @@ const YamlFormatter = () => {
   const formattedYaml = useMemo(() => {
     if (!yamlContent.trim()) return ''
     if (!validation.isValid) return ''
-    return formatYaml(yamlContent)
-  }, [yamlContent, validation.isValid])
+    return formatYaml(yamlContent, indentSize)
+  }, [yamlContent, validation.isValid, indentSize])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -53,6 +54,21 @@ const YamlFormatter = () => {
     setError('')
   }, [yamlContent, validation, formattedYaml])
 
+  const handleDownload = useCallback(() => {
+    const content = formattedYaml || yamlContent
+    if (!content.trim()) return
+
+    const blob = new Blob([content], { type: 'text/yaml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'formatted.yaml'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [formattedYaml, yamlContent])
+
   const handleClear = useCallback(() => {
     setYamlContent('')
     setError('')
@@ -67,11 +83,25 @@ const YamlFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
       onClick: () => copyInputHook.copy(yamlContent, (err) => setError(err)),
       disabled: !yamlContent.trim(),
-      title: 'Copy YAML',
+      title: 'Copy input',
       showDividerBefore: true
+    },
+    {
+      icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      onClick: () => copyOutputHook.copy(formattedYaml, (err) => setError(err)),
+      disabled: !formattedYaml.trim(),
+      title: 'Copy output',
+    },
+    {
+      icon: <Download size={16} />,
+      label: 'Download',
+      onClick: handleDownload,
+      disabled: !yamlContent.trim(),
+      title: 'Download YAML file',
     },
     {
       icon: <X size={16} />,
@@ -83,9 +113,36 @@ const YamlFormatter = () => {
     }
   ]
 
+  const toolbarRight = (
+    <>
+      <span className="yaml-toolbar-label">Indent:</span>
+      <div className="yaml-indent-control">
+        <button
+          type="button"
+          className="yaml-indent-btn"
+          onClick={() => setIndentSize(Math.max(1, indentSize - 1))}
+          disabled={indentSize <= 1}
+          aria-label="Decrease indent"
+        >
+          <Minus size={12} />
+        </button>
+        <span className="yaml-indent-value">{indentSize}</span>
+        <button
+          type="button"
+          className="yaml-indent-btn"
+          onClick={() => setIndentSize(Math.min(8, indentSize + 1))}
+          disabled={indentSize >= 8}
+          aria-label="Increase indent"
+        >
+          <Plus size={12} />
+        </button>
+      </div>
+    </>
+  )
+
   return (
     <ToolContainer>
-      <Toolbar left={toolbarButtons} />
+      <Toolbar left={toolbarButtons} right={toolbarRight} />
 
       {error && <ErrorBar message={error} />}
 

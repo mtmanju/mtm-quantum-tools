@@ -479,30 +479,25 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 
 /* Tools Grid - Compact */
 .category-section {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
-.section-header {
-  margin-bottom: 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid var(--border-subtle);
+.category-section .section-title {
+  font-size: clamp(0.9375rem, 1.3vw, 1.0625rem) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0;
+  color: #6B7280;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  line-height: 1.5;
+  text-transform: none;
 }
 
-.section-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  color: #1F2937;
-  margin-bottom: 0;
-  line-height: 1.2;
-}
-
-[data-theme="dark"] .section-title {
-  color: #F9FAFB;
-  font-weight: 600;
+[data-theme="dark"] .category-section .section-title {
+  color: #9CA3AF;
+  font-weight: 500 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .section-description {
@@ -514,19 +509,19 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1.5rem;
   /* Removed animation delay for instant rendering */
 }
 
 @media (max-width: 768px) {
   .tools-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1.25rem;
   }
 
   .category-section {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.75rem;
   }
 
   .tool-card {
@@ -534,7 +529,7 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   }
 
   .tool-icon-wrapper {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.875rem;
   }
 
   .tool-icon-wrapper svg {
@@ -550,43 +545,37 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 /* Tool Cards - Odoo Style Design */
 .tool-card {
   background: #FFFFFF;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 1.5rem 1rem;
+  border: none;
+  padding: 1.75rem 1rem 1.25rem;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  justify-content: flex-start;
+  border-radius: 0;
+  box-shadow: none;
   aspect-ratio: 1;
   min-height: 0;
 }
 
 [data-theme="dark"] .tool-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  box-shadow: none;
 }
 
 .tool-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-[data-theme="light"] .tool-card:hover {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   background: #FAFAFA;
 }
 
 [data-theme="dark"] .tool-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .tool-badge {
@@ -658,31 +647,30 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   background: transparent;
   border-radius: 0;
   border: none;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease;
   flex-shrink: 0;
-  margin-bottom: 0.875rem;
+  margin-bottom: 1rem;
 }
 
 .tool-icon-wrapper svg {
-  width: 56px;
-  height: 56px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 64px;
+  height: 64px;
+  transition: transform 0.2s ease;
   color: inherit;
-  stroke-width: 1.75;
-  opacity: 0.9;
+  stroke-width: 1.5;
+  opacity: 1;
 }
 
 [data-theme="dark"] .tool-icon-wrapper svg {
-  opacity: 0.85;
+  opacity: 0.95;
 }
 
 .tool-card:hover .tool-icon-wrapper {
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .tool-card:hover .tool-icon-wrapper svg {
-  opacity: 1;
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .tool-info {
@@ -699,26 +687,26 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 .tool-info h3 {
   font-size: 0.875rem;
   margin: 0;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: 0;
   color: #1F2937;
   line-height: 1.4;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  transition: color 0.2s ease;
+  transition: none;
 }
 
 [data-theme="dark"] .tool-info h3 {
-  color: #F3F4F6;
+  color: #E5E7EB;
   font-weight: 500;
 }
 
 .tool-card:hover .tool-info h3 {
-  color: var(--accent);
+  color: #1F2937;
 }
 
 [data-theme="dark"] .tool-card:hover .tool-info h3 {
-  color: var(--accent);
+  color: #E5E7EB;
 }
 
 /* Status Badge - Removed, using tool-badge instead */

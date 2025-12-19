@@ -1,0 +1,30 @@
+.css-empty-state,
+.css-error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 200px;
+}
+
+.css-empty-state p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.css-error-state p {
+  font-size: 0.9375rem;
+  color: var(--text-error);
+}
+
+.css-output {
+  margin: 0;
+  padding: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+

@@ -13,13 +13,14 @@ export interface TimestampResult {
     utc: string
     unix: number
     milliseconds: number
+    timezone?: string
   }
 }
 
 /**
  * Converts a timestamp to human-readable date
  */
-export const timestampToDate = (input: string | number): TimestampResult => {
+export const timestampToDate = (input: string | number, timezone?: string): TimestampResult => {
   if (!input) {
     return {
       isValid: false,
@@ -80,16 +81,21 @@ export const timestampToDate = (input: string | number): TimestampResult => {
       }
     }
 
+    const localString = timezone 
+      ? date.toLocaleString('en-US', { timeZone: timezone })
+      : date.toLocaleString()
+    
     return {
       isValid: true,
       timestamp: Math.floor(timestamp / 1000), // Unix timestamp in seconds
       date,
       formatted: {
         iso: date.toISOString(),
-        local: date.toLocaleString(),
+        local: localString,
         utc: date.toUTCString(),
         unix: Math.floor(timestamp / 1000),
-        milliseconds: timestamp
+        milliseconds: timestamp,
+        timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
       }
     }
   } catch (error) {

@@ -1,5 +1,5 @@
-import { AlertCircle, Check, Copy, Eye, EyeOff, Shield, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { AlertCircle, Check, Copy, Eye, EyeOff, Shield, Upload, X, Clock } from 'lucide-react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { decodeJwt, formatJwtTimestamp, isJwtExpired, type JwtDecodeResult } from '../utils/jwt'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
@@ -22,6 +22,51 @@ const JwtDecoder = () => {
     }
     return decodeJwt(token)
   }, [token])
+
+  const [expirationCountdown, setExpirationCountdown] = useState<string>('')
+
+  useEffect(() => {
+    if (!decodeResult.valid || !decodeResult.payload || !isJwtExpired(decodeResult.payload)) {
+      setExpirationCountdown('')
+      return
+    }
+
+    const exp = (decodeResult.payload as any).exp
+    if (!exp) {
+      setExpirationCountdown('')
+      return
+    }
+
+    const updateCountdown = () => {
+      const now = Math.floor(Date.now() / 1000)
+      const remaining = exp - now
+      
+      if (remaining <= 0) {
+        setExpirationCountdown('Expired')
+        return
+      }
+
+      const days = Math.floor(remaining / 86400)
+      const hours = Math.floor((remaining % 86400) / 3600)
+      const minutes = Math.floor((remaining % 3600) / 60)
+      const seconds = remaining % 60
+
+      if (days > 0) {
+        setExpirationCountdown(`${days}d ${hours}h ${minutes}m`)
+      } else if (hours > 0) {
+        setExpirationCountdown(`${hours}h ${minutes}m ${seconds}s`)
+      } else if (minutes > 0) {
+        setExpirationCountdown(`${minutes}m ${seconds}s`)
+      } else {
+        setExpirationCountdown(`${seconds}s`)
+      }
+    }
+
+    updateCountdown()
+    const interval = setInterval(updateCountdown, 1000)
+
+    return () => clearInterval(interval)
+  }, [decodeResult])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -171,8 +216,13 @@ const JwtDecoder = () => {
                     <div className="jwt-status-bar">
                       <Shield size={16} />
                       <span>Token decoded successfully</span>
-                      {isJwtExpired(decodeResult.payload) && (
+                      {isJwtExpired(decodeResult.payload) ? (
                         <span className="jwt-expired-badge">Expired</span>
+                      ) : expirationCountdown && (
+                        <span className="jwt-countdown-badge">
+                          <Clock size={14} />
+                          <span>Expires in: {expirationCountdown}</span>
+                        </span>
                       )}
                     </div>
                   )}

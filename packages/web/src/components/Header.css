@@ -25,14 +25,13 @@
   margin: 0 auto;
   padding: 0 2rem;
   height: 100%;
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 2rem;
 }
 
 .header-left,
-.header-center,
 .header-right {
   display: flex;
   align-items: center;
@@ -40,10 +39,6 @@
 
 .header-left {
   justify-content: flex-start;
-}
-
-.header-center {
-  justify-content: center;
 }
 
 .header-right {
@@ -92,60 +87,6 @@
   text-transform: uppercase;
   line-height: 1;
   margin-top: 0.125rem;
-}
-
-/* Header Search */
-.header-search-container {
-  position: relative;
-  width: 100%;
-  max-width: 480px;
-}
-
-.header-search-icon {
-  position: absolute;
-  left: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  pointer-events: none;
-  transition: color 0.3s var(--ease-out);
-  z-index: 1;
-}
-
-.header-search-input {
-  width: 100%;
-  padding: 0.75rem 1.25rem 0.75rem 3rem;
-  font-size: 0.9375rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 100px;
-  color: var(--text-primary);
-  outline: none;
-  transition: all 0.3s var(--ease-out);
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  font-family: 'Aptos', system-ui, sans-serif;
-}
-
-.header-search-input::placeholder {
-  color: var(--text-tertiary);
-  font-weight: 400;
-}
-
-.header-search-input:hover {
-  border-color: var(--border-medium);
-  background: var(--bg-elevated);
-}
-
-.header-search-container:hover .header-search-icon,
-.header-search-container:focus-within .header-search-icon {
-  color: var(--text-secondary);
-}
-
-.header-search-input:focus {
-  border-color: var(--border-focus);
-  background: var(--bg-elevated);
-  box-shadow: 0 0 0 3px var(--accent-light);
 }
 
 /* Header Navigation Button */
@@ -257,24 +198,9 @@
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .header-content {
-    grid-template-columns: auto 1fr auto;
-    gap: 1rem;
-  }
-
-  .header-center {
-    max-width: 400px;
-  }
-}
-
 @media (max-width: 768px) {
   .header-content {
-    grid-template-columns: 1fr auto;
-  }
-
-  .header-center {
-    display: none;
+    gap: 1rem;
   }
   
   .header-nav-btn span {

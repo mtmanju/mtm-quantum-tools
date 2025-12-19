@@ -1,41 +1,80 @@
-import { useState, useMemo, useCallback, memo } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { 
-  ArrowLeft, Zap, Clock, Shield, Calculator as CalculatorIcon,
-  FileStack, Link2, 
-  Brackets, 
-  FileJson, FileCode, KeyRound, Hash, LockKeyhole, CalendarClock, 
-  FileCode2 as FileCodeIcon, CodeXml, Database as DatabaseIcon, 
-  GitBranch, CaseLower, FileText, Network, Search, Cog
+import {
+  ArrowLeft,
+  Binary,
+  Brackets,
+  Calculator as CalculatorIcon,
+  CalendarClock,
+  Clock,
+  Code,
+  CodeXml,
+  Database as DatabaseIcon,
+  FileCheck,
+  FileCode,
+  FileCode2 as FileCodeIcon,
+  FileJson,
+  FileStack,
+  FileText,
+  GitBranch,
+  Hash,
+  KeyRound,
+  Layers,
+  Link2,
+  LockKeyhole,
+  Mail,
+  Network,
+  Palette,
+  Scissors,
+  Shield,
+  Sparkle,
+  Table2,
+  Type,
+  Wand2,
+  Zap
 } from 'lucide-react'
+import type { ComponentType, ReactElement, ReactNode } from 'react'
+import { memo, useCallback, useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import './App.css'
+import Footer from './components/Footer'
+import Header from './components/Header'
+import { getToolId, getViewType, ROUTES } from './constants/routes'
 import { useTheme } from './context/ThemeContext'
 import { useScrollPosition } from './hooks/useScrollPosition'
-import { getViewType, getToolId, ROUTES } from './constants/routes'
-import Header from './components/Header'
-import Footer from './components/Footer'
-import MarkdownConverter from './tools/MarkdownConverter'
-import JsonFormatter from './tools/JsonFormatter'
-import JwtDecoder from './tools/JwtDecoder'
-import PdfMerger from './tools/PdfMerger'
-import Base64Converter from './tools/Base64Converter'
-import RegexTester from './tools/RegexTester'
-import DiffChecker from './tools/DiffChecker'
-import TimestampConverter from './tools/TimestampConverter'
-import SqlFormatter from './tools/SqlFormatter'
-import ApiTester from './tools/ApiTester'
-import Calculator from './tools/Calculator'
-import DmnEvaluator from './tools/DmnEvaluator'
-import WorkflowValidator from './tools/WorkflowValidator'
-import UrlEncoder from './tools/UrlEncoder'
-import HashGenerator from './tools/HashGenerator'
-import UuidGenerator from './tools/UuidGenerator'
-import TextCaseConverter from './tools/TextCaseConverter'
-import PasswordGenerator from './tools/PasswordGenerator'
-import HtmlFormatter from './tools/HtmlFormatter'
-import YamlFormatter from './tools/YamlFormatter'
 import About from './pages/About'
-import './App.css'
-import type { ComponentType, ReactElement, ReactNode } from 'react'
+import ApiTester from './tools/ApiTester'
+import Base64Converter from './tools/Base64Converter'
+import Calculator from './tools/Calculator'
+import ColorConverter from './tools/ColorConverter'
+import CssFormatter from './tools/CssFormatter'
+import CsvToJsonConverter from './tools/CsvToJsonConverter'
+import DiffChecker from './tools/DiffChecker'
+import DmnEvaluator from './tools/DmnEvaluator'
+import EmailValidator from './tools/EmailValidator'
+import HashGenerator from './tools/HashGenerator'
+import HtmlEntityEncoder from './tools/HtmlEntityEncoder'
+import HtmlFormatter from './tools/HtmlFormatter'
+import JavaScriptFormatter from './tools/JavaScriptFormatter'
+import JsonFormatter from './tools/JsonFormatter'
+import JsonXmlConverter from './tools/JsonXmlConverter'
+import JwtDecoder from './tools/JwtDecoder'
+import LoremIpsumGenerator from './tools/LoremIpsumGenerator'
+import MarkdownConverter from './tools/MarkdownConverter'
+import NumberBaseConverter from './tools/NumberBaseConverter'
+import PasswordGenerator from './tools/PasswordGenerator'
+import PdfMerger from './tools/PdfMerger'
+import PdfSplitter from './tools/PdfSplitter'
+import RegexTester from './tools/RegexTester'
+import SlugConverter from './tools/SlugConverter'
+import SqlFormatter from './tools/SqlFormatter'
+import TextCaseConverter from './tools/TextCaseConverter'
+import TextSummarizer from './tools/TextSummarizer'
+import TimestampConverter from './tools/TimestampConverter'
+import UrlEncoder from './tools/UrlEncoder'
+import UuidGenerator from './tools/UuidGenerator'
+import WordCounter from './tools/WordCounter'
+import WorkflowValidator from './tools/WorkflowValidator'
+import XmlFormatter from './tools/XmlFormatter'
+import YamlFormatter from './tools/YamlFormatter'
 
 interface Tool {
   id: string
@@ -51,14 +90,14 @@ interface Tool {
 
 
 const tools: Tool[] = [
-  // Most Popular Tools (Featured)
+  // Essential Tools (Featured)
   {
     id: 'json-formatter',
     name: 'JSON Formatter',
-    description: 'Format, validate, and beautify JSON data with syntax highlighting',
+    description: 'Beautify & validate JSON instantly',
     icon: <FileJson size={64} strokeWidth={1.5} />,
     iconColor: '#F39C12', // Orange
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: JsonFormatter,
     featured: true
@@ -66,10 +105,10 @@ const tools: Tool[] = [
   {
     id: 'url-encoder',
     name: 'URL Encoder',
-    description: 'Encode and decode URL-encoded strings',
+    description: 'Encode & decode URLs quickly',
     icon: <Link2 size={64} strokeWidth={1.5} />,
     iconColor: '#8B5CF6', // Purple
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: UrlEncoder,
     featured: true
@@ -77,10 +116,10 @@ const tools: Tool[] = [
   {
     id: 'base64-converter',
     name: 'Base64 Converter',
-    description: 'Encode and decode Base64 strings, images, and files',
+    description: 'Convert files & text to Base64',
     icon: <FileCode size={64} strokeWidth={1.5} />,
     iconColor: '#2980B9', // Blue
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: Base64Converter,
     featured: true
@@ -88,10 +127,10 @@ const tools: Tool[] = [
   {
     id: 'hash-generator',
     name: 'Hash Generator',
-    description: 'Generate MD5, SHA-1, SHA-256, and SHA-512 hashes',
+    description: 'Generate MD5, SHA-1, SHA-256, SHA-512',
     icon: <KeyRound size={64} strokeWidth={1.5} />,
     iconColor: '#EC4899', // Pink
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: HashGenerator,
     featured: true
@@ -99,10 +138,10 @@ const tools: Tool[] = [
   {
     id: 'uuid-generator',
     name: 'UUID Generator',
-    description: 'Generate UUIDs (Universally Unique Identifiers)',
+    description: 'Create unique identifiers',
     icon: <Hash size={64} strokeWidth={1.5} />,
     iconColor: '#06B6D4', // Cyan
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: UuidGenerator,
     featured: true
@@ -110,10 +149,10 @@ const tools: Tool[] = [
   {
     id: 'password-generator',
     name: 'Password Generator',
-    description: 'Generate secure passwords with customizable options',
+    description: 'Create strong, secure passwords',
     icon: <LockKeyhole size={64} strokeWidth={1.5} />,
     iconColor: '#F59E0B', // Amber
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: PasswordGenerator,
     featured: true
@@ -121,10 +160,10 @@ const tools: Tool[] = [
   {
     id: 'jwt-decoder',
     name: 'JWT Decoder',
-    description: 'Decode and validate JSON Web Tokens',
+    description: 'Decode & inspect JWT tokens',
     icon: <Shield size={64} strokeWidth={1.5} />,
     iconColor: '#27AE60', // Green
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: JwtDecoder,
     featured: true
@@ -132,106 +171,246 @@ const tools: Tool[] = [
   {
     id: 'timestamp-converter',
     name: 'Timestamp Converter',
-    description: 'Convert between Unix timestamps and human-readable dates',
+    description: 'Convert timestamps to dates',
     icon: <CalendarClock size={64} strokeWidth={1.5} />,
     iconColor: '#34495E', // Dark Blue
-    category: 'Most Popular',
+    category: 'Essential',
     status: 'active',
     component: TimestampConverter,
     featured: true
   },
 
-  // Data & Formatting
+  // Code Formatters
   {
     id: 'yaml-formatter',
     name: 'YAML Formatter',
-    description: 'Format and validate YAML configuration files',
+    description: 'Format & validate YAML configs',
     icon: <FileText size={64} strokeWidth={1.5} />,
     iconColor: '#6366F1', // Indigo
-    category: 'Data & Formatting',
+    category: 'Code Formatters',
     status: 'active',
     component: YamlFormatter
   },
   {
     id: 'html-formatter',
     name: 'HTML Formatter',
-    description: 'Format and minify HTML code',
+    description: 'Beautify & minify HTML',
     icon: <CodeXml size={64} strokeWidth={1.5} />,
     iconColor: '#EF4444', // Red
-    category: 'Data & Formatting',
+    category: 'Code Formatters',
     status: 'active',
     component: HtmlFormatter
   },
   {
+    id: 'xml-formatter',
+    name: 'XML Formatter',
+    description: 'Format & validate XML docs',
+    icon: <FileCheck size={64} strokeWidth={1.5} />,
+    iconColor: '#F97316', // Orange
+    category: 'Code Formatters',
+    status: 'active',
+    component: XmlFormatter
+  },
+  {
     id: 'sql-formatter',
     name: 'SQL Formatter',
-    description: 'Format and beautify SQL queries with proper indentation',
+    description: 'Format SQL queries beautifully',
     icon: <DatabaseIcon size={64} strokeWidth={1.5} />,
     iconColor: '#3498DB', // Blue
-    category: 'Data & Formatting',
+    category: 'Code Formatters',
     status: 'active',
     component: SqlFormatter
   },
+  {
+    id: 'csv-to-json',
+    name: 'CSV ↔ JSON',
+    description: 'Convert between CSV & JSON',
+    icon: <Table2 size={64} strokeWidth={1.5} />,
+    iconColor: '#22C55E', // Green
+    category: 'Code Formatters',
+    status: 'active',
+    component: CsvToJsonConverter
+  },
+  {
+    id: 'json-xml-converter',
+    name: 'JSON ↔ XML',
+    description: 'Convert between JSON & XML',
+    icon: <FileCheck size={64} strokeWidth={1.5} />,
+    iconColor: '#F97316', // Orange
+    category: 'Code Formatters',
+    status: 'active',
+    component: JsonXmlConverter
+  },
+  {
+    id: 'css-formatter',
+    name: 'CSS Formatter',
+    description: 'Format & minify CSS',
+    icon: <Code size={64} strokeWidth={1.5} />,
+    iconColor: '#3B82F6', // Blue
+    category: 'Code Formatters',
+    status: 'active',
+    component: CssFormatter
+  },
+  {
+    id: 'javascript-formatter',
+    name: 'JS Formatter',
+    description: 'Format & minify JavaScript',
+    icon: <Code size={64} strokeWidth={1.5} />,
+    iconColor: '#F59E0B', // Amber
+    category: 'Code Formatters',
+    status: 'active',
+    component: JavaScriptFormatter
+  },
 
-  // Developer Utilities
+  // Code Tools
   {
     id: 'regex-tester',
     name: 'Regex Tester',
-    description: 'Test and debug regular expressions with live matching',
+    description: 'Test regex patterns live',
     icon: <Brackets size={64} strokeWidth={1.5} />,
     iconColor: '#E67E22', // Orange
-    category: 'Developer Utilities',
+    category: 'Code Tools',
     status: 'active',
     component: RegexTester
   },
   {
     id: 'diff-checker',
     name: 'Diff Checker',
-    description: 'Compare text, code, or JSON with side-by-side view',
+    description: 'Compare code & text side-by-side',
     icon: <GitBranch size={64} strokeWidth={1.5} />,
     iconColor: '#16A085', // Green
-    category: 'Developer Utilities',
+    category: 'Code Tools',
     status: 'active',
     component: DiffChecker
   },
   {
     id: 'text-case-converter',
-    name: 'Text Case Converter',
-    description: 'Convert text between different case formats',
-    icon: <CaseLower size={64} strokeWidth={1.5} />,
+    name: 'Case Converter',
+    description: 'Transform text case instantly',
+    icon: <Type size={64} strokeWidth={1.5} />,
     iconColor: '#10B981', // Green
-    category: 'Developer Utilities',
+    category: 'Code Tools',
     status: 'active',
     component: TextCaseConverter
   },
+  {
+    id: 'color-converter',
+    name: 'Color Converter',
+    description: 'Convert HEX, RGB, HSL',
+    icon: <Palette size={64} strokeWidth={1.5} />,
+    iconColor: '#EC4899', // Pink
+    category: 'Code Tools',
+    status: 'active',
+    component: ColorConverter
+  },
+  {
+    id: 'number-base-converter',
+    name: 'Base Converter',
+    description: 'Convert binary, hex, decimal, octal',
+    icon: <Binary size={64} strokeWidth={1.5} />,
+    iconColor: '#8B5CF6', // Purple
+    category: 'Code Tools',
+    status: 'active',
+    component: NumberBaseConverter
+  },
+  {
+    id: 'lorem-ipsum-generator',
+    name: 'Lorem Generator',
+    description: 'Generate placeholder text',
+    icon: <Sparkle size={64} strokeWidth={1.5} />,
+    iconColor: '#64748B', // Slate
+    category: 'Code Tools',
+    status: 'active',
+    component: LoremIpsumGenerator
+  },
+  {
+    id: 'html-entity-encoder',
+    name: 'HTML Entity',
+    description: 'Encode & decode HTML entities',
+    icon: <Code size={64} strokeWidth={1.5} />,
+    iconColor: '#EF4444', // Red
+    category: 'Code Tools',
+    status: 'active',
+    component: HtmlEntityEncoder
+  },
+  {
+    id: 'slug-converter',
+    name: 'Slug Converter',
+    description: 'Convert text to URL-friendly slugs',
+    icon: <Link2 size={64} strokeWidth={1.5} />,
+    iconColor: '#8B5CF6', // Purple
+    category: 'Code Tools',
+    status: 'active',
+    component: SlugConverter
+  },
+  {
+    id: 'email-validator',
+    name: 'Email Validator',
+    description: 'Validate email addresses',
+    icon: <Mail size={64} strokeWidth={1.5} />,
+    iconColor: '#06B6D4', // Cyan
+    category: 'Code Tools',
+    status: 'active',
+    component: EmailValidator
+  },
 
-  // Document Processing
+  // Documents
   {
     id: 'md-converter',
-    name: 'MD to DOCX',
-    description: 'Convert Markdown files to professional Word documents with full Mermaid diagram support',
+    name: 'MD → DOCX',
+    description: 'Convert Markdown to Word docs',
     icon: <FileCodeIcon size={64} strokeWidth={1.5} />,
     iconColor: '#875A7B', // Purple - Odoo style
-    category: 'Document Processing',
+    category: 'Documents',
     status: 'active',
     component: MarkdownConverter
   },
   {
     id: 'pdf-merger',
     name: 'PDF Merger',
-    description: 'Merge multiple PDF files into a single document',
+    description: 'Merge PDFs into one file',
     icon: <FileStack size={64} strokeWidth={1.5} />,
     iconColor: '#E74C3C', // Red
-    category: 'Document Processing',
+    category: 'Documents',
     status: 'active',
     component: PdfMerger
+  },
+  {
+    id: 'pdf-splitter',
+    name: 'PDF Splitter',
+    description: 'Split PDF into individual pages',
+    icon: <Scissors size={64} strokeWidth={1.5} />,
+    iconColor: '#F59E0B', // Amber
+    category: 'Documents',
+    status: 'active',
+    component: PdfSplitter
+  },
+  {
+    id: 'word-counter',
+    name: 'Word Counter',
+    description: 'Count words, characters & more',
+    icon: <FileText size={64} strokeWidth={1.5} />,
+    iconColor: '#3B82F6', // Blue
+    category: 'Documents',
+    status: 'active',
+    component: WordCounter
+  },
+  {
+    id: 'text-summarizer',
+    name: 'Text Summarizer',
+    description: 'Summarize long text quickly',
+    icon: <FileText size={64} strokeWidth={1.5} />,
+    iconColor: '#10B981', // Green
+    category: 'Documents',
+    status: 'active',
+    component: TextSummarizer
   },
 
   // API & Testing
   {
     id: 'api-tester',
     name: 'API Tester',
-    description: 'Test REST APIs with custom headers, authentication, and request bodies',
+    description: 'Test REST APIs with ease',
     icon: <Network size={64} strokeWidth={1.5} />,
     iconColor: '#F1C40F', // Yellow
     category: 'API & Testing',
@@ -243,8 +422,8 @@ const tools: Tool[] = [
   {
     id: 'dmn-evaluator',
     name: 'DMN Evaluator',
-    description: 'Evaluate DMN (Decision Model and Notation) decision tables for business rules',
-    icon: <Search size={64} strokeWidth={1.5} />,
+    description: 'Evaluate decision tables',
+    icon: <Layers size={64} strokeWidth={1.5} />,
     iconColor: '#9B59B6', // Purple
     category: 'Business Logic',
     status: 'active',
@@ -253,8 +432,8 @@ const tools: Tool[] = [
   {
     id: 'workflow-validator',
     name: 'Workflow Validator',
-    description: 'Validate BPMN workflows and process definitions',
-    icon: <Cog size={64} strokeWidth={1.5} />,
+    description: 'Validate BPMN workflows',
+    icon: <Wand2 size={64} strokeWidth={1.5} />,
     iconColor: '#1ABC9C', // Teal
     category: 'Business Logic',
     status: 'active',
@@ -265,7 +444,7 @@ const tools: Tool[] = [
   {
     id: 'calculator',
     name: 'Calculator',
-    description: 'Scientific and business calculations with formula support',
+    description: 'Scientific calculations',
     icon: <CalculatorIcon size={64} strokeWidth={1.5} />,
     iconColor: '#8E44AD', // Purple
     category: 'Utilities',
@@ -310,7 +489,6 @@ function App() {
   const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
   const scrolled = useScrollPosition()
-  const [searchQuery, setSearchQuery] = useState('')
 
   // Determine current view from pathname
   const currentView = useMemo(() => getViewType(location.pathname), [location.pathname])
@@ -321,17 +499,6 @@ function App() {
     if (!toolId) return null
     return tools.find(t => t.id === toolId) || null
   }, [location.pathname])
-
-  // Memoize filtered tools with debounced search
-  const filteredTools = useMemo(() => {
-    if (!searchQuery.trim()) return tools
-    const query = searchQuery.toLowerCase()
-    return tools.filter(tool =>
-      tool.name.toLowerCase().includes(query) ||
-      tool.description.toLowerCase().includes(query) ||
-      tool.category.toLowerCase().includes(query)
-    )
-  }, [searchQuery])
 
   // Memoize categories
   const categories = useMemo(() => 
@@ -358,14 +525,12 @@ function App() {
     const sections: ReactNode[] = []
     
     for (const category of categories) {
-      const categoryTools = filteredTools.filter(t => t.category === category)
+      const categoryTools = tools.filter(t => t.category === category)
       if (categoryTools.length === 0) continue
 
       sections.push(
         <section key={category} className="category-section">
-          <div className="section-header">
-            <h2 className="section-title">{category}</h2>
-          </div>
+          <h2 className="section-title">{category}</h2>
           <div className="tools-grid">
             {categoryTools.map(tool => (
               <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} />
@@ -376,17 +541,15 @@ function App() {
     }
     
     return sections
-  }, [categories, filteredTools, handleToolClick])
+  }, [categories, handleToolClick])
 
   return (
     <div className="app">
       <Header
         scrolled={scrolled}
         isDarkMode={isDarkMode}
-        searchQuery={searchQuery}
         currentView={currentView}
         onNavigate={navigate}
-        onSearchChange={setSearchQuery}
         onToggleTheme={toggleTheme}
       />
 

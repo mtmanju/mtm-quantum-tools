@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, Key, RefreshCw } from 'lucide-react'
+import { Check, Copy, Download, Upload, X, Key, RefreshCw } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -91,6 +91,32 @@ const HashGenerator = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input])
 
+  const handleDownload = useCallback(() => {
+    if (!input.trim() || Object.values(hashes).every(h => !h)) return
+
+    const report = `Hash Report
+Generated: ${new Date().toLocaleString()}
+
+Input:
+${input}
+
+Hashes:
+MD5:    ${hashes.md5}
+SHA-1:  ${hashes.sha1}
+SHA-256: ${hashes.sha256}
+SHA-512: ${hashes.sha512}`
+
+    const blob = new Blob([report], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'hash-report.txt'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [input, hashes])
+
   const handleClear = useCallback(() => {
     setInput('')
     setHashes({
@@ -124,6 +150,13 @@ const HashGenerator = () => {
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
+    },
+    {
+      icon: <Download size={16} />,
+      label: 'Export',
+      onClick: handleDownload,
+      disabled: !input.trim() || Object.values(hashes).every(h => !h),
+      title: 'Export hash report',
     },
     {
       icon: <X size={16} />,

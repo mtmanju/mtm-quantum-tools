@@ -35,6 +35,22 @@ const TextCaseConverter = () => {
     return convertCase(input, caseType)
   }, [input, caseType])
 
+  const allCases = useMemo(() => {
+    if (!input.trim()) return null
+    const cases: Array<{ type: CaseType; label: string; value: string }> = [
+      { type: 'lowercase', label: 'lowercase', value: convertCase(input, 'lowercase') },
+      { type: 'uppercase', label: 'UPPERCASE', value: convertCase(input, 'uppercase') },
+      { type: 'title', label: 'Title Case', value: convertCase(input, 'title') },
+      { type: 'sentence', label: 'Sentence case', value: convertCase(input, 'sentence') },
+      { type: 'camel', label: 'camelCase', value: convertCase(input, 'camel') },
+      { type: 'pascal', label: 'PascalCase', value: convertCase(input, 'pascal') },
+      { type: 'snake', label: 'snake_case', value: convertCase(input, 'snake') },
+      { type: 'kebab', label: 'kebab-case', value: convertCase(input, 'kebab') },
+      { type: 'constant', label: 'CONSTANT_CASE', value: convertCase(input, 'constant') }
+    ]
+    return cases
+  }, [input])
+
   const handleClear = useCallback(() => {
     setInput('')
     setError('')
@@ -127,22 +143,45 @@ const TextCaseConverter = () => {
           </EditorPanel>
         }
         right={
-          <EditorPanel
-            title="Converted Text"
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
-            copied={copyOutputHook.copied}
-          >
-            <div className="text-case-output">
-              {!input.trim() ? (
-                <div className="text-case-empty-state">
-                  <Type size={48} />
-                  <p>Enter text to convert case</p>
+          <div className="text-case-output-panels">
+            <EditorPanel
+              title={`${caseTypes.find(c => c.value === caseType)?.label || 'Converted'} Text`}
+              onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+              copied={copyOutputHook.copied}
+            >
+              <div className="text-case-output">
+                {!input.trim() ? (
+                  <div className="text-case-empty-state">
+                    <Type size={48} />
+                    <p>Enter text to convert case</p>
+                  </div>
+                ) : (
+                  <pre className="text-case-result">{output}</pre>
+                )}
+              </div>
+            </EditorPanel>
+            
+            {allCases && (
+              <EditorPanel title="All Case Variations">
+                <div className="text-case-all-variations">
+                  {allCases.map((caseItem) => (
+                    <div key={caseItem.type} className="text-case-variation-item">
+                      <div className="text-case-variation-label">{caseItem.label}:</div>
+                      <code className="text-case-variation-value">{caseItem.value}</code>
+                      <button
+                        type="button"
+                        className="text-case-variation-copy"
+                        onClick={() => copyOutputHook.copy(caseItem.value, (err) => setError(err))}
+                        title={`Copy ${caseItem.label}`}
+                      >
+                        {copyOutputHook.copied ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <pre className="text-case-result">{output}</pre>
-              )}
-            </div>
-          </EditorPanel>
+              </EditorPanel>
+            )}
+          </div>
         }
       />
     </ToolContainer>

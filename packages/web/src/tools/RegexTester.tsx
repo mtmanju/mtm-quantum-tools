@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, Code, Info } from 'lucide-react'
+import { Check, Copy, Upload, X, Code, Info, ArrowRightLeft } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -8,12 +8,14 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
-import { testRegex, highlightMatches, type RegexFlags } from '../utils/regex'
+import { testRegex, highlightMatches, replaceRegex, type RegexFlags } from '../utils/regex'
 import './RegexTester.css'
 
 const RegexTester = () => {
   const [pattern, setPattern] = useState('')
   const [testString, setTestString] = useState('')
+  const [replacement, setReplacement] = useState('')
+  const [mode, setMode] = useState<'test' | 'replace'>('test')
   const [flags, setFlags] = useState<RegexFlags>({
     global: true,
     caseInsensitive: false,
@@ -27,6 +29,7 @@ const RegexTester = () => {
   const copyPatternHook = useCopy()
   const copyTestStringHook = useCopy()
   const copyResultHook = useCopy()
+  const copyHook = useCopy()
 
   const testResult = useMemo(() => {
     if (!pattern.trim() || !testString.trim()) {
@@ -48,7 +51,25 @@ const RegexTester = () => {
     return highlightMatches(testString, testResult.matches)
   }, [testResult, testString])
 
+  const replaceResult = useMemo(() => {
+    if (mode !== 'replace' || !pattern.trim() || !testString.trim()) {
+      return null
+    }
+    const result = replaceRegex(pattern, testString, replacement, flags)
+    if (!result.isValid) {
+      setError(result.error || 'Replace failed')
+    } else {
+      setError('')
+    }
+    return result
+  }, [pattern, testString, replacement, flags, mode])
+
   const resultText = useMemo(() => {
+    if (mode === 'replace') {
+      if (!replaceResult || !replaceResult.isValid) return ''
+      return replaceResult.replaced
+    }
+    
     if (!testResult || !testResult.isValid) return ''
     
     if (testResult.matches.length === 0) {
@@ -80,7 +101,7 @@ const RegexTester = () => {
     })
     
     return output
-  }, [testResult])
+  }, [testResult, mode, replaceResult])
 
   const patternFileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -107,6 +128,7 @@ const RegexTester = () => {
   const handleClear = useCallback(() => {
     setPattern('')
     setTestString('')
+    setReplacement('')
     setError('')
     setFlags({
       global: true,
@@ -170,6 +192,25 @@ const RegexTester = () => {
       <Toolbar left={toolbarButtons} />
 
       {error && <ErrorBar message={error} />}
+
+      <div className="regex-mode-selector">
+        <button
+          type="button"
+          className={`regex-mode-btn ${mode === 'test' ? 'active' : ''}`}
+          onClick={() => setMode('test')}
+        >
+          <Code size={16} />
+          <span>Test</span>
+        </button>
+        <button
+          type="button"
+          className={`regex-mode-btn ${mode === 'replace' ? 'active' : ''}`}
+          onClick={() => setMode('replace')}
+        >
+          <ArrowRightLeft size={16} />
+          <span>Replace</span>
+        </button>
+      </div>
 
       <div className="regex-flags-bar">
         <div className="regex-flags-label">
@@ -251,7 +292,7 @@ const RegexTester = () => {
               />
             </EditorPanel>
             <EditorPanel
-              title="Test String"
+              title={mode === 'test' ? 'Test String' : 'Input Text'}
               onCopy={() => copyTestStringHook.copy(testString, (err) => setError(err))}
               copied={copyTestStringHook.copied}
             >
@@ -262,23 +303,62 @@ const RegexTester = () => {
                   setTestString(e.target.value)
                   setError('')
                 }}
-                placeholder="Enter text to test against the regex pattern"
+                placeholder={mode === 'test' ? 'Enter text to test against the regex pattern' : 'Enter text to replace matches in'}
                 spellCheck={false}
                 dropzoneText="Drag & drop test file or paste text"
                 dropzoneHint="Supports .txt files"
                 dropzoneActiveText="Drop file here"
               />
             </EditorPanel>
+            {mode === 'replace' && (
+              <EditorPanel
+                title="Replacement"
+                onCopy={() => copyHook.copy(replacement, (err) => setError(err))}
+                copied={copyHook.copied}
+              >
+                <textarea
+                  value={replacement}
+                  onChange={(e) => {
+                    setReplacement(e.target.value)
+                    setError('')
+                  }}
+                  placeholder="Enter replacement text (use $1, $2 for groups)"
+                  spellCheck={false}
+                  className="regex-replacement-input"
+                />
+              </EditorPanel>
+            )}
           </div>
         }
         right={
           <EditorPanel
-            title="Match Results"
+            title={mode === 'test' ? 'Match Results' : 'Replaced Text'}
             onCopy={() => copyResultHook.copy(resultText, (err) => setError(err))}
             copied={copyResultHook.copied}
           >
             <div className="regex-results">
-              {!pattern.trim() || !testString.trim() ? (
+              {mode === 'replace' ? (
+                !pattern.trim() || !testString.trim() ? (
+                  <div className="regex-empty-state">
+                    <ArrowRightLeft size={48} />
+                    <p>Enter a regex pattern and input text to replace matches</p>
+                  </div>
+                ) : !replaceResult || !replaceResult.isValid ? (
+                  <div className="regex-error-state">
+                    <p>{replaceResult?.error || 'Invalid regex pattern'}</p>
+                  </div>
+                ) : (
+                  <>
+                    {replaceResult.replacements > 0 && (
+                      <div className="regex-replace-info">
+                        <Info size={16} />
+                        <span>Made {replaceResult.replacements} replacement{replaceResult.replacements !== 1 ? 's' : ''}</span>
+                      </div>
+                    )}
+                    <pre className="regex-replaced-text">{resultText}</pre>
+                  </>
+                )
+              ) : !pattern.trim() || !testString.trim() ? (
                 <div className="regex-empty-state">
                   <Code size={48} />
                   <p>Enter a regex pattern and test string to see matches</p>

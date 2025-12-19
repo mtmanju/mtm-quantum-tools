@@ -1,0 +1,44 @@
+.xml-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  gap: 1rem;
+  min-height: 300px;
+}
+
+.xml-empty-state svg {
+  color: var(--text-tertiary);
+}
+
+.xml-empty-state p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.xml-error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 200px;
+}
+
+.xml-error-state p {
+  font-size: 0.9375rem;
+  color: var(--text-error);
+}
+
+.xml-output {
+  margin: 0;
+  padding: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+

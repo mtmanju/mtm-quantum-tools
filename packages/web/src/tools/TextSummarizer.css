@@ -1,0 +1,119 @@
+.text-summarizer-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.text-summarizer-mode-selector {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+
+.text-summarizer-mode-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.text-summarizer-mode-btn:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.text-summarizer-mode-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .text-summarizer-mode-btn.active {
+  color: #000000;
+}
+
+.text-summarizer-count-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.text-summarizer-count-input label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.text-summarizer-count-field {
+  width: 100px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.text-summarizer-count-field:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.text-summarizer-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  gap: 1rem;
+  min-height: 300px;
+}
+
+.text-summarizer-empty-state svg {
+  color: var(--text-tertiary);
+}
+
+.text-summarizer-empty-state p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.text-summarizer-output {
+  padding: 1rem;
+  min-height: 200px;
+}
+
+.text-summarizer-paragraph {
+  margin: 0 0 1rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.text-summarizer-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .text-summarizer-controls {
+    padding: 0.75rem 1rem;
+  }
+
+  .text-summarizer-count-input {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
