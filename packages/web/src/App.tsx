@@ -16,6 +16,8 @@ import {
   FileJson,
   FileStack,
   FileText,
+  FileType,
+  FileX,
   GitBranch,
   Hash,
   KeyRound,
@@ -31,9 +33,14 @@ import {
   Sparkle,
   Table2,
   TrendingUp,
+  TrendingDown,
   Type,
   Wand2,
-  Zap
+  Zap,
+  FileSpreadsheet,
+  AlignLeft,
+  BarChart3,
+  Globe
 } from 'lucide-react'
 import type { ComponentType, ReactElement, ReactNode } from 'react'
 import { memo, useCallback, useMemo } from 'react'
@@ -104,7 +111,7 @@ const tools: Tool[] = [
     id: 'json-formatter',
     name: 'JSON Formatter',
     description: 'Beautify & validate JSON instantly',
-    icon: <FileJson size={64} strokeWidth={1.5} />,
+    icon: <FileJson size={48} strokeWidth={1.5} />,
     iconColor: '#F39C12', // Orange
     category: 'Essential',
     status: 'active',
@@ -115,7 +122,7 @@ const tools: Tool[] = [
     id: 'url-encoder',
     name: 'URL Encoder',
     description: 'Encode & decode URLs quickly',
-    icon: <Link2 size={64} strokeWidth={1.5} />,
+    icon: <Globe size={48} strokeWidth={1.5} />,
     iconColor: '#8B5CF6', // Purple
     category: 'Essential',
     status: 'active',
@@ -126,7 +133,7 @@ const tools: Tool[] = [
     id: 'base64-converter',
     name: 'Base64 Converter',
     description: 'Convert files & text to Base64',
-    icon: <FileCode size={64} strokeWidth={1.5} />,
+    icon: <FileCode size={48} strokeWidth={1.5} />,
     iconColor: '#2980B9', // Blue
     category: 'Essential',
     status: 'active',
@@ -137,7 +144,7 @@ const tools: Tool[] = [
     id: 'hash-generator',
     name: 'Hash Generator',
     description: 'Generate MD5, SHA-1, SHA-256, SHA-512',
-    icon: <KeyRound size={64} strokeWidth={1.5} />,
+    icon: <KeyRound size={48} strokeWidth={1.5} />,
     iconColor: '#EC4899', // Pink
     category: 'Essential',
     status: 'active',
@@ -148,7 +155,7 @@ const tools: Tool[] = [
     id: 'uuid-generator',
     name: 'UUID Generator',
     description: 'Create unique identifiers',
-    icon: <Hash size={64} strokeWidth={1.5} />,
+    icon: <Hash size={48} strokeWidth={1.5} />,
     iconColor: '#06B6D4', // Cyan
     category: 'Essential',
     status: 'active',
@@ -159,7 +166,7 @@ const tools: Tool[] = [
     id: 'password-generator',
     name: 'Password Generator',
     description: 'Create strong, secure passwords',
-    icon: <LockKeyhole size={64} strokeWidth={1.5} />,
+    icon: <LockKeyhole size={48} strokeWidth={1.5} />,
     iconColor: '#F59E0B', // Amber
     category: 'Essential',
     status: 'active',
@@ -170,7 +177,7 @@ const tools: Tool[] = [
     id: 'jwt-decoder',
     name: 'JWT Decoder',
     description: 'Decode & inspect JWT tokens',
-    icon: <Shield size={64} strokeWidth={1.5} />,
+    icon: <Shield size={48} strokeWidth={1.5} />,
     iconColor: '#27AE60', // Green
     category: 'Essential',
     status: 'active',
@@ -181,7 +188,7 @@ const tools: Tool[] = [
     id: 'timestamp-converter',
     name: 'Timestamp Converter',
     description: 'Convert timestamps to dates',
-    icon: <CalendarClock size={64} strokeWidth={1.5} />,
+    icon: <CalendarClock size={48} strokeWidth={1.5} />,
     iconColor: '#34495E', // Dark Blue
     category: 'Essential',
     status: 'active',
@@ -194,7 +201,7 @@ const tools: Tool[] = [
     id: 'yaml-formatter',
     name: 'YAML Formatter',
     description: 'Format & validate YAML configs',
-    icon: <FileText size={64} strokeWidth={1.5} />,
+    icon: <FileSpreadsheet size={48} strokeWidth={1.5} />,
     iconColor: '#6366F1', // Indigo
     category: 'Code Formatters',
     status: 'active',
@@ -204,7 +211,7 @@ const tools: Tool[] = [
     id: 'html-formatter',
     name: 'HTML Formatter',
     description: 'Beautify & minify HTML',
-    icon: <CodeXml size={64} strokeWidth={1.5} />,
+    icon: <CodeXml size={48} strokeWidth={1.5} />,
     iconColor: '#EF4444', // Red
     category: 'Code Formatters',
     status: 'active',
@@ -214,7 +221,7 @@ const tools: Tool[] = [
     id: 'xml-formatter',
     name: 'XML Formatter',
     description: 'Format & validate XML docs',
-    icon: <FileCheck size={64} strokeWidth={1.5} />,
+    icon: <FileX size={48} strokeWidth={1.5} />,
     iconColor: '#F97316', // Orange
     category: 'Code Formatters',
     status: 'active',
@@ -224,7 +231,7 @@ const tools: Tool[] = [
     id: 'sql-formatter',
     name: 'SQL Formatter',
     description: 'Format SQL queries beautifully',
-    icon: <DatabaseIcon size={64} strokeWidth={1.5} />,
+    icon: <DatabaseIcon size={48} strokeWidth={1.5} />,
     iconColor: '#3498DB', // Blue
     category: 'Code Formatters',
     status: 'active',
@@ -234,7 +241,7 @@ const tools: Tool[] = [
     id: 'csv-to-json',
     name: 'CSV ↔ JSON',
     description: 'Convert between CSV & JSON',
-    icon: <Table2 size={64} strokeWidth={1.5} />,
+    icon: <Table2 size={48} strokeWidth={1.5} />,
     iconColor: '#22C55E', // Green
     category: 'Code Formatters',
     status: 'active',
@@ -244,7 +251,7 @@ const tools: Tool[] = [
     id: 'json-xml-converter',
     name: 'JSON ↔ XML',
     description: 'Convert between JSON & XML',
-    icon: <FileCheck size={64} strokeWidth={1.5} />,
+    icon: <FileType size={48} strokeWidth={1.5} />,
     iconColor: '#F97316', // Orange
     category: 'Code Formatters',
     status: 'active',
@@ -254,7 +261,7 @@ const tools: Tool[] = [
     id: 'css-formatter',
     name: 'CSS Formatter',
     description: 'Format & minify CSS',
-    icon: <Code size={64} strokeWidth={1.5} />,
+    icon: <Code size={48} strokeWidth={1.5} />,
     iconColor: '#3B82F6', // Blue
     category: 'Code Formatters',
     status: 'active',
@@ -264,7 +271,7 @@ const tools: Tool[] = [
     id: 'javascript-formatter',
     name: 'JS Formatter',
     description: 'Format & minify JavaScript',
-    icon: <Code size={64} strokeWidth={1.5} />,
+    icon: <FileCodeIcon size={48} strokeWidth={1.5} />,
     iconColor: '#F59E0B', // Amber
     category: 'Code Formatters',
     status: 'active',
@@ -276,7 +283,7 @@ const tools: Tool[] = [
     id: 'regex-tester',
     name: 'Regex Tester',
     description: 'Test regex patterns live',
-    icon: <Brackets size={64} strokeWidth={1.5} />,
+    icon: <Brackets size={48} strokeWidth={1.5} />,
     iconColor: '#E67E22', // Orange
     category: 'Code Tools',
     status: 'active',
@@ -286,7 +293,7 @@ const tools: Tool[] = [
     id: 'diff-checker',
     name: 'Diff Checker',
     description: 'Compare code & text side-by-side',
-    icon: <GitBranch size={64} strokeWidth={1.5} />,
+    icon: <GitBranch size={48} strokeWidth={1.5} />,
     iconColor: '#16A085', // Green
     category: 'Code Tools',
     status: 'active',
@@ -296,7 +303,7 @@ const tools: Tool[] = [
     id: 'text-case-converter',
     name: 'Case Converter',
     description: 'Transform text case instantly',
-    icon: <Type size={64} strokeWidth={1.5} />,
+    icon: <Type size={48} strokeWidth={1.5} />,
     iconColor: '#10B981', // Green
     category: 'Code Tools',
     status: 'active',
@@ -306,7 +313,7 @@ const tools: Tool[] = [
     id: 'color-converter',
     name: 'Color Converter',
     description: 'Convert HEX, RGB, HSL',
-    icon: <Palette size={64} strokeWidth={1.5} />,
+    icon: <Palette size={48} strokeWidth={1.5} />,
     iconColor: '#EC4899', // Pink
     category: 'Code Tools',
     status: 'active',
@@ -316,7 +323,7 @@ const tools: Tool[] = [
     id: 'number-base-converter',
     name: 'Base Converter',
     description: 'Convert binary, hex, decimal, octal',
-    icon: <Binary size={64} strokeWidth={1.5} />,
+    icon: <Binary size={48} strokeWidth={1.5} />,
     iconColor: '#8B5CF6', // Purple
     category: 'Code Tools',
     status: 'active',
@@ -326,7 +333,7 @@ const tools: Tool[] = [
     id: 'lorem-ipsum-generator',
     name: 'Lorem Generator',
     description: 'Generate placeholder text',
-    icon: <Sparkle size={64} strokeWidth={1.5} />,
+    icon: <Sparkle size={48} strokeWidth={1.5} />,
     iconColor: '#64748B', // Slate
     category: 'Code Tools',
     status: 'active',
@@ -336,7 +343,7 @@ const tools: Tool[] = [
     id: 'html-entity-encoder',
     name: 'HTML Entity',
     description: 'Encode & decode HTML entities',
-    icon: <Code size={64} strokeWidth={1.5} />,
+    icon: <Brackets size={48} strokeWidth={1.5} />,
     iconColor: '#EF4444', // Red
     category: 'Code Tools',
     status: 'active',
@@ -346,7 +353,7 @@ const tools: Tool[] = [
     id: 'slug-converter',
     name: 'Slug Converter',
     description: 'Convert text to URL-friendly slugs',
-    icon: <Link2 size={64} strokeWidth={1.5} />,
+    icon: <Link2 size={48} strokeWidth={1.5} />,
     iconColor: '#8B5CF6', // Purple
     category: 'Code Tools',
     status: 'active',
@@ -356,7 +363,7 @@ const tools: Tool[] = [
     id: 'email-validator',
     name: 'Email Validator',
     description: 'Validate email addresses',
-    icon: <Mail size={64} strokeWidth={1.5} />,
+    icon: <Mail size={48} strokeWidth={1.5} />,
     iconColor: '#06B6D4', // Cyan
     category: 'Code Tools',
     status: 'active',
@@ -368,7 +375,7 @@ const tools: Tool[] = [
     id: 'md-converter',
     name: 'MD → DOCX',
     description: 'Convert Markdown to Word docs',
-    icon: <FileCodeIcon size={64} strokeWidth={1.5} />,
+    icon: <FileCodeIcon size={48} strokeWidth={1.5} />,
     iconColor: '#875A7B', // Purple - Odoo style
     category: 'Documents',
     status: 'active',
@@ -378,7 +385,7 @@ const tools: Tool[] = [
     id: 'pdf-merger',
     name: 'PDF Merger',
     description: 'Merge PDFs into one file',
-    icon: <FileStack size={64} strokeWidth={1.5} />,
+    icon: <FileStack size={48} strokeWidth={1.5} />,
     iconColor: '#E74C3C', // Red
     category: 'Documents',
     status: 'active',
@@ -388,7 +395,7 @@ const tools: Tool[] = [
     id: 'pdf-splitter',
     name: 'PDF Splitter',
     description: 'Split PDF into individual pages',
-    icon: <Scissors size={64} strokeWidth={1.5} />,
+    icon: <Scissors size={48} strokeWidth={1.5} />,
     iconColor: '#F59E0B', // Amber
     category: 'Documents',
     status: 'active',
@@ -398,7 +405,7 @@ const tools: Tool[] = [
     id: 'word-counter',
     name: 'Word Counter',
     description: 'Count words, characters & more',
-    icon: <FileText size={64} strokeWidth={1.5} />,
+    icon: <BarChart3 size={48} strokeWidth={1.5} />,
     iconColor: '#3B82F6', // Blue
     category: 'Documents',
     status: 'active',
@@ -408,7 +415,7 @@ const tools: Tool[] = [
     id: 'text-summarizer',
     name: 'Text Summarizer',
     description: 'Summarize long text quickly',
-    icon: <FileText size={64} strokeWidth={1.5} />,
+    icon: <AlignLeft size={48} strokeWidth={1.5} />,
     iconColor: '#10B981', // Green
     category: 'Documents',
     status: 'active',
@@ -420,7 +427,7 @@ const tools: Tool[] = [
     id: 'api-tester',
     name: 'API Tester',
     description: 'Test REST APIs with ease',
-    icon: <Network size={64} strokeWidth={1.5} />,
+    icon: <Network size={48} strokeWidth={1.5} />,
     iconColor: '#F1C40F', // Yellow
     category: 'API & Testing',
     status: 'active',
@@ -432,7 +439,7 @@ const tools: Tool[] = [
     id: 'dmn-evaluator',
     name: 'DMN Evaluator',
     description: 'Evaluate decision tables',
-    icon: <Layers size={64} strokeWidth={1.5} />,
+    icon: <Layers size={48} strokeWidth={1.5} />,
     iconColor: '#9B59B6', // Purple
     category: 'Business Logic',
     status: 'active',
@@ -442,7 +449,7 @@ const tools: Tool[] = [
     id: 'workflow-validator',
     name: 'Workflow Validator',
     description: 'Validate BPMN workflows',
-    icon: <Wand2 size={64} strokeWidth={1.5} />,
+    icon: <Wand2 size={48} strokeWidth={1.5} />,
     iconColor: '#1ABC9C', // Teal
     category: 'Business Logic',
     status: 'active',
@@ -454,7 +461,7 @@ const tools: Tool[] = [
     id: 'calculator',
     name: 'Calculator',
     description: 'Scientific calculations',
-    icon: <CalculatorIcon size={64} strokeWidth={1.5} />,
+    icon: <CalculatorIcon size={48} strokeWidth={1.5} />,
     iconColor: '#8E44AD', // Purple
     category: 'Utilities',
     status: 'active',
@@ -466,7 +473,7 @@ const tools: Tool[] = [
     id: 'loan-emi-calculator',
     name: 'Loan EMI Calculator',
     description: 'Calculate loan EMI & interest',
-    icon: <CreditCard size={64} strokeWidth={1.5} />,
+    icon: <CreditCard size={48} strokeWidth={1.5} />,
     iconColor: '#3B82F6', // Blue
     category: 'Finance',
     status: 'active',
@@ -476,7 +483,7 @@ const tools: Tool[] = [
     id: 'sip-calculator',
     name: 'SIP Calculator',
     description: 'Calculate SIP returns',
-    icon: <TrendingUp size={64} strokeWidth={1.5} />,
+    icon: <TrendingUp size={48} strokeWidth={1.5} />,
     iconColor: '#10B981', // Green
     category: 'Finance',
     status: 'active',
@@ -486,7 +493,7 @@ const tools: Tool[] = [
     id: 'compound-interest-calculator',
     name: 'Compound Interest',
     description: 'Calculate compound interest',
-    icon: <Percent size={64} strokeWidth={1.5} />,
+    icon: <Percent size={48} strokeWidth={1.5} />,
     iconColor: '#8B5CF6', // Purple
     category: 'Finance',
     status: 'active',
@@ -496,7 +503,7 @@ const tools: Tool[] = [
     id: 'loan-repayment-calculator',
     name: 'Loan Repayment',
     description: 'Plan loan repayment strategy',
-    icon: <DollarSign size={64} strokeWidth={1.5} />,
+    icon: <DollarSign size={48} strokeWidth={1.5} />,
     iconColor: '#F59E0B', // Amber
     category: 'Finance',
     status: 'active',
@@ -506,7 +513,7 @@ const tools: Tool[] = [
     id: 'investment-return-calculator',
     name: 'Investment Return',
     description: 'Calculate investment returns & CAGR',
-    icon: <TrendingUp size={64} strokeWidth={1.5} />,
+    icon: <TrendingDown size={48} strokeWidth={1.5} />,
     iconColor: '#EC4899', // Pink
     category: 'Finance',
     status: 'active',
