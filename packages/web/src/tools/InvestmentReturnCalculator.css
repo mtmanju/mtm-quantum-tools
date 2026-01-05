@@ -37,12 +37,12 @@
 .input-group select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--focus-shadow-light);
 }
 
 [data-theme="dark"] .input-group input:focus,
 [data-theme="dark"] .input-group select:focus {
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  box-shadow: var(--focus-shadow-dark);
 }
 
 .time-input {
@@ -86,11 +86,11 @@
 }
 
 .result-value.returns {
-  color: #10B981;
+  color: var(--status-success);
 }
 
 .result-value.cagr {
-  color: #3B82F6;
+  color: var(--status-info);
 }
 
 .result-note {
@@ -103,7 +103,7 @@
   grid-column: 1 / -1;
   padding: 0.875rem 1.75rem;
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-light);
   border: none;
   border-radius: 100px;
   font-size: 0.9375rem;
@@ -113,7 +113,7 @@
 }
 
 [data-theme="dark"] .download-btn {
-  color: #000000;
+  color: var(--text-on-accent-dark);
 }
 
 .download-btn:hover {

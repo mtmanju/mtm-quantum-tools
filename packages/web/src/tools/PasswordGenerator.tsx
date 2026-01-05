@@ -108,11 +108,12 @@ const PasswordGenerator = () => {
               <div className="password-strength-bar">
                 <div
                   className="password-strength-fill"
-                  style={{ width: `${(strength.score / 6) * 100}%` }}
+                  style={{ width: `${(strength.score / 7) * 100}%` }}
                 />
               </div>
               <div className="password-strength-label">
                 <span>Strength: {strength.strength.replace('-', ' ')}</span>
+                <span className="password-entropy">Entropy: {strength.entropy.toFixed(1)} bits</span>
                 {strength.feedback.length > 0 && (
                   <span className="password-strength-feedback">
                     {strength.feedback[0]}

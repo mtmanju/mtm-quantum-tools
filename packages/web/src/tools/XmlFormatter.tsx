@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatXml, minifyXml, validateXml } from '../utils/xml'
+import { downloadTextFile } from '../utils/file'
 import './XmlFormatter.css'
 
 const XmlFormatter = () => {
@@ -84,15 +85,7 @@ const XmlFormatter = () => {
     const content = formattedXml || xmlContent
     if (!content.trim()) return
 
-    const blob = new Blob([content], { type: 'text/xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.xml'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'formatted.xml', 'text/xml')
   }, [formattedXml, xmlContent])
 
   const handleClear = useCallback(() => {

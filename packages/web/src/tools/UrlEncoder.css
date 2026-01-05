@@ -2,11 +2,38 @@
 
 .url-mode-selector {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 1rem;
   padding: 1rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+}
+
+.url-mode-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.url-encode-mode-group {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.url-encode-mode-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.url-encode-mode-label input[type="radio"] {
+  cursor: pointer;
+  accent-color: var(--accent);
 }
 
 .url-mode-btn {
@@ -28,12 +55,12 @@
 
 .url-mode-btn.active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-light);
   border-color: var(--accent);
 }
 
 [data-theme="dark"] .url-mode-btn.active {
-  color: #000000;
+  color: var(--text-on-accent-dark);
 }
 
 .url-output {

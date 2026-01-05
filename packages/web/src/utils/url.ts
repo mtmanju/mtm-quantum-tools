@@ -4,8 +4,10 @@
 
 /**
  * Encodes a string to URL-encoded format
+ * @param text - Text to encode
+ * @param component - If true, uses encodeURIComponent (for URL components). If false, uses encodeURI (for full URLs)
  */
-export const encodeUrl = (text: string): string => {
+export const encodeUrl = (text: string, component: boolean = true): string => {
   // Defensive: Handle null/undefined inputs
   if (text == null) return ''
   if (typeof text !== 'string') {
@@ -19,7 +21,9 @@ export const encodeUrl = (text: string): string => {
   if (!text.trim()) return ''
   
   try {
-    return encodeURIComponent(text)
+    // encodeURIComponent: Encodes special characters (use for URL components like query params)
+    // encodeURI: Encodes only characters that are not valid in URLs (use for full URLs)
+    return component ? encodeURIComponent(text) : encodeURI(text)
   } catch (error) {
     // If encoding fails, return empty string
     return ''

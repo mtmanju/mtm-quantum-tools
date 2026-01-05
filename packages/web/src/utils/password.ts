@@ -88,12 +88,38 @@ export const generatePassword = (options: PasswordOptions): string => {
 }
 
 /**
- * Calculates password strength
+ * Calculates password entropy (bits of entropy)
+ */
+export const calculatePasswordEntropy = (password: string): number => {
+  if (!password) return 0
+  
+  // Count character sets used
+  let charsetSize = 0
+  if (/[a-z]/.test(password)) charsetSize += 26
+  if (/[A-Z]/.test(password)) charsetSize += 26
+  if (/[0-9]/.test(password)) charsetSize += 10
+  if (/[^a-zA-Z0-9]/.test(password)) {
+    // Count unique special characters
+    const specialChars = password.match(/[^a-zA-Z0-9]/g)
+    if (specialChars) {
+      charsetSize += new Set(specialChars).size
+    }
+  }
+  
+  if (charsetSize === 0) return 0
+  
+  // Entropy = log2(charsetSize^length)
+  return Math.log2(Math.pow(charsetSize, password.length))
+}
+
+/**
+ * Calculates password strength with entropy
  */
 export const calculatePasswordStrength = (password: string): {
   score: number
   strength: 'weak' | 'fair' | 'good' | 'strong' | 'very-strong'
   feedback: string[]
+  entropy: number
 } => {
   let score = 0
   const feedback: string[] = []
@@ -106,6 +132,10 @@ export const calculatePasswordStrength = (password: string): {
 
   if (password.length >= 12) {
     score += 1
+  }
+  
+  if (password.length >= 16) {
+    score += 0.5
   }
 
   if (/[a-z]/.test(password)) {
@@ -131,20 +161,47 @@ export const calculatePasswordStrength = (password: string): {
   } else {
     feedback.push('Add special characters')
   }
+  
+  // Check for common patterns (reduce score)
+  const commonPatterns = [
+    /(.)\1{2,}/, // Repeated characters (aaa, 111)
+    /(012|123|234|345|456|567|678|789|890)/, // Sequential numbers
+    /(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i, // Sequential letters
+    /(qwerty|asdfgh|zxcvbn|password|123456)/i // Common passwords
+  ]
+  
+  const hasCommonPattern = commonPatterns.some(pattern => pattern.test(password))
+  if (hasCommonPattern) {
+    score -= 1
+    feedback.push('Avoid common patterns or sequences')
+  }
+  
+  // Calculate entropy
+  const entropy = calculatePasswordEntropy(password)
+  
+  // Adjust score based on entropy
+  if (entropy >= 80) {
+    score += 1
+  } else if (entropy < 40) {
+    score -= 1
+    feedback.push('Password has low entropy - use more diverse characters')
+  }
 
   let strength: 'weak' | 'fair' | 'good' | 'strong' | 'very-strong'
-  if (score <= 2) {
+  const finalScore = Math.max(0, Math.min(7, Math.round(score)))
+  
+  if (finalScore <= 2) {
     strength = 'weak'
-  } else if (score === 3) {
+  } else if (finalScore === 3) {
     strength = 'fair'
-  } else if (score === 4) {
+  } else if (finalScore === 4) {
     strength = 'good'
-  } else if (score === 5) {
+  } else if (finalScore === 5 || finalScore === 6) {
     strength = 'strong'
   } else {
     strength = 'very-strong'
   }
 
-  return { score, strength, feedback }
+  return { score: finalScore, strength, feedback, entropy }
 }
 

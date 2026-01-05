@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatJson, minifyJson, validateJson } from '../utils/json'
+import { downloadTextFile } from '../utils/file'
 import './JsonFormatter.css'
 
 const JsonFormatter = () => {
@@ -74,15 +75,7 @@ const JsonFormatter = () => {
     const content = formattedJson || jsonContent
     if (!content) return
 
-    const blob = new Blob([content], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'json.json'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'json.json', 'application/json')
   }, [formattedJson, jsonContent])
 
   const handleClear = useCallback(() => {

@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { generateHash, type HashAlgorithm } from '../utils/hash'
+import { downloadTextFile } from '../utils/file'
 import './HashGenerator.css'
 
 const HashGenerator = () => {
@@ -106,15 +107,7 @@ SHA-1:  ${hashes.sha1}
 SHA-256: ${hashes.sha256}
 SHA-512: ${hashes.sha512}`
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'hash-report.txt'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(report, 'hash-report.txt')
   }, [input, hashes])
 
   const handleClear = useCallback(() => {

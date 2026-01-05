@@ -8,6 +8,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { analyzeText } from '../utils/textAnalysis'
+import { downloadTextFile } from '../utils/file'
 import './WordCounter.css'
 
 const WordCounter = () => {
@@ -50,15 +51,7 @@ Statistics:
 Original Text:
 ${text}`
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'word-count-report.txt'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(report, 'word-count-report.txt')
   }, [text, stats])
 
   const handleClear = useCallback(() => {

@@ -121,7 +121,7 @@
 }
 
 .workflow-info h4 {
-  color: #3B82F6;
+  color: var(--status-info);
 }
 
 .workflow-errors ul,

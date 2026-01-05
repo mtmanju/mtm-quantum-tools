@@ -1,7 +1,8 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useCallback } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateSIP, calculateSIPInvestment, formatCurrency, formatPercentage } from '../utils/finance'
+import { downloadTextFile } from '../utils/file'
 import './SipCalculator.css'
 
 const SipCalculator = memo(() => {
@@ -45,7 +46,7 @@ const SipCalculator = memo(() => {
     }
   }, [monthlyAmount, rate, tenure, tenureUnit])
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!results) return
 
     const report = `SIP Calculator Report
@@ -65,14 +66,8 @@ Results:
 Generated on: ${new Date().toLocaleString()}
 `
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'sip-calculator-report.txt'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    downloadTextFile(report, 'sip-calculator-report.txt')
+  }, [results, monthlyAmount, rate, tenure, tenureUnit])
 
   return (
     <ToolContainer>

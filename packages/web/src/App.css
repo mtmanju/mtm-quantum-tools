@@ -33,6 +33,21 @@
     --border-medium: #D1D5DB;
     --border-focus: #C9A063;
 
+    /* Status colors */
+    --status-success: #10B981;
+    --status-error: #EF4444;
+    --status-warning: #F59E0B;
+    --status-info: #3B82F6;
+    --status-success-light: #22C55E;
+    
+    /* Text colors on colored backgrounds */
+    --text-on-accent-light: #FFFFFF;
+    --text-on-accent-dark: #000000;
+    
+    /* Focus shadows */
+    --focus-shadow-light: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    --focus-shadow-dark: 0 0 0 3px rgba(255, 255, 255, 0.1);
+
     /* Sophisticated shadows with modern blur */
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
@@ -83,6 +98,17 @@
     --border-subtle: #1F2937;
     --border-medium: #374151;
     --border-focus: #D4AF6A;
+
+    /* Status colors (same in dark mode) */
+    --status-success: #10B981;
+    --status-error: #EF4444;
+    --status-warning: #F59E0B;
+    --status-info: #3B82F6;
+    --status-success-light: #22C55E;
+    
+    /* Text colors on colored backgrounds */
+    --text-on-accent-light: #FFFFFF;
+    --text-on-accent-dark: #000000;
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);

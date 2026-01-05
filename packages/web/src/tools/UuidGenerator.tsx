@@ -5,6 +5,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { useCopy } from '../hooks/useCopy'
 import { generateUUIDs, type UUIDVersion } from '../utils/uuid'
+import { downloadTextFile } from '../utils/file'
 import './UuidGenerator.css'
 
 const UuidGenerator = () => {
@@ -39,15 +40,7 @@ const UuidGenerator = () => {
     if (uuids.length === 0) return
 
     const content = uuids.join('\n')
-    const blob = new Blob([content], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `uuids-${uuids.length}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, `uuids-${uuids.length}.txt`)
   }, [uuids])
 
   const toolbarButtons = [

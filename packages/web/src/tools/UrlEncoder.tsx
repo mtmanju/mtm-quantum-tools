@@ -14,6 +14,7 @@ import './UrlEncoder.css'
 const UrlEncoder = () => {
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<'encode' | 'decode'>('encode')
+  const [encodeMode, setEncodeMode] = useState<'component' | 'full'>('component')
   const [error, setError] = useState('')
 
   const copyInputHook = useCopy()
@@ -34,7 +35,7 @@ const UrlEncoder = () => {
     if (!input.trim()) return ''
     
     if (mode === 'encode') {
-      return encodeUrl(input)
+      return encodeUrl(input, encodeMode === 'component')
     } else {
       const result = decodeUrl(input)
       if (!result.isValid) {
@@ -44,7 +45,7 @@ const UrlEncoder = () => {
       setError('')
       return result.decoded
     }
-  }, [input, mode])
+  }, [input, mode, encodeMode])
 
   const handleClear = useCallback(() => {
     setInput('')
@@ -88,26 +89,52 @@ const UrlEncoder = () => {
       <Toolbar left={toolbarButtons} />
 
       <div className="url-mode-selector">
-        <button
-          type="button"
-          className={`url-mode-btn ${mode === 'encode' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('encode')
-            setError('')
-          }}
-        >
-          Encode
-        </button>
-        <button
-          type="button"
-          className={`url-mode-btn ${mode === 'decode' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('decode')
-            setError('')
-          }}
-        >
-          Decode
-        </button>
+        <div className="url-mode-group">
+          <button
+            type="button"
+            className={`url-mode-btn ${mode === 'encode' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('encode')
+              setError('')
+            }}
+          >
+            Encode
+          </button>
+          <button
+            type="button"
+            className={`url-mode-btn ${mode === 'decode' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('decode')
+              setError('')
+            }}
+          >
+            Decode
+          </button>
+        </div>
+        {mode === 'encode' && (
+          <div className="url-encode-mode-group">
+            <label className="url-encode-mode-label">
+              <input
+                type="radio"
+                name="encodeMode"
+                value="component"
+                checked={encodeMode === 'component'}
+                onChange={() => setEncodeMode('component')}
+              />
+              <span>Component (encodeURIComponent)</span>
+            </label>
+            <label className="url-encode-mode-label">
+              <input
+                type="radio"
+                name="encodeMode"
+                value="full"
+                checked={encodeMode === 'full'}
+                onChange={() => setEncodeMode('full')}
+              />
+              <span>Full URL (encodeURI)</span>
+            </label>
+          </div>
+        )}
       </div>
 
       {error && <ErrorBar message={error} />}

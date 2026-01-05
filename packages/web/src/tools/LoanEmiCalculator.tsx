@@ -1,7 +1,8 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useCallback } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateEMI, calculateTotalInterest, formatCurrency, formatPercentage } from '../utils/finance'
+import { downloadTextFile } from '../utils/file'
 import './LoanEmiCalculator.css'
 
 const LoanEmiCalculator = memo(() => {
@@ -45,7 +46,7 @@ const LoanEmiCalculator = memo(() => {
     }
   }, [principal, rate, tenure, tenureUnit])
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!results) return
 
     const report = `Loan EMI Calculator Report
@@ -65,14 +66,8 @@ Results:
 Generated on: ${new Date().toLocaleString()}
 `
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'loan-emi-report.txt'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    downloadTextFile(report, 'loan-emi-report.txt')
+  }, [results, principal, rate, tenure, tenureUnit])
 
   return (
     <ToolContainer>

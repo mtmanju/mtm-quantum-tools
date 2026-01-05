@@ -87,7 +87,7 @@
 }
 
 .result-value.savings {
-  color: #10B981;
+  color: var(--status-success);
 }
 
 .schedule-controls {
@@ -212,12 +212,12 @@
 
 .load-all-btn {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-light);
   border-color: var(--accent);
 }
 
 [data-theme="dark"] .load-all-btn {
-  color: #000000;
+  color: var(--text-on-accent-dark);
 }
 
 .load-all-btn:hover {
@@ -229,7 +229,7 @@
 .download-btn {
   padding: 0.875rem 1.75rem;
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-light);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -246,7 +246,7 @@
 }
 
 [data-theme="dark"] .download-btn {
-  color: #000000;
+  color: var(--text-on-accent-dark);
 }
 
 .download-btn:hover {

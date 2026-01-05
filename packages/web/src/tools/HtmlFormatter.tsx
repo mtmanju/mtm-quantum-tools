@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatHtml, minifyHtml, validateHtml } from '../utils/html'
+import { downloadTextFile } from '../utils/file'
 import './HtmlFormatter.css'
 
 const HtmlFormatter = () => {
@@ -73,15 +74,7 @@ const HtmlFormatter = () => {
     const content = formattedHtml || htmlContent
     if (!content.trim()) return
 
-    const blob = new Blob([content], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.html'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'formatted.html', 'text/html')
   }, [formattedHtml, htmlContent])
 
   const handleClear = useCallback(() => {

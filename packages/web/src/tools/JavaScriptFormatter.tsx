@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatJavaScript, minifyJavaScript } from '../utils/javascript'
+import { downloadTextFile } from '../utils/file'
 import './JavaScriptFormatter.css'
 
 const JavaScriptFormatter = () => {
@@ -71,15 +72,7 @@ const JavaScriptFormatter = () => {
     const content = formattedJs || jsContent
     if (!content.trim()) return
 
-    const blob = new Blob([content], { type: 'text/javascript' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.js'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'formatted.js', 'text/javascript')
   }, [formattedJs, jsContent])
 
   const handleClear = useCallback(() => {

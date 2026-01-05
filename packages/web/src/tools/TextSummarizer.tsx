@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { summarizeText } from '../utils/textAnalysis'
+import { downloadTextFile } from '../utils/file'
 import './TextSummarizer.css'
 
 const TextSummarizer = () => {
@@ -63,15 +64,7 @@ ${output}
 Original Text:
 ${input}`
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'text-summary.txt'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(report, 'text-summary.txt')
   }, [output, input, mode, count])
 
   const handleClear = useCallback(() => {

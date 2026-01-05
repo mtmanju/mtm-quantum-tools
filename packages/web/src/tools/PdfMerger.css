@@ -382,7 +382,7 @@
   padding: 0.75rem 1rem;
   background: rgba(59, 130, 246, 0.1);
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3B82F6;
+  color: var(--status-info);
   font-size: 0.875rem;
   flex-shrink: 0;
 }

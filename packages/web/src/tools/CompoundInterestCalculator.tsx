@@ -1,7 +1,8 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useCallback } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateCompoundInterest, formatCurrency, formatPercentage } from '../utils/finance'
+import { downloadTextFile } from '../utils/file'
 import './CompoundInterestCalculator.css'
 
 const CompoundInterestCalculator = memo(() => {
@@ -46,7 +47,7 @@ const CompoundInterestCalculator = memo(() => {
     { value: '365', label: 'Daily' }
   ]
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!results) return
 
     const frequencyLabel = frequencyOptions.find(opt => opt.value === compoundingFrequency)?.label || 'Monthly'
@@ -69,14 +70,8 @@ Results:
 Generated on: ${new Date().toLocaleString()}
 `
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'compound-interest-report.txt'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    downloadTextFile(report, 'compound-interest-report.txt')
+  }, [results, principal, rate, time, compoundingFrequency, frequencyOptions])
 
   return (
     <ToolContainer>

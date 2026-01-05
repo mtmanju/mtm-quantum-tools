@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatCss, minifyCss, validateCss } from '../utils/css'
+import { downloadTextFile } from '../utils/file'
 import './CssFormatter.css'
 
 const CssFormatter = () => {
@@ -83,15 +84,7 @@ const CssFormatter = () => {
     const content = formattedCss || cssContent
     if (!content.trim()) return
 
-    const blob = new Blob([content], { type: 'text/css' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.css'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'formatted.css', 'text/css')
   }, [formattedCss, cssContent])
 
   const handleClear = useCallback(() => {

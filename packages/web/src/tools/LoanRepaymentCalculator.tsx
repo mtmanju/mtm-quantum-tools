@@ -1,7 +1,8 @@
-import { memo, useMemo, useState, useEffect } from 'react'
+import { memo, useMemo, useState, useEffect, useCallback } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateLoanRepaymentSchedule, calculateEMI, formatCurrency, formatPercentage } from '../utils/finance'
+import { downloadTextFile } from '../utils/file'
 import { usePagination } from '../hooks/usePagination'
 import './LoanRepaymentCalculator.css'
 
@@ -67,7 +68,7 @@ const LoanRepaymentCalculator = memo(() => {
     schedulePagination.reset()
   }, [principal, rate, tenure, tenureUnit, extraPayment, schedulePagination.reset])
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!results) return
 
     let report = `Loan Repayment Calculator Report
@@ -101,14 +102,8 @@ Results:
 
     report += `\nGenerated on: ${new Date().toLocaleString()}\n`
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'loan-repayment-report.txt'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    downloadTextFile(report, 'loan-repayment-report.txt')
+  }, [results, principal, rate, tenure, tenureUnit, extraPayment, showSchedule])
 
   return (
     <ToolContainer>

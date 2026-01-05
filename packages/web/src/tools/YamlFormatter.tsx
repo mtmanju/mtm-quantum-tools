@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatYaml, validateYaml } from '../utils/yaml'
+import { downloadTextFile } from '../utils/file'
 import './YamlFormatter.css'
 
 const YamlFormatter = () => {
@@ -58,15 +59,7 @@ const YamlFormatter = () => {
     const content = formattedYaml || yamlContent
     if (!content.trim()) return
 
-    const blob = new Blob([content], { type: 'text/yaml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.yaml'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'formatted.yaml', 'text/yaml')
   }, [formattedYaml, yamlContent])
 
   const handleClear = useCallback(() => {

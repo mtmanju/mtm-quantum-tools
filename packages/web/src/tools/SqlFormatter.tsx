@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatSql, minifySql, validateSql } from '../utils/sql'
+import { downloadTextFile } from '../utils/file'
 import './SqlFormatter.css'
 
 const SqlFormatter = () => {
@@ -73,15 +74,7 @@ const SqlFormatter = () => {
     const content = formattedSql || sqlContent
     if (!content.trim()) return
 
-    const blob = new Blob([content], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'formatted.sql'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    downloadTextFile(content, 'formatted.sql', 'text/plain')
   }, [formattedSql, sqlContent])
 
   const handleClear = useCallback(() => {

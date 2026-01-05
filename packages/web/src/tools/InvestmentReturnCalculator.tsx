@@ -1,6 +1,7 @@
-import { memo, useMemo, useState } from 'react'
-import { ToolContainer } from '../components/ui/ToolContainer'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { ErrorBar } from '../components/ui/ErrorBar'
+import { ToolContainer } from '../components/ui/ToolContainer'
+import { downloadTextFile } from '../utils/file'
 import { calculateInvestmentReturn, formatCurrency, formatPercentage } from '../utils/finance'
 import './InvestmentReturnCalculator.css'
 
@@ -46,7 +47,7 @@ const InvestmentReturnCalculator = memo(() => {
     }
   }, [initialInvestment, finalValue, time, timeUnit])
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!results) return
 
     const report = `Investment Return Calculator Report
@@ -66,14 +67,8 @@ Results:
 Generated on: ${new Date().toLocaleString()}
 `
 
-    const blob = new Blob([report], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'investment-return-report.txt'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    downloadTextFile(report, 'investment-return-report.txt')
+  }, [results, initialInvestment, finalValue, time, timeUnit])
 
   return (
     <ToolContainer>
