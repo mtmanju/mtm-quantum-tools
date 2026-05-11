@@ -360,27 +360,42 @@ function App() {
     }
   }, [navigate])
 
-  // Memoize category sections - optimized for instant rendering
-  const categorySections = useMemo(() => {
-    const sections: ReactNode[] = []
-    
+  // All categories rendered side-by-side as glass cards with compact tool rows
+  const categoryCards = useMemo(() => {
+    const cards: ReactNode[] = []
+
     for (const category of categories) {
       const categoryTools = tools.filter(t => t.category === category)
       if (categoryTools.length === 0) continue
 
-      sections.push(
-        <section key={category} className="category-section">
-          <h2 className="section-title">{category}</h2>
-          <div className="tools-grid">
+      cards.push(
+        <div key={category} className="category-card">
+          <div className="category-card-header">
+            <span className="category-card-title">{category}</span>
+            <span className="category-card-count">{categoryTools.length}</span>
+          </div>
+          <div className="category-card-tools">
             {categoryTools.map(tool => (
-              <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} />
+              <button
+                key={tool.id}
+                type="button"
+                className="tool-row"
+                onClick={() => handleToolClick(tool)}
+                disabled={tool.status !== 'active'}
+                title={tool.description}
+              >
+                <span className="tool-row-icon" style={{ color: tool.iconColor }}>
+                  {tool.icon}
+                </span>
+                <span className="tool-row-name">{tool.name}</span>
+              </button>
             ))}
           </div>
-        </section>
+        </div>
       )
     }
-    
-    return sections
+
+    return <div className="categories-grid">{cards}</div>
   }, [categories, handleToolClick])
 
   return (
@@ -398,58 +413,11 @@ function App() {
           <div className="page-header">
             <h1 className="page-title">About</h1>
           </div>
-          <About 
+          <About
             totalTools={tools.length}
             activeTools={activeCount}
             totalCategories={categories.length}
           />
-        </main>
-      ) : currentView === 'home' ? (
-        <main className="main-content">
-          <section className="landing-hero">
-            <div className="hero-badge">
-              <span>Professional Grade</span>
-            </div>
-            <h1 className="hero-title">Developer Tools<br />Simplified</h1>
-            <p className="hero-subtitle">
-              Trusted by developers worldwide. Professional utilities designed to streamline your workflow and boost productivity.
-            </p>
-            <div className="hero-cta">
-              <button className="cta-primary" onClick={() => navigate(ROUTES.TOOLS)}>
-                <span>Explore Tools</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </button>
-              <button className="cta-secondary" onClick={() => navigate(ROUTES.ABOUT)}>
-                <span>Learn More</span>
-              </button>
-            </div>
-          </section>
-
-          <section className="landing-features">
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Zap size={24} />
-                </div>
-              <h3>Lightning Fast</h3>
-              <p>Optimized for performance with instant results</p>
-                      </div>
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Clock size={24} />
-                      </div>
-              <h3>24/7 Available</h3>
-              <p>Access your tools anytime, anywhere</p>
-                      </div>
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Shield size={24} />
-                    </div>
-              <h3>Secure & Private</h3>
-              <p>Your data never leaves your browser</p>
-                </div>
-              </section>
         </main>
       ) : currentView === 'tools' ? (
         <main className="main-content tools-page">
@@ -497,7 +465,7 @@ function App() {
                 <p>No tools match <strong>"{searchQuery}"</strong></p>
               </div>
             )
-          ) : categorySections}
+          ) : categoryCards}
         </main>
       ) : (
         <main className="main-content tool-view">
