@@ -1,4 +1,4 @@
-import { Check, Copy, Download, Upload, X, FileText } from 'lucide-react'
+import { Check, Copy, FileText, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -95,7 +95,7 @@ ${input}`
       title: 'Copy output',
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileText size={16} />,
       label: 'Export',
       onClick: handleDownload,
       disabled: !output.trim(),

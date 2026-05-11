@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, FileText, Check, Scissors } from 'lucide-react'
+import { Upload, X, FileText, Check, Scissors, Printer } from 'lucide-react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { validatePdf, getPdfPageCount, formatFileSize, generatePdfThumbnail, splitPdfByPages, type PdfFile } from '../utils/pdf'
-import { saveAs } from 'file-saver'
+import { downloadBinaryFile } from '../utils/file'
 import './PdfSplitter.css'
 
 const PdfSplitter = () => {
@@ -88,7 +88,7 @@ const PdfSplitter = () => {
         const view = new Uint8Array(buffer)
         view.set(result.data)
         const blob = new Blob([buffer as ArrayBuffer], { type: 'application/pdf' })
-        saveAs(blob, result.name)
+        downloadBinaryFile(blob, result.name, 'application/pdf')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to split PDF')

@@ -1,4 +1,4 @@
-import { Check, Copy, Download, Upload, X, Database } from 'lucide-react'
+import { Check, Copy, Database, FileCode, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -105,7 +105,7 @@ const SqlFormatter = () => {
       title: 'Copy output',
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
       disabled: !sqlContent.trim(),

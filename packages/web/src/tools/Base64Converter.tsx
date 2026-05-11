@@ -1,5 +1,4 @@
-import { saveAs } from 'file-saver'
-import { Check, Copy, Download, FileText, Upload, X } from 'lucide-react'
+import { Check, Copy, FileDown, FileText, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
@@ -9,6 +8,7 @@ import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
+import { downloadBinaryFile } from '../utils/file'
 import {
   bytesToBase64,
   decodeFromBase64,
@@ -201,7 +201,7 @@ const Base64Converter = () => {
       extension = mimeType.split('/')[1] || 'txt'
     }
 
-    saveAs(blob, `decoded.${extension}`)
+    downloadBinaryFile(blob, `decoded.${extension}`, mimeType)
   }, [mode, detectedType, decodeResult])
 
   const handleClear = useCallback(() => {
@@ -261,7 +261,7 @@ const Base64Converter = () => {
       title: 'Copy output'
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileDown size={16} />,
       label: 'Save',
       onClick: handleDownload,
       disabled: !output.trim() || mode !== 'decode',
@@ -454,7 +454,7 @@ const Base64Converter = () => {
                   }}
                   title={isImage ? 'Download image' : 'Download file'}
                 >
-                  <Download size={14} />
+                  <FileDown size={14} />
                 </button>
               ) : undefined
             }
@@ -513,7 +513,7 @@ const Base64Converter = () => {
                         handleDownload()
                       }}
                     >
-                      <Download size={18} />
+                      <FileDown size={18} />
                       <span>Download PDF</span>
                     </button>
                   </>
@@ -529,7 +529,7 @@ const Base64Converter = () => {
                         handleDownload()
                       }}
                     >
-                      <Download size={18} />
+                      <FileDown size={18} />
                       <span>Download File</span>
                     </button>
                   </>

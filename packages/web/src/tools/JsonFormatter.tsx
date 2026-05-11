@@ -1,4 +1,4 @@
-import { Check, Copy, Download, FileJson, Minus, Plus, Upload, X } from 'lucide-react'
+import { Check, Copy, FileJson, Minus, Plus, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -113,7 +113,7 @@ const JsonFormatter = () => {
       title: 'Copy JSON'
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileJson size={16} />,
       label: 'Save',
       onClick: handleDownload,
       disabled: !jsonContent.trim(),

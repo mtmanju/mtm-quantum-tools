@@ -63,7 +63,7 @@ export default defineConfig({
           }
           
           // Document processing - only load when needed
-          if (id.includes('node_modules/docx') || id.includes('node_modules/file-saver')) {
+          if (id.includes('node_modules/docx')) {
             return 'docx-vendor'
           }
           
@@ -118,8 +118,7 @@ export default defineConfig({
     cssCodeSplit: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'lucide-react'],
-    exclude: ['mermaid']
+    include: ['react', 'react-dom', 'lucide-react', 'mermaid'],
   },
   // esbuild options only apply when using esbuild minifier
   // Since we're using terser, these are not needed

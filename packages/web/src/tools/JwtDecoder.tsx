@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Copy, Eye, EyeOff, Shield, Upload, X, Clock } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Check, Copy, Eye, EyeOff, Shield, Upload, X, Clock } from 'lucide-react'
 import { useCallback, useMemo, useState, useEffect } from 'react'
 import { decodeJwt, formatJwtTimestamp, isJwtExpired, type JwtDecodeResult } from '../utils/jwt'
 import { ToolContainer } from '../components/ui/ToolContainer'
@@ -213,18 +213,24 @@ const JwtDecoder = () => {
               ) : decodeResult.valid && decodeResult.header && decodeResult.payload ? (
                 <div className="jwt-decoded-sections">
                   {decodeResult.valid && (
-                    <div className="jwt-status-bar">
-                      <Shield size={16} />
-                      <span>Token decoded successfully</span>
-                      {isJwtExpired(decodeResult.payload) ? (
-                        <span className="jwt-expired-badge">Expired</span>
-                      ) : expirationCountdown && (
-                        <span className="jwt-countdown-badge">
-                          <Clock size={14} />
-                          <span>Expires in: {expirationCountdown}</span>
-                        </span>
-                      )}
-                    </div>
+                    <>
+                      <div className="jwt-status-bar">
+                        <Shield size={16} />
+                        <span>Token decoded successfully</span>
+                        {isJwtExpired(decodeResult.payload) ? (
+                          <span className="jwt-expired-badge">Expired</span>
+                        ) : expirationCountdown && (
+                          <span className="jwt-countdown-badge">
+                            <Clock size={14} />
+                            <span>Expires in: {expirationCountdown}</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="jwt-unverified-warning">
+                        <AlertTriangle size={14} />
+                        <span>Signature not verified — this tool decodes only, it does not validate the signature</span>
+                      </div>
+                    </>
                   )}
 
                   <div className="jwt-section">

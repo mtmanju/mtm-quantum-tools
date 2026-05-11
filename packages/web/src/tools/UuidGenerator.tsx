@@ -1,4 +1,4 @@
-import { Check, Copy, Download, X, Hash, RefreshCw } from 'lucide-react'
+import { Check, Copy, FileText, Hash, RefreshCw, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
@@ -59,7 +59,7 @@ const UuidGenerator = () => {
       showDividerBefore: true
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileText size={16} />,
       label: 'Download',
       onClick: handleDownload,
       disabled: uuids.length === 0,

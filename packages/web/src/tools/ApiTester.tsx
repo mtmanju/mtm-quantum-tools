@@ -80,6 +80,19 @@ const ApiTester = () => {
       return
     }
 
+    // Only allow http/https to prevent protocol injection
+    let parsedUrl: URL
+    try {
+      parsedUrl = new URL(url.trim())
+    } catch {
+      setError('Invalid URL — please enter a valid http:// or https:// URL')
+      return
+    }
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      setError('Only http:// and https:// URLs are supported')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     setResponse(null)
@@ -97,7 +110,7 @@ const ApiTester = () => {
         requestOptions.body = body
       }
 
-      const res = await fetch(url, requestOptions)
+      const res = await fetch(parsedUrl.href, requestOptions)
       const endTime = Date.now()
       const responseTime = endTime - startTime
 

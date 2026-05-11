@@ -1,4 +1,4 @@
-import { Check, Copy, Download, Upload, X, Key, RefreshCw } from 'lucide-react'
+import { Check, Copy, FileText, Key, RefreshCw, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -145,7 +145,7 @@ SHA-512: ${hashes.sha512}`
       showDividerBefore: true
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileText size={16} />,
       label: 'Export',
       onClick: handleDownload,
       disabled: !input.trim() || Object.values(hashes).every(h => !h),

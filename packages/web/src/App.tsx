@@ -38,10 +38,13 @@ import {
   FileSpreadsheet,
   AlignLeft,
   BarChart3,
-  Globe
+  Globe,
+  Search,
+  X,
 } from 'lucide-react'
-import type { ComponentType, ReactElement, ReactNode } from 'react'
-import { memo, useCallback, useMemo } from 'react'
+import React from 'react'
+import type { ReactElement, ReactNode } from 'react'
+import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './App.css'
 import Footer from './components/Footer'
@@ -50,45 +53,47 @@ import { getToolId, getViewType, ROUTES } from './constants/routes'
 import { useTheme } from './context/ThemeContext'
 import { useScrollPosition } from './hooks/useScrollPosition'
 import About from './pages/About'
-import ApiTester from './tools/ApiTester'
-import Base64Converter from './tools/Base64Converter'
-import Calculator from './tools/Calculator'
-import ColorConverter from './tools/ColorConverter'
-import CssFormatter from './tools/CssFormatter'
-import CsvToJsonConverter from './tools/CsvToJsonConverter'
-import DiffChecker from './tools/DiffChecker'
-import DmnEvaluator from './tools/DmnEvaluator'
-import EmailValidator from './tools/EmailValidator'
-import HashGenerator from './tools/HashGenerator'
-import HtmlEntityEncoder from './tools/HtmlEntityEncoder'
-import HtmlFormatter from './tools/HtmlFormatter'
-import JavaScriptFormatter from './tools/JavaScriptFormatter'
-import JsonFormatter from './tools/JsonFormatter'
-import JsonXmlConverter from './tools/JsonXmlConverter'
-import JwtDecoder from './tools/JwtDecoder'
-import LoremIpsumGenerator from './tools/LoremIpsumGenerator'
-import MarkdownConverter from './tools/MarkdownConverter'
-import NumberBaseConverter from './tools/NumberBaseConverter'
-import PasswordGenerator from './tools/PasswordGenerator'
-import PdfMerger from './tools/PdfMerger'
-import PdfSplitter from './tools/PdfSplitter'
-import RegexTester from './tools/RegexTester'
-import SlugConverter from './tools/SlugConverter'
-import SqlFormatter from './tools/SqlFormatter'
-import TextCaseConverter from './tools/TextCaseConverter'
-import TextSummarizer from './tools/TextSummarizer'
-import TimestampConverter from './tools/TimestampConverter'
-import UrlEncoder from './tools/UrlEncoder'
-import UuidGenerator from './tools/UuidGenerator'
-import WordCounter from './tools/WordCounter'
-import WorkflowValidator from './tools/WorkflowValidator'
-import XmlFormatter from './tools/XmlFormatter'
-import YamlFormatter from './tools/YamlFormatter'
-import LoanEmiCalculator from './tools/LoanEmiCalculator'
-import SipCalculator from './tools/SipCalculator'
-import CompoundInterestCalculator from './tools/CompoundInterestCalculator'
-import LoanRepaymentCalculator from './tools/LoanRepaymentCalculator'
-import InvestmentReturnCalculator from './tools/InvestmentReturnCalculator'
+
+// Lazy-load all tool components — each tool loads only when first navigated to
+const ApiTester = lazy(() => import('./tools/ApiTester'))
+const Base64Converter = lazy(() => import('./tools/Base64Converter'))
+const Calculator = lazy(() => import('./tools/Calculator'))
+const ColorConverter = lazy(() => import('./tools/ColorConverter'))
+const CssFormatter = lazy(() => import('./tools/CssFormatter'))
+const CsvToJsonConverter = lazy(() => import('./tools/CsvToJsonConverter'))
+const DiffChecker = lazy(() => import('./tools/DiffChecker'))
+const DmnEvaluator = lazy(() => import('./tools/DmnEvaluator'))
+const EmailValidator = lazy(() => import('./tools/EmailValidator'))
+const HashGenerator = lazy(() => import('./tools/HashGenerator'))
+const HtmlEntityEncoder = lazy(() => import('./tools/HtmlEntityEncoder'))
+const HtmlFormatter = lazy(() => import('./tools/HtmlFormatter'))
+const JavaScriptFormatter = lazy(() => import('./tools/JavaScriptFormatter'))
+const JsonFormatter = lazy(() => import('./tools/JsonFormatter'))
+const JsonXmlConverter = lazy(() => import('./tools/JsonXmlConverter'))
+const JwtDecoder = lazy(() => import('./tools/JwtDecoder'))
+const LoremIpsumGenerator = lazy(() => import('./tools/LoremIpsumGenerator'))
+const MarkdownConverter = lazy(() => import('./tools/MarkdownConverter'))
+const NumberBaseConverter = lazy(() => import('./tools/NumberBaseConverter'))
+const PasswordGenerator = lazy(() => import('./tools/PasswordGenerator'))
+const PdfMerger = lazy(() => import('./tools/PdfMerger'))
+const PdfSplitter = lazy(() => import('./tools/PdfSplitter'))
+const RegexTester = lazy(() => import('./tools/RegexTester'))
+const SlugConverter = lazy(() => import('./tools/SlugConverter'))
+const SqlFormatter = lazy(() => import('./tools/SqlFormatter'))
+const TextCaseConverter = lazy(() => import('./tools/TextCaseConverter'))
+const TextSummarizer = lazy(() => import('./tools/TextSummarizer'))
+const TimestampConverter = lazy(() => import('./tools/TimestampConverter'))
+const UrlEncoder = lazy(() => import('./tools/UrlEncoder'))
+const UuidGenerator = lazy(() => import('./tools/UuidGenerator'))
+const WordCounter = lazy(() => import('./tools/WordCounter'))
+const WorkflowValidator = lazy(() => import('./tools/WorkflowValidator'))
+const XmlFormatter = lazy(() => import('./tools/XmlFormatter'))
+const YamlFormatter = lazy(() => import('./tools/YamlFormatter'))
+const LoanEmiCalculator = lazy(() => import('./tools/LoanEmiCalculator'))
+const SipCalculator = lazy(() => import('./tools/SipCalculator'))
+const CompoundInterestCalculator = lazy(() => import('./tools/CompoundInterestCalculator'))
+const LoanRepaymentCalculator = lazy(() => import('./tools/LoanRepaymentCalculator'))
+const InvestmentReturnCalculator = lazy(() => import('./tools/InvestmentReturnCalculator'))
 
 interface Tool {
   id: string
@@ -98,7 +103,7 @@ interface Tool {
   iconColor?: string
   category: string
   status: 'active' | 'coming-soon'
-  component?: ComponentType
+  component?: React.ElementType
   featured?: boolean
 }
 
@@ -371,8 +376,8 @@ const tools: Tool[] = [
   // Documents
   {
     id: 'md-converter',
-    name: 'MD → DOCX',
-    description: 'Convert Markdown to Word docs',
+    name: 'MD Converter',
+    description: 'Export Markdown to DOCX, PDF, or HTML',
     icon: <FileCodeIcon size={48} strokeWidth={1.5} />,
     iconColor: '#875A7B', // Purple - Odoo style
     category: 'Documents',
@@ -519,8 +524,11 @@ const tools: Tool[] = [
   }
 ]
 
-// Memoized tool card component - Odoo style
-const ToolCard = memo(({ tool, onClick }: { tool: Tool; onClick: (tool: Tool) => void }) => (
+const ToolCard = memo(({ tool, onClick, showDescription }: {
+  tool: Tool
+  onClick: (tool: Tool) => void
+  showDescription?: boolean
+}) => (
   <div
     className={`tool-card ${tool.status}`}
     onClick={() => onClick(tool)}
@@ -530,6 +538,7 @@ const ToolCard = memo(({ tool, onClick }: { tool: Tool; onClick: (tool: Tool) =>
     </div>
     <div className="tool-info">
       <h3>{tool.name}</h3>
+      {showDescription && <p className="tool-description">{tool.description}</p>}
     </div>
     {tool.status === 'coming-soon' && (
       <div className="tool-badge">
@@ -541,10 +550,20 @@ const ToolCard = memo(({ tool, onClick }: { tool: Tool; onClick: (tool: Tool) =>
 
 ToolCard.displayName = 'ToolCard'
 
-// Component renderer for lazy-loaded tools
-const ToolRenderer = memo(({ component: ToolComponent }: { component: ComponentType }) => {
+const ToolLoadingFallback = () => (
+  <div className="tool-loading-fallback">
+    <div className="tool-loading-spinner" aria-label="Loading tool..." />
+  </div>
+)
+
+// Component renderer — wraps each lazy tool in Suspense
+const ToolRenderer = memo(({ component: ToolComponent }: { component: React.ElementType }) => {
   if (!ToolComponent) return null
-  return <ToolComponent />
+  return (
+    <Suspense fallback={<ToolLoadingFallback />}>
+      <ToolComponent />
+    </Suspense>
+  )
 })
 
 ToolRenderer.displayName = 'ToolRenderer'
@@ -578,9 +597,21 @@ function App() {
     []
   )
 
-  // Memoize tool click handler
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredTools = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return null
+    return tools.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      t.category.toLowerCase().includes(q)
+    )
+  }, [searchQuery])
+
   const handleToolClick = useCallback((tool: Tool) => {
     if (tool.status === 'active') {
+      setSearchQuery('')
       navigate(ROUTES.TOOL(tool.id))
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -679,10 +710,51 @@ function App() {
         </main>
       ) : currentView === 'tools' ? (
         <main className="main-content tools-page">
-          <div className="page-header">
+          <div className="page-header tools-page-header">
             <h1 className="page-title">Tools</h1>
+            <div className="tools-search-bar">
+              <Search size={14} className="tools-search-icon" aria-hidden="true" />
+              <input
+                type="search"
+                className="tools-search-input"
+                placeholder={`Search ${activeCount} tools…`}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                aria-label="Search tools"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="tools-search-clear"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
           </div>
-          {categorySections}
+
+          {filteredTools !== null ? (
+            filteredTools.length > 0 ? (
+              <section className="category-section">
+                <h2 className="section-title">
+                  {filteredTools.length} tool{filteredTools.length !== 1 ? 's' : ''} found
+                </h2>
+                <div className="tools-grid">
+                  {filteredTools.map(tool => (
+                    <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} showDescription />
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <div className="tools-search-empty">
+                <p>No tools match <strong>"{searchQuery}"</strong></p>
+              </div>
+            )
+          ) : categorySections}
         </main>
       ) : (
         <main className="main-content tool-view">
@@ -701,9 +773,18 @@ function App() {
               )}
             </div>
 
-            {selectedTool && selectedTool.component && (
-            <div className="tool-workspace">
+            {selectedTool && selectedTool.component ? (
+              <div className="tool-workspace">
                 <ToolRenderer component={selectedTool.component} />
+              </div>
+            ) : !selectedTool && (
+              <div className="tool-not-found">
+                <h2>Tool not found</h2>
+                <p>The requested tool doesn't exist or has been moved.</p>
+                <button className="back-button" onClick={() => navigate(ROUTES.TOOLS)}>
+                  <ArrowLeft size={18} />
+                  <span>Browse All Tools</span>
+                </button>
               </div>
             )}
           </div>

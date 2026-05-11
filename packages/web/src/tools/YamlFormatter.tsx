@@ -1,4 +1,4 @@
-import { Check, Copy, Download, FileText, Minus, Plus, Upload, X } from 'lucide-react'
+import { Check, Copy, FileCode, FileText, Minus, Plus, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -90,7 +90,7 @@ const YamlFormatter = () => {
       title: 'Copy output',
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
       disabled: !yamlContent.trim(),

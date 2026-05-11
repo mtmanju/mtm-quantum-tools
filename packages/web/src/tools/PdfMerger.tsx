@@ -1,11 +1,11 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Download, AlertCircle, FileText, Check, GripVertical } from 'lucide-react'
+import { Upload, X, Printer, AlertCircle, FileText, Check, GripVertical } from 'lucide-react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { mergePdfs, validatePdf, getPdfPageCount, formatFileSize, generatePdfThumbnail, type PdfFile } from '../utils/pdf'
-import { saveAs } from 'file-saver'
+import { downloadBinaryFile } from '../utils/file'
 import './PdfMerger.css'
 
 const PdfMerger = () => {
@@ -159,12 +159,7 @@ const PdfMerger = () => {
 
     try {
       const mergedPdfBytes = await mergePdfs(pdfFiles)
-      // Convert Uint8Array to Blob - create a new ArrayBuffer view
-      const buffer = new ArrayBuffer(mergedPdfBytes.length)
-      const view = new Uint8Array(buffer)
-      view.set(mergedPdfBytes)
-      const blob = new Blob([buffer as ArrayBuffer], { type: 'application/pdf' })
-      saveAs(blob, 'merged.pdf')
+      downloadBinaryFile(mergedPdfBytes, 'merged.pdf', 'application/pdf')
       setError('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to merge PDFs')
@@ -194,7 +189,7 @@ const PdfMerger = () => {
       title: 'Add PDF files'
     },
     {
-      icon: <Download size={16} />,
+      icon: <Printer size={16} />,
       label: isMerging ? 'Merging...' : 'Merge & Download',
       onClick: handleMerge,
       disabled: pdfFiles.length < 2 || isMerging || isValidating,

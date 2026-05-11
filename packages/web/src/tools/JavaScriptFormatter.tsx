@@ -1,4 +1,4 @@
-import { Check, Copy, Download, Upload, X } from 'lucide-react'
+import { Check, Copy, FileCode, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -117,7 +117,7 @@ const JavaScriptFormatter = () => {
       title: 'Copy output',
     },
     {
-      icon: <Download size={16} />,
+      icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
       disabled: !jsContent.trim(),
