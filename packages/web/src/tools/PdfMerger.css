@@ -2,16 +2,8 @@
   flex: 1;
   overflow: auto;
   padding: 2rem;
-  background: var(--bg-primary);
+  background: transparent;
   min-height: 0;
-}
-
-[data-theme="light"] .pdf-merger-content {
-  background: #F8F9FA;
-}
-
-[data-theme="dark"] .pdf-merger-content {
-  background: #0B0D17;
 }
 
 /* Dropzone Area */
@@ -90,21 +82,15 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  background: var(--bg-elevated);
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 1.5rem;
-}
-
-[data-theme="light"] .pdf-files-list {
-  background: #FFFFFF;
-  border-color: #E5E7EB;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 [data-theme="dark"] .pdf-files-list {
-  background: #1A1F2E;
-  border-color: #2D3748;
+  background: rgba(255, 255, 255, 0.06);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -200,36 +186,25 @@
 .pdf-file-card {
   display: flex;
   flex-direction: column;
-  background: var(--bg-elevated);
+  background: rgba(255, 255, 255, 0.7);
   border: 2px solid var(--border-subtle);
   border-radius: 12px;
   overflow: hidden;
   cursor: grab;
   transition: all 0.2s var(--ease-out);
   position: relative;
-  box-shadow: var(--shadow-sm);
-}
-
-[data-theme="light"] .pdf-file-card {
-  background: #FFFFFF;
-  border-color: #E5E7EB;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="dark"] .pdf-file-card {
-  background: #1A1F2E;
-  border-color: #2D3748;
+  background: rgba(255, 255, 255, 0.06);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .pdf-file-card:hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-[data-theme="light"] .pdf-file-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 [data-theme="dark"] .pdf-file-card:hover {

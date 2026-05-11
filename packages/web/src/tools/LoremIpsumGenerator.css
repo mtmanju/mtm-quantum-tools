@@ -10,9 +10,46 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  background: var(--bg-elevated);
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
+}
+
+[data-theme="dark"] .lorem-controls {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Latin / English language toggle */
+.lorem-text-type-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lorem-text-type-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.lorem-text-type-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.lorem-text-type-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .lorem-text-type-btn.active {
+  color: #000000;
 }
 
 .lorem-type-selector {

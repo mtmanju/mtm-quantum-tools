@@ -47,7 +47,7 @@
 
 .color-input-wrapper {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.5rem;
 }
 
@@ -73,6 +73,52 @@
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
+/* Color picker swatch — fixed-width, the text input grows to fill */
+.color-input-wrapper .color-input-picker {
+  width: 56px;
+  flex: 0 0 56px;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.color-input-wrapper .color-input-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input-wrapper .color-input-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.color-input-wrapper .color-input-picker::-moz-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.color-input-text {
+  flex: 1;
+  min-width: 0;
+  padding: 0.875rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  transition: all 0.2s var(--ease-out);
+}
+
+.color-input-text:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .color-input-text:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
 .color-preview-section {
   display: flex;
   flex-direction: column;
@@ -89,6 +135,76 @@
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
+}
+
+.color-contrast-checker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.color-contrast-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.color-contrast-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.color-contrast-result {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.color-contrast-ratio {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.color-contrast-ratio.pass {
+  color: #22C55E;
+}
+
+.color-contrast-ratio.fail {
+  color: #EF4444;
+}
+
+.color-contrast-level {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+}
+
+.color-contrast-level.pass {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22C55E;
+}
+
+.color-contrast-level.fail {
+  background: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+}
+
+@media (max-width: 600px) {
+  .color-contrast-checker {
+    grid-template-columns: 1fr;
+  }
 }
 
 .color-results {
