@@ -56,8 +56,11 @@
     --shadow-hover: 0 12px 32px -8px rgba(0, 0, 0, 0.12);
     --shadow-xl: 0 20px 48px -12px rgba(0, 0, 0, 0.15);
 
-    /* Spacing system - Responsive with clamp() */
-    --container-width: 1440px;
+    /* Page layout — single source of truth for max-width + gutter.
+       Change these two variables to retune every page (header, footer, content). */
+    --container-width: 100%;
+    --page-padding-x: clamp(0.75rem, 2vw, 1.5rem);
+
     --header-height: 72px;
     --footer-height: 80px;
     --section-spacing: clamp(4rem, 8vw, 8rem);
@@ -194,12 +197,12 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 
 /* Header and Footer styles moved to component files */
 
-/* Main Content */
+/* Main Content — width & gutter driven by --container-width and --page-padding-x */
 .main-content {
   flex: 1;
   max-width: var(--container-width);
   margin: 0 auto;
-  padding: 2rem clamp(1rem, 4vw, 2rem);
+  padding: 2rem var(--page-padding-x);
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -210,9 +213,10 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   padding-top: 1.5rem;
 }
 
-/* Tool view - optimized spacing */
+/* Tool view inherits the same gutter; just trims vertical padding */
 .main-content.tool-view {
-  padding: 0.5rem clamp(1rem, 4vw, 2rem) 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -221,15 +225,17 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 1.5rem 1rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
   }
-  
+
   .main-content.tools-page {
     padding-top: 1rem;
   }
-  
+
   .main-content.tool-view {
-    padding: 0.5rem 1rem 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.75rem;
     height: 100%;
   }
 }
@@ -535,16 +541,17 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   letter-spacing: -0.01em;
 }
 
+/* macOS Launchpad-style tool grid */
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
 }
 
 @media (max-width: 768px) {
   .tools-grid {
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.25rem;
   }
 
   .category-section {
@@ -552,18 +559,19 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   }
 
   .tool-card {
-    padding: 0.875rem 0.5rem 0.75rem;
+    padding: 1rem 0.5rem 0.875rem !important;
   }
 
   .tool-icon-wrapper {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 0.5rem;
+    width: 52px !important;
+    height: 52px !important;
+    margin-bottom: 0.625rem !important;
+    border-radius: 13px !important;
   }
 
   .tool-icon-wrapper svg {
-    width: 20px;
-    height: 20px;
+    width: 26px !important;
+    height: 26px !important;
   }
 
   .tool-info h3 {
@@ -571,39 +579,43 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   }
 }
 
-/* Tool Cards - compact vertical tiles */
+/* Tool Cards — squircle icon, soft colored bg, spring hover */
 .tool-card {
-  background: #FFFFFF;
-  border: none;
-  padding: 1rem 0.625rem 0.875rem;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 1.25rem 0.75rem 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
   position: relative;
   overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  border-radius: 0;
+  border-radius: 14px;
   box-shadow: none;
   min-height: 0;
-}
-
-[data-theme="dark"] .tool-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: none;
-  box-shadow: none;
+  transition:
+    background 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out),
+    transform 0.35s var(--ease-spring),
+    box-shadow 0.3s var(--ease-out);
 }
 
 .tool-card:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-subtle);
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  background: #FAFAFA;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 10px 24px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="dark"] .tool-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
 .tool-badge {
@@ -666,63 +678,78 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   color: #6B7280;
 }
 
+/* Squircle icon container — macOS Big Sur app icon style */
 .tool-icon-wrapper {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  transition: all 0.3s var(--ease-out);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 15px;
+  border: none;
+  transition:
+    transform 0.4s var(--ease-spring),
+    background 0.25s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
   flex-shrink: 0;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.875rem;
   position: relative;
   overflow: hidden;
 }
 
+[data-theme="dark"] .tool-icon-wrapper {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* Subtle glossy highlight — top-left to bottom-right */
 .tool-icon-wrapper::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
-  opacity: 0;
-  transition: opacity 0.3s var(--ease-out);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0));
+  border-radius: inherit;
+  opacity: 0.7;
   pointer-events: none;
 }
 
 [data-theme="dark"] .tool-icon-wrapper::before {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+  opacity: 0.9;
 }
 
 .tool-icon-wrapper svg {
-  width: 26px;
-  height: 26px;
-  transition: all 0.3s var(--ease-out);
+  width: 30px;
+  height: 30px;
+  transition: transform 0.4s var(--ease-spring);
   color: inherit;
-  stroke-width: 1.5;
-  opacity: 1;
+  stroke-width: 1.75;
   position: relative;
   z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08));
 }
 
 [data-theme="dark"] .tool-icon-wrapper svg {
-  opacity: 0.95;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .tool-card:hover .tool-icon-wrapper {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--accent);
+  transform: scale(1.06);
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  box-shadow:
+    0 4px 12px color-mix(in srgb, currentColor 25%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.tool-card:hover .tool-icon-wrapper::before {
-  opacity: 1;
+[data-theme="dark"] .tool-card:hover .tool-icon-wrapper {
+  background: color-mix(in srgb, currentColor 28%, transparent);
+  box-shadow:
+    0 4px 16px color-mix(in srgb, currentColor 30%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .tool-card:hover .tool-icon-wrapper svg {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .tool-info {
@@ -737,15 +764,15 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
 }
 
 .tool-info h3 {
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   margin: 0;
   font-weight: 500;
-  letter-spacing: 0;
-  color: #1F2937;
-  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+  line-height: 1.3;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  transition: none;
+  transition: color 0.2s var(--ease-out);
 }
 
 .tool-description {
@@ -974,6 +1001,59 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; }
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .tool-workspace {
+  background: var(--bg-secondary);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Flatten internal containers — single unified surface ──────── */
+.tool-workspace .tool-container,
+.tool-workspace .toolbar,
+.tool-workspace .editor-panel-header,
+.tool-workspace .editor-panel-content,
+.tool-workspace .api-intro,
+.tool-workspace .api-examples-bar,
+.tool-workspace .api-request-config,
+.tool-workspace .api-headers-toolbar,
+.tool-workspace .regex-examples-bar,
+.tool-workspace .json-examples-bar,
+.tool-workspace .jwt-examples-bar,
+.tool-workspace .hash-examples-bar,
+.tool-workspace .b64-examples-bar,
+.tool-workspace .diff-examples-bar,
+.tool-workspace .url-examples-bar,
+.tool-workspace .sql-examples-bar {
+  background: transparent;
+}
+
+/* Refine inner separators to subtle hairlines */
+.tool-workspace .toolbar,
+.tool-workspace .api-intro,
+.tool-workspace .api-examples-bar,
+.tool-workspace .api-request-config,
+.tool-workspace .api-headers-toolbar,
+.tool-workspace .regex-examples-bar,
+.tool-workspace .json-examples-bar,
+.tool-workspace .jwt-examples-bar,
+.tool-workspace .hash-examples-bar,
+.tool-workspace .b64-examples-bar,
+.tool-workspace .diff-examples-bar,
+.tool-workspace .url-examples-bar,
+.tool-workspace .sql-examples-bar,
+.tool-workspace .editor-panel-header {
+  border-bottom-color: var(--border-subtle);
 }
 
 

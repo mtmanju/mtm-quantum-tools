@@ -11,6 +11,20 @@ import { useFileUpload } from '../hooks/useFileUpload'
 import { encodeUrl, decodeUrl } from '../utils/url'
 import './UrlEncoder.css'
 
+const ENCODE_EXAMPLES = [
+  { label: 'Query string', text: 'name=Alice & Bob&city=New York' },
+  { label: 'Special chars', text: 'hello world! @#$%^&*()' },
+  { label: 'URL params', text: 'https://example.com/search?q=café&category=food' },
+  { label: 'Unicode', text: '日本語 テスト 🚀' },
+]
+
+const DECODE_EXAMPLES = [
+  { label: 'Query string', text: 'name%3DAlice%20%26%20Bob%26city%3DNew%20York' },
+  { label: 'Special chars', text: 'hello%20world!%20%40%23%24%25%5E%26*()' },
+  { label: 'URL params', text: 'https%3A%2F%2Fexample.com%2Fsearch%3Fq%3Dcaf%C3%A9' },
+  { label: 'Unicode', text: '%E6%97%A5%E6%9C%AC%E8%AA%9E' },
+]
+
 const UrlEncoder = () => {
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<'encode' | 'decode'>('encode')
@@ -52,6 +66,11 @@ const UrlEncoder = () => {
     setError('')
   }, [])
 
+  const handleLoadExample = useCallback((text: string) => {
+    setInput(text)
+    setError('')
+  }, [])
+
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
@@ -87,6 +106,20 @@ const UrlEncoder = () => {
   return (
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
+
+      <div className="url-examples-bar">
+        <span className="url-examples-label">Try it</span>
+        {(mode === 'encode' ? ENCODE_EXAMPLES : DECODE_EXAMPLES).map((ex) => (
+          <button
+            key={ex.label}
+            type="button"
+            className="url-example-chip"
+            onClick={() => handleLoadExample(ex.text)}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
 
       <div className="url-mode-selector">
         <div className="url-mode-group">

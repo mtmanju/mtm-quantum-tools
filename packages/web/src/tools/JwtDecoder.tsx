@@ -10,6 +10,29 @@ import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { useFileUpload } from '../hooks/useFileUpload'
 import './JwtDecoder.css'
 
+const EXAMPLES = [
+  {
+    label: 'Standard claims',
+    desc: 'sub, iat, exp',
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+  },
+  {
+    label: 'Expired token',
+    desc: 'iat in past',
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxNTE2MjM5MDgyfQ.YzpQE-PuS5C5xDgMSCNCXckqGn1OBqJfvHhHKjPxJl4',
+  },
+  {
+    label: 'RS256 signed',
+    desc: 'asymmetric alg',
+    token: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhdXRoLmV4YW1wbGUuY29tIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20iLCJhdWQiOiJhcGkuZXhhbXBsZS5jb20iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMCwicm9sZXMiOlsiYWRtaW4iXX0.SIGNATURE_PLACEHOLDER',
+  },
+  {
+    label: 'Custom claims',
+    desc: 'roles, scopes',
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MiIsIm5hbWUiOiJBbGljZSIsImVtYWlsIjoiYWxpY2VAZXhhbXBsZS5jb20iLCJyb2xlcyI6WyJhZG1pbiIsImVkaXRvciJdLCJzY29wZXMiOlsicmVhZDp1c2VycyIsIndyaXRlOnVzZXJzIl0sImlhdCI6MTcwMDAwMDAwMH0.eF6P9YqxQ8YJjqJZJ9_Vd5Q9rRGfXh3GpVy6IfRJ5KU',
+  },
+]
+
 const JwtDecoder = () => {
   const [token, setToken] = useState('')
   const [copiedStates, setCopiedStates] = useState({ token: false, header: false, payload: false, signature: false })
@@ -140,7 +163,27 @@ const JwtDecoder = () => {
   return (
     <ToolContainer dropzoneProps={fileUpload}>
       <Toolbar left={toolbarButtons} />
-      
+
+      <div className="jwt-examples-bar">
+        <span className="jwt-examples-label">Try:</span>
+        {EXAMPLES.map(ex => (
+          <button
+            key={ex.label}
+            type="button"
+            className="jwt-example-chip"
+            onClick={() => {
+              setToken(ex.token)
+              setError('')
+              setCopiedStates({ token: false, header: false, payload: false, signature: false })
+            }}
+            title={ex.desc}
+          >
+            <span className="jwt-example-name">{ex.label}</span>
+            <span className="jwt-example-desc">{ex.desc}</span>
+          </button>
+        ))}
+      </div>
+
       {error && <ErrorBar message={error} />}
 
       {decodeResult.error && decodeResult.error !== 'Please enter a JWT token' && (

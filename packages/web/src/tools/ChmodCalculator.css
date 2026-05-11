@@ -1,0 +1,473 @@
+/* ============================================================
+   Chmod Calculator
+   ============================================================ */
+
+/* Results row */
+.chmod-results {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.5rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chmod-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.chmod-result-item--wide {
+  flex: 1;
+  min-width: 220px;
+}
+
+.chmod-result-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+
+.chmod-result-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Shared value display style */
+.chmod-result-value {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4375rem 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9375rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Editable octal input */
+.chmod-octal-input {
+  width: 5ch;
+  text-align: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9375rem;
+  letter-spacing: 0.05em;
+  padding: 0.4375rem 0.75rem;
+  transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+.chmod-octal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.chmod-octal-input--error {
+  border-color: var(--status-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.chmod-octal-error {
+  font-size: 0.75rem;
+  color: var(--status-error);
+  margin-top: 0.125rem;
+}
+
+.chmod-symbolic {
+  letter-spacing: 0.08em;
+}
+
+.chmod-command {
+  flex: 1;
+}
+
+/* Inline copy button */
+.chmod-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s var(--ease-out);
+}
+
+.chmod-copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* Section title */
+.chmod-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+  padding: 0.75rem 1.5rem 0.375rem;
+}
+
+.chmod-section-title svg {
+  flex-shrink: 0;
+}
+
+/* Presets */
+.chmod-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1.5rem 1rem;
+}
+
+.chmod-preset-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.4375rem 0.875rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s var(--ease-out);
+  text-align: left;
+  min-width: 80px;
+}
+
+.chmod-preset-chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.chmod-preset-chip--active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.chmod-preset-chip-label {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
+.chmod-preset-chip--active .chmod-preset-chip-label {
+  color: var(--accent);
+}
+
+.chmod-preset-chip-desc {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  margin-top: 0.125rem;
+}
+
+/* Grid wrapper */
+.chmod-grid-wrapper {
+  padding: 0 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Permission grid: 4 columns — label + r + w + x */
+.chmod-grid {
+  display: grid;
+  grid-template-columns: auto repeat(3, 1fr);
+  gap: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Corner spacer */
+.chmod-grid-corner {
+  background: var(--bg-hover);
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Column headers */
+.chmod-grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 0.5rem;
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.chmod-grid-header:last-child {
+  border-right: none;
+}
+
+/* Row label */
+.chmod-grid-row-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.625rem 1rem;
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-hover);
+  gap: 0.125rem;
+}
+
+/* Remove bottom border from last row labels */
+.chmod-grid > .chmod-grid-row-label:last-of-type,
+.chmod-grid > .chmod-grid-cell:nth-last-child(-n+3) {
+  border-bottom: none;
+}
+
+/* Actually target last 4 grid children for no bottom border */
+.chmod-grid > *:nth-last-child(-n+4) {
+  border-bottom: none;
+}
+
+.chmod-row-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.chmod-row-sub {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+/* Grid cell */
+.chmod-grid-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem;
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s;
+}
+
+.chmod-grid-cell:hover {
+  background: var(--accent-light);
+}
+
+.chmod-grid-cell:nth-child(4n) {
+  border-right: none;
+}
+
+/* Custom checkbox */
+.chmod-checkbox-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+}
+
+.chmod-checkbox-label input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.chmod-checkbox-custom {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-medium);
+  background: var(--bg-secondary);
+  transition: all 0.15s var(--ease-out);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chmod-checkbox-label input[type='checkbox']:checked + .chmod-checkbox-custom {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.chmod-checkbox-label input[type='checkbox']:checked + .chmod-checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid #000;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.chmod-checkbox-label:hover .chmod-checkbox-custom {
+  border-color: var(--accent);
+}
+
+.chmod-checkbox-label input[type='checkbox']:focus-visible + .chmod-checkbox-custom {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Special bits section */
+.chmod-special-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chmod-section-title--inline {
+  padding: 0;
+}
+
+.chmod-special-bits {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chmod-special-bit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: all 0.15s var(--ease-out);
+  user-select: none;
+}
+
+.chmod-special-bit-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.chmod-special-bit-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.chmod-special-bit-symbol {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  width: 1ch;
+  text-align: center;
+}
+
+.chmod-special-checkbox-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.chmod-special-checkbox-wrap input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Dark theme checkmark */
+[data-theme='dark']
+  .chmod-checkbox-label
+  input[type='checkbox']:checked
+  + .chmod-checkbox-custom::after,
+[data-theme='dark']
+  .chmod-special-checkbox-wrap
+  input[type='checkbox']:checked
+  + .chmod-checkbox-custom::after {
+  border-color: #000;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chmod-results {
+    padding: 0.875rem 1rem 0.5rem;
+    gap: 0.75rem;
+  }
+
+  .chmod-result-item--wide {
+    min-width: 100%;
+  }
+
+  .chmod-section-title {
+    padding: 0.625rem 1rem 0.25rem;
+  }
+
+  .chmod-presets {
+    padding: 0 1rem 0.75rem;
+    gap: 0.375rem;
+  }
+
+  .chmod-preset-chip {
+    padding: 0.375rem 0.625rem;
+    min-width: 60px;
+  }
+
+  .chmod-grid-wrapper {
+    padding: 0 1rem 1rem;
+  }
+
+  .chmod-grid {
+    max-width: 100%;
+  }
+
+  .chmod-grid-row-label {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .chmod-special-bits {
+    gap: 0.5rem;
+  }
+
+  .chmod-special-bit-item {
+    padding: 0.4375rem 0.75rem;
+    gap: 0.5rem;
+  }
+}

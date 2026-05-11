@@ -1,0 +1,316 @@
+.pdf-to-image-container {
+  padding: 1.5rem;
+  min-height: 400px;
+}
+
+.pdf-to-image-dropzone {
+  border: 2px dashed var(--border-subtle);
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  padding: 4rem 3rem;
+  transition: all 0.4s var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  min-height: 320px;
+}
+
+.pdf-to-image-dropzone:hover {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+.pdf-to-image-dropzone.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  border-style: solid;
+}
+
+.pdf-to-image-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdf-to-image-dropzone-content svg {
+  color: var(--text-tertiary);
+}
+
+.pdf-to-image-dropzone-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.pdf-to-image-dropzone-content p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.pdf-to-image-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+}
+
+.pdf-to-image-upload-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .pdf-to-image-upload-btn {
+  color: #000000;
+}
+
+.pdf-to-image-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pdf-to-image-file-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.pdf-to-image-file-thumbnail {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-to-image-file-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pdf-to-image-thumbnail-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-tertiary);
+}
+
+.pdf-to-image-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-to-image-file-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-to-image-file-info p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.pdf-to-image-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.pdf-to-image-remove-btn:hover {
+  background: var(--bg-primary);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+.pdf-to-image-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.pdf-to-image-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pdf-to-image-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pdf-to-image-format-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pdf-to-image-format-btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.pdf-to-image-format-btn:hover {
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+.pdf-to-image-format-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .pdf-to-image-format-btn.active {
+  color: #000000;
+}
+
+.pdf-to-image-scale-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdf-to-image-scale-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.pdf-to-image-scale-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-out);
+}
+
+.pdf-to-image-scale-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.pdf-to-image-scale-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border-style: solid;
+}
+
+.pdf-to-image-scale-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-to-image-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  color: #22C55E;
+  font-size: 0.9375rem;
+}
+
+.pdf-to-image-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.pdf-to-image-progress {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .pdf-to-image-container {
+    padding: 1rem;
+  }
+
+  .pdf-to-image-dropzone {
+    padding: 3rem 2rem;
+  }
+
+  .pdf-to-image-file-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}

@@ -11,6 +11,15 @@ import { useFileUpload } from '../hooks/useFileUpload'
 import { testRegex, highlightMatches, replaceRegex, type RegexFlags } from '../utils/regex'
 import './RegexTester.css'
 
+const EXAMPLES = [
+  { label: 'Email', pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}', test: 'Contact: hello@example.com or admin@mydomain.co.uk for info' },
+  { label: 'URL', pattern: 'https?://[^\\s]+', test: 'Visit https://example.com or http://docs.example.com/api' },
+  { label: 'IP address', pattern: '\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b', test: 'Server: 192.168.1.1, gateway 10.0.0.1, public 8.8.8.8' },
+  { label: 'Phone (US)', pattern: '\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{4}', test: 'Call (415) 555-1234 or 212-555-0199' },
+  { label: 'Hex color', pattern: '#[0-9a-fA-F]{6}\\b', test: 'Colors: #FF5733 background, #2980B9 link, #27AE60 success' },
+  { label: 'Date (ISO)', pattern: '\\d{4}-\\d{2}-\\d{2}', test: 'Started 2024-01-15, last update 2026-05-11' },
+]
+
 const RegexTester = () => {
   const [pattern, setPattern] = useState('')
   const [testString, setTestString] = useState('')
@@ -125,6 +134,12 @@ const RegexTester = () => {
     }
   })
 
+  const handleLoadExample = useCallback((ex: { pattern: string; test: string }) => {
+    setPattern(ex.pattern)
+    setTestString(ex.test)
+    setError('')
+  }, [])
+
   const handleClear = useCallback(() => {
     setPattern('')
     setTestString('')
@@ -190,6 +205,21 @@ const RegexTester = () => {
   return (
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
+
+      <div className="regex-examples-bar">
+        <span className="regex-examples-label">Try:</span>
+        {EXAMPLES.map(ex => (
+          <button
+            key={ex.label}
+            type="button"
+            className="regex-example-chip"
+            onClick={() => handleLoadExample(ex)}
+            title={ex.pattern}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
 
       {error && <ErrorBar message={error} />}
 

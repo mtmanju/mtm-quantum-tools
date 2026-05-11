@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, ArrowRightLeft, FileSpreadsheet } from 'lucide-react'
+import { Check, Copy, Upload, X, ArrowRightLeft, FileSpreadsheet, FileDown } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { csvToJson, jsonToCsv } from '../utils/csv'
+import { downloadTextFile } from '../utils/file'
 import './CsvToJsonConverter.css'
 
 const CsvToJsonConverter = () => {
@@ -86,6 +87,19 @@ const CsvToJsonConverter = () => {
       onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
+    },
+    {
+      icon: <FileDown size={16} />,
+      label: 'Download',
+      onClick: () => {
+        if (mode === 'csv-to-json') {
+          downloadTextFile(output, 'data.json', 'application/json')
+        } else {
+          downloadTextFile(output, 'data.csv', 'text/csv')
+        }
+      },
+      disabled: !output.trim(),
+      title: 'Download output as file',
     },
     {
       icon: <X size={16} />,

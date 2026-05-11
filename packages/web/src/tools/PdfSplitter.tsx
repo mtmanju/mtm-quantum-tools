@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, FileText, Check, Scissors, Printer } from 'lucide-react'
+import { Upload, X, FileText, Check, Scissors } from 'lucide-react'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'

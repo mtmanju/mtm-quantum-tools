@@ -1,4 +1,4 @@
-import { Check, Copy, Upload, X, GitCompare, FileText } from 'lucide-react'
+import { Check, Copy, Upload, X, GitCompare, FileText, FileDown } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
@@ -9,13 +9,43 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { computeDiff } from '../utils/diff'
+import { downloadTextFile } from '../utils/file'
 import './DiffChecker.css'
+
+const EXAMPLES = [
+  {
+    label: 'Code change',
+    old: 'function greet(name) {\n  return "Hello " + name\n}\n\ngreet("World")',
+    next: 'function greet(name) {\n  return `Hello, ${name}!`\n}\n\ngreet("World")',
+  },
+  {
+    label: 'Config diff',
+    old: 'host: localhost\nport: 3000\ndebug: true\ncache: false',
+    next: 'host: 0.0.0.0\nport: 8080\ndebug: false\ncache: true\ntimeout: 30',
+  },
+  {
+    label: 'JSON change',
+    old: '{\n  "name": "Alice",\n  "age": 30,\n  "role": "user"\n}',
+    next: '{\n  "name": "Alice",\n  "age": 31,\n  "role": "admin",\n  "active": true\n}',
+  },
+  {
+    label: 'Text edit',
+    old: 'The quick brown fox jumps over the lazy dog.\nThis is line two.\nThird line here.',
+    next: 'The quick brown fox leaped over the lazy dog.\nThis is line two.\nThird line, edited.\nNew fourth line.',
+  },
+]
 
 const DiffChecker = () => {
   const [oldText, setOldText] = useState('')
   const [newText, setNewText] = useState('')
   const [ignoreWhitespace, setIgnoreWhitespace] = useState(false)
   const [error, setError] = useState('')
+
+  const handleLoadExample = useCallback((ex: { old: string; next: string }) => {
+    setOldText(ex.old)
+    setNewText(ex.next)
+    setError('')
+  }, [])
 
   const copyOldHook = useCopy()
   const copyNewHook = useCopy()
@@ -107,6 +137,13 @@ const DiffChecker = () => {
       showDividerBefore: true
     },
     {
+      icon: <FileDown size={16} />,
+      label: 'Download .diff',
+      onClick: () => downloadTextFile(diffOutput, 'document.diff', 'text/plain'),
+      disabled: !diffOutput.trim(),
+      title: 'Download diff as file',
+    },
+    {
       icon: <X size={16} />,
       label: 'Clear',
       onClick: handleClear,
@@ -119,6 +156,20 @@ const DiffChecker = () => {
   return (
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
+
+      <div className="diff-examples-bar">
+        <span className="diff-examples-label">Try it</span>
+        {EXAMPLES.map((ex) => (
+          <button
+            key={ex.label}
+            type="button"
+            className="diff-example-chip"
+            onClick={() => handleLoadExample(ex)}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
 
       {error && <ErrorBar message={error} />}
 

@@ -19,6 +19,20 @@ import {
 } from '../utils/base64'
 import './Base64Converter.css'
 
+const ENCODE_EXAMPLES = [
+  { label: 'Greeting', text: 'Hello, World!' },
+  { label: 'Auth header', text: 'username:password' },
+  { label: 'JSON', text: '{"name":"Alice","active":true}' },
+  { label: 'URL', text: 'https://example.com/path?q=test' },
+]
+
+const DECODE_EXAMPLES = [
+  { label: 'Greeting', text: 'SGVsbG8sIFdvcmxkIQ==' },
+  { label: 'Auth header', text: 'dXNlcm5hbWU6cGFzc3dvcmQ=' },
+  { label: 'JSON', text: 'eyJuYW1lIjoiQWxpY2UiLCJhY3RpdmUiOnRydWV9' },
+  { label: 'URL', text: 'aHR0cHM6Ly9leGFtcGxlLmNvbS9wYXRoP3E9dGVzdA==' },
+]
+
 const Base64Converter = () => {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
@@ -300,6 +314,31 @@ const Base64Converter = () => {
   return (
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
+
+      <div className="b64-examples-bar">
+        <span className="b64-examples-label">Try:</span>
+        {(mode === 'encode' ? ENCODE_EXAMPLES : DECODE_EXAMPLES).map(ex => (
+          <button
+            key={ex.label}
+            type="button"
+            className="b64-example-chip"
+            onClick={() => {
+              setError('')
+              setDetectedType('')
+              if (mode === 'encode') {
+                setOutput(formatBase64(encodeToBase64(ex.text)))
+                setInput('')
+              } else {
+                setInput(ex.text)
+                setOutput('')
+              }
+            }}
+            title={ex.label}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
 
       <div className="base64-mode-selector">
         <button

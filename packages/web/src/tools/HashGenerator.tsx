@@ -1,5 +1,5 @@
-import { Check, Copy, FileText, Key, RefreshCw, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Check, Copy, FileText, Key, RefreshCw, Upload, X, AlertTriangle } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -11,6 +11,14 @@ import { useFileUpload } from '../hooks/useFileUpload'
 import { generateHash, type HashAlgorithm } from '../utils/hash'
 import { downloadTextFile } from '../utils/file'
 import './HashGenerator.css'
+
+const EXAMPLES = [
+  { label: 'Hello World', text: 'Hello World' },
+  { label: 'Lorem ipsum', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' },
+  { label: 'JSON snippet', text: '{"user":"alice","role":"admin","ts":1700000000}' },
+  { label: 'Password', text: 'MyS3cur3P@ssw0rd!' },
+  { label: 'Empty string', text: '' },
+]
 
 const HashGenerator = () => {
   const [input, setInput] = useState('')
@@ -78,19 +86,13 @@ const HashGenerator = () => {
   }, [input])
 
   // Auto-generate on input change
-  useMemo(() => {
+  useEffect(() => {
     if (input.trim()) {
       generateAllHashes()
     } else {
-      setHashes({
-        md5: '',
-        sha1: '',
-        sha256: '',
-        sha512: ''
-      })
+      setHashes({ md5: '', sha1: '', sha256: '', sha512: '' })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [input])
+  }, [input, generateAllHashes])
 
   const handleDownload = useCallback(() => {
     if (!input.trim() || Object.values(hashes).every(h => !h)) return
@@ -165,6 +167,24 @@ SHA-512: ${hashes.sha512}`
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
 
+      <div className="hash-examples-bar">
+        <span className="hash-examples-label">Try:</span>
+        {EXAMPLES.map(ex => (
+          <button
+            key={ex.label}
+            type="button"
+            className="hash-example-chip"
+            onClick={() => {
+              setInput(ex.text)
+              setError('')
+            }}
+            title={ex.label}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
+
       {error && <ErrorBar message={error} />}
 
       {isGenerating && (
@@ -210,6 +230,11 @@ SHA-512: ${hashes.sha512}`
                     <div key={algo} className="hash-item">
                       <div className="hash-label">
                         <span className="hash-algorithm">{algo.toUpperCase()}</span>
+                        {(algo === 'md5' || algo === 'sha1') && (
+                          <span className="hash-weak-warning" title="Cryptographically broken — not suitable for security">
+                            <AlertTriangle size={12} /> Weak
+                          </span>
+                        )}
                         <button
                           type="button"
                           className="hash-copy-btn"

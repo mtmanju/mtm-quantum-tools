@@ -12,6 +12,29 @@ import { formatJson, minifyJson, validateJson } from '../utils/json'
 import { downloadTextFile } from '../utils/file'
 import './JsonFormatter.css'
 
+const EXAMPLES = [
+  {
+    label: 'Object',
+    json: '{"name":"Alice","age":30,"email":"alice@example.com","active":true}',
+  },
+  {
+    label: 'Array',
+    json: '[{"id":1,"title":"First post","tags":["intro","welcome"]},{"id":2,"title":"Second post","tags":["update"]}]',
+  },
+  {
+    label: 'Nested',
+    json: '{"user":{"id":42,"profile":{"name":"Bob","prefs":{"theme":"dark","lang":"en"}}},"meta":{"version":"1.0"}}',
+  },
+  {
+    label: 'API response',
+    json: '{"status":"success","data":{"users":[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}],"total":2},"timestamp":"2026-05-11T10:30:00Z"}',
+  },
+  {
+    label: 'Mixed types',
+    json: '{"string":"hello","number":42,"float":3.14,"boolean":true,"null":null,"array":[1,2,3],"object":{"nested":"value"}}',
+  },
+]
+
 const JsonFormatter = () => {
   const [jsonContent, setJsonContent] = useState('')
   const [indentSize, setIndentSize] = useState(2)
@@ -80,6 +103,11 @@ const JsonFormatter = () => {
 
   const handleClear = useCallback(() => {
     setJsonContent('')
+    setError('')
+  }, [])
+
+  const handleLoadExample = useCallback((ex: { json: string }) => {
+    setJsonContent(ex.json)
     setError('')
   }, [])
 
@@ -159,7 +187,22 @@ const JsonFormatter = () => {
   return (
     <ToolContainer dropzoneProps={fileUpload}>
       <Toolbar left={toolbarButtons} right={toolbarRight} />
-      
+
+      <div className="json-examples-bar">
+        <span className="json-examples-label">Try:</span>
+        {EXAMPLES.map(ex => (
+          <button
+            key={ex.label}
+            type="button"
+            className="json-example-chip"
+            onClick={() => handleLoadExample(ex)}
+            title={ex.json}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
+
       {error && <ErrorBar message={error} />}
 
       {validation.isValid && jsonContent.trim() && !error && (

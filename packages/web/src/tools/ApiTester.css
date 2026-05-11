@@ -1,5 +1,182 @@
 /* API Tester Tool Styles */
 
+/* Intro panel — explains the tool */
+.api-intro {
+  padding: 0.875rem 1rem 0.75rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.api-intro-headline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex-wrap: wrap;
+}
+.api-intro-headline svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.api-intro-headline strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.api-intro-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+.api-intro-hint svg {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+/* Quick-example chips row */
+.api-examples-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.api-examples-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+.api-example-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3125rem 0.625rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.api-example-chip:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.api-example-method {
+  font-family: 'Courier New', 'Monaco', monospace;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+.api-example-method.method-get    { background: rgba(34,197,94,0.15);  color: #16A34A; }
+.api-example-method.method-post   { background: rgba(59,130,246,0.15); color: #2563EB; }
+.api-example-method.method-put    { background: rgba(245,158,11,0.15); color: #D97706; }
+.api-example-method.method-patch  { background: rgba(168,85,247,0.15); color: #9333EA; }
+.api-example-method.method-delete { background: rgba(239,68,68,0.15);  color: #DC2626; }
+[data-theme="dark"] .api-example-method.method-get    { color: #4ADE80; }
+[data-theme="dark"] .api-example-method.method-post   { color: #60A5FA; }
+[data-theme="dark"] .api-example-method.method-put    { color: #FBBF24; }
+[data-theme="dark"] .api-example-method.method-patch  { color: #C084FC; }
+[data-theme="dark"] .api-example-method.method-delete { color: #F87171; }
+.api-example-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.api-example-desc {
+  color: var(--text-tertiary);
+}
+@media (max-width: 768px) {
+  .api-example-desc { display: none; }
+}
+
+/* Send button (inline with URL bar) */
+.api-send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: var(--text-on-accent-dark);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+.api-send-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.api-send-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.api-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Headers toolbar (hint + Bearer button) */
+.api-headers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+.api-headers-hint code {
+  background: var(--bg-elevated);
+  padding: 0.1rem 0.3125rem;
+  border-radius: 3px;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+}
+.api-headers-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.api-headers-auth-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.api-empty-state-sub {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+  margin-top: -0.25rem !important;
+}
+
 .api-request-config {
   padding: 1rem;
   background: var(--bg-secondary);

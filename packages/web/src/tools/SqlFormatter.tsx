@@ -12,6 +12,29 @@ import { formatSql, minifySql, validateSql } from '../utils/sql'
 import { downloadTextFile } from '../utils/file'
 import './SqlFormatter.css'
 
+const EXAMPLES = [
+  {
+    label: 'SELECT with JOIN',
+    sql: 'select u.id, u.name, count(o.id) as order_count from users u left join orders o on o.user_id = u.id where u.active = true group by u.id, u.name order by order_count desc limit 10',
+  },
+  {
+    label: 'INSERT',
+    sql: "insert into users (name, email, role, created_at) values ('Alice', 'alice@example.com', 'admin', now()), ('Bob', 'bob@example.com', 'user', now())",
+  },
+  {
+    label: 'UPDATE',
+    sql: "update orders set status = 'shipped', shipped_at = now() where id in (select order_id from order_items where quantity > 0) and customer_id = 42",
+  },
+  {
+    label: 'CREATE TABLE',
+    sql: 'create table products (id serial primary key, name varchar(255) not null, price decimal(10,2) check (price >= 0), category_id int references categories(id) on delete set null, created_at timestamp default now())',
+  },
+  {
+    label: 'CTE',
+    sql: 'with recent_orders as (select user_id, count(*) as cnt from orders where created_at > now() - interval \'30 days\' group by user_id) select u.name, coalesce(r.cnt, 0) as recent_count from users u left join recent_orders r on r.user_id = u.id',
+  },
+]
+
 const SqlFormatter = () => {
   const [sqlContent, setSqlContent] = useState('')
   const [error, setError] = useState('')
@@ -82,6 +105,11 @@ const SqlFormatter = () => {
     setError('')
   }, [])
 
+  const handleLoadExample = useCallback((sql: string) => {
+    setSqlContent(sql)
+    setError('')
+  }, [])
+
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
@@ -124,6 +152,20 @@ const SqlFormatter = () => {
   return (
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
+
+      <div className="sql-examples-bar">
+        <span className="sql-examples-label">Try it</span>
+        {EXAMPLES.map((ex) => (
+          <button
+            key={ex.label}
+            type="button"
+            className="sql-example-chip"
+            onClick={() => handleLoadExample(ex.sql)}
+          >
+            {ex.label}
+          </button>
+        ))}
+      </div>
 
       {error && <ErrorBar message={error} />}
 

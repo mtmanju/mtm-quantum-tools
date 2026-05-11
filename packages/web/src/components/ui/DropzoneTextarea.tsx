@@ -12,8 +12,8 @@ interface DropzoneTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaEleme
   isDragReject?: boolean
   isFocused?: boolean
   isFileDialogActive?: boolean
-  acceptedFiles?: File[]
-  fileRejections?: unknown[]
+  acceptedFiles?: readonly File[]
+  fileRejections?: readonly unknown[]
   rootRef?: RefObject<HTMLElement>
   inputRef?: RefObject<HTMLInputElement>
   open?: () => void

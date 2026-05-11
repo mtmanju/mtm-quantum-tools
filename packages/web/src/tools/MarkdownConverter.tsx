@@ -451,7 +451,7 @@ const MarkdownConverter = () => {
   const [isConverting, setIsConverting] = useState(false)
   const [conversionProgress, setConversionProgress] = useState('')
   const [error, setError] = useState('')
-  const { copied: copiedToolbar, copy: copyToolbar } = useCopy()
+  const { copy: copyToolbar } = useCopy()
   const { copied: copiedPanel, copy: copyPanel } = useCopy()
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [wordWrap, setWordWrap] = useState(true)

@@ -2,7 +2,7 @@ import {
   ArrowLeft,
   Binary,
   Brackets,
-  Calculator as CalculatorIcon,
+  Cake,
   CalendarClock,
   Clock,
   Code,
@@ -10,22 +10,25 @@ import {
   CreditCard,
   Database as DatabaseIcon,
   DollarSign,
+  Droplet,
   FileCode,
   FileCode2 as FileCodeIcon,
   FileJson,
+  FileOutput,
   FileStack,
   FileType,
   FileX,
   GitBranch,
   Hash,
+  Image as ImageIcon,
   KeyRound,
-  Layers,
   Link2,
   LockKeyhole,
   Mail,
   Network,
   Palette,
   Percent,
+  RotateCw,
   Scissors,
   Shield,
   Sparkle,
@@ -33,13 +36,12 @@ import {
   TrendingUp,
   TrendingDown,
   Type,
-  Wand2,
   Zap,
   FileSpreadsheet,
-  AlignLeft,
   BarChart3,
   Globe,
   Search,
+  Terminal,
   X,
 } from 'lucide-react'
 import React from 'react'
@@ -57,12 +59,10 @@ import About from './pages/About'
 // Lazy-load all tool components — each tool loads only when first navigated to
 const ApiTester = lazy(() => import('./tools/ApiTester'))
 const Base64Converter = lazy(() => import('./tools/Base64Converter'))
-const Calculator = lazy(() => import('./tools/Calculator'))
 const ColorConverter = lazy(() => import('./tools/ColorConverter'))
 const CssFormatter = lazy(() => import('./tools/CssFormatter'))
 const CsvToJsonConverter = lazy(() => import('./tools/CsvToJsonConverter'))
 const DiffChecker = lazy(() => import('./tools/DiffChecker'))
-const DmnEvaluator = lazy(() => import('./tools/DmnEvaluator'))
 const EmailValidator = lazy(() => import('./tools/EmailValidator'))
 const HashGenerator = lazy(() => import('./tools/HashGenerator'))
 const HtmlEntityEncoder = lazy(() => import('./tools/HtmlEntityEncoder'))
@@ -71,22 +71,26 @@ const JavaScriptFormatter = lazy(() => import('./tools/JavaScriptFormatter'))
 const JsonFormatter = lazy(() => import('./tools/JsonFormatter'))
 const JsonXmlConverter = lazy(() => import('./tools/JsonXmlConverter'))
 const JwtDecoder = lazy(() => import('./tools/JwtDecoder'))
+const JwtGenerator = lazy(() => import('./tools/JwtGenerator'))
+const IpCidrCalculator = lazy(() => import('./tools/IpCidrCalculator'))
 const LoremIpsumGenerator = lazy(() => import('./tools/LoremIpsumGenerator'))
 const MarkdownConverter = lazy(() => import('./tools/MarkdownConverter'))
 const NumberBaseConverter = lazy(() => import('./tools/NumberBaseConverter'))
 const PasswordGenerator = lazy(() => import('./tools/PasswordGenerator'))
 const PdfMerger = lazy(() => import('./tools/PdfMerger'))
+const PdfPageExtractor = lazy(() => import('./tools/PdfPageExtractor'))
+const PdfRotator = lazy(() => import('./tools/PdfRotator'))
 const PdfSplitter = lazy(() => import('./tools/PdfSplitter'))
+const PdfToImage = lazy(() => import('./tools/PdfToImage'))
+const PdfWatermark = lazy(() => import('./tools/PdfWatermark'))
 const RegexTester = lazy(() => import('./tools/RegexTester'))
 const SlugConverter = lazy(() => import('./tools/SlugConverter'))
 const SqlFormatter = lazy(() => import('./tools/SqlFormatter'))
 const TextCaseConverter = lazy(() => import('./tools/TextCaseConverter'))
-const TextSummarizer = lazy(() => import('./tools/TextSummarizer'))
 const TimestampConverter = lazy(() => import('./tools/TimestampConverter'))
 const UrlEncoder = lazy(() => import('./tools/UrlEncoder'))
 const UuidGenerator = lazy(() => import('./tools/UuidGenerator'))
 const WordCounter = lazy(() => import('./tools/WordCounter'))
-const WorkflowValidator = lazy(() => import('./tools/WorkflowValidator'))
 const XmlFormatter = lazy(() => import('./tools/XmlFormatter'))
 const YamlFormatter = lazy(() => import('./tools/YamlFormatter'))
 const LoanEmiCalculator = lazy(() => import('./tools/LoanEmiCalculator'))
@@ -94,6 +98,10 @@ const SipCalculator = lazy(() => import('./tools/SipCalculator'))
 const CompoundInterestCalculator = lazy(() => import('./tools/CompoundInterestCalculator'))
 const LoanRepaymentCalculator = lazy(() => import('./tools/LoanRepaymentCalculator'))
 const InvestmentReturnCalculator = lazy(() => import('./tools/InvestmentReturnCalculator'))
+const CronParser = lazy(() => import('./tools/CronParser'))
+const ChmodCalculator = lazy(() => import('./tools/ChmodCalculator'))
+const StringInspector = lazy(() => import('./tools/StringInspector'))
+const AgeCalculator = lazy(() => import('./tools/AgeCalculator'))
 
 interface Tool {
   id: string
@@ -109,419 +117,154 @@ interface Tool {
 
 
 const tools: Tool[] = [
-  // Essential Tools (Featured)
-  {
-    id: 'json-formatter',
-    name: 'JSON Formatter',
-    description: 'Beautify & validate JSON instantly',
-    icon: <FileJson size={48} strokeWidth={1.5} />,
-    iconColor: '#F39C12', // Orange
-    category: 'Essential',
-    status: 'active',
-    component: JsonFormatter,
-    featured: true
-  },
-  {
-    id: 'url-encoder',
-    name: 'URL Encoder',
-    description: 'Encode & decode URLs quickly',
-    icon: <Globe size={48} strokeWidth={1.5} />,
-    iconColor: '#8B5CF6', // Purple
-    category: 'Essential',
-    status: 'active',
-    component: UrlEncoder,
-    featured: true
-  },
-  {
-    id: 'base64-converter',
-    name: 'Base64 Converter',
-    description: 'Convert files & text to Base64',
-    icon: <FileCode size={48} strokeWidth={1.5} />,
-    iconColor: '#2980B9', // Blue
-    category: 'Essential',
-    status: 'active',
-    component: Base64Converter,
-    featured: true
-  },
-  {
-    id: 'hash-generator',
-    name: 'Hash Generator',
-    description: 'Generate MD5, SHA-1, SHA-256, SHA-512',
-    icon: <KeyRound size={48} strokeWidth={1.5} />,
-    iconColor: '#EC4899', // Pink
-    category: 'Essential',
-    status: 'active',
-    component: HashGenerator,
-    featured: true
-  },
-  {
-    id: 'uuid-generator',
-    name: 'UUID Generator',
-    description: 'Create unique identifiers',
-    icon: <Hash size={48} strokeWidth={1.5} />,
-    iconColor: '#06B6D4', // Cyan
-    category: 'Essential',
-    status: 'active',
-    component: UuidGenerator,
-    featured: true
-  },
-  {
-    id: 'password-generator',
-    name: 'Password Generator',
-    description: 'Create strong, secure passwords',
-    icon: <LockKeyhole size={48} strokeWidth={1.5} />,
-    iconColor: '#F59E0B', // Amber
-    category: 'Essential',
-    status: 'active',
-    component: PasswordGenerator,
-    featured: true
-  },
-  {
-    id: 'jwt-decoder',
-    name: 'JWT Decoder',
-    description: 'Decode & inspect JWT tokens',
-    icon: <Shield size={48} strokeWidth={1.5} />,
-    iconColor: '#27AE60', // Green
-    category: 'Essential',
-    status: 'active',
-    component: JwtDecoder,
-    featured: true
-  },
-  {
-    id: 'timestamp-converter',
-    name: 'Timestamp Converter',
-    description: 'Convert timestamps to dates',
-    icon: <CalendarClock size={48} strokeWidth={1.5} />,
-    iconColor: '#34495E', // Dark Blue
-    category: 'Essential',
-    status: 'active',
-    component: TimestampConverter,
-    featured: true
-  },
+  // ─── Essential — the daily-driver tools ─────────────────────────
+  { id: 'json-formatter', name: 'JSON Formatter', description: 'Beautify & validate JSON instantly',
+    icon: <FileJson size={48} strokeWidth={1.5} />, iconColor: '#F39C12',
+    category: 'Essential', status: 'active', component: JsonFormatter, featured: true },
+  { id: 'base64-converter', name: 'Base64 Converter', description: 'Convert files & text to Base64',
+    icon: <FileCode size={48} strokeWidth={1.5} />, iconColor: '#2980B9',
+    category: 'Essential', status: 'active', component: Base64Converter, featured: true },
+  { id: 'url-encoder', name: 'URL Encoder', description: 'Encode & decode URLs quickly',
+    icon: <Globe size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
+    category: 'Essential', status: 'active', component: UrlEncoder, featured: true },
+  { id: 'hash-generator', name: 'Hash Generator', description: 'Generate MD5, SHA-1, SHA-256, SHA-512',
+    icon: <KeyRound size={48} strokeWidth={1.5} />, iconColor: '#EC4899',
+    category: 'Essential', status: 'active', component: HashGenerator, featured: true },
+  { id: 'uuid-generator', name: 'UUID Generator', description: 'Create unique identifiers',
+    icon: <Hash size={48} strokeWidth={1.5} />, iconColor: '#06B6D4',
+    category: 'Essential', status: 'active', component: UuidGenerator, featured: true },
+  { id: 'password-generator', name: 'Password Generator', description: 'Create strong, secure passwords',
+    icon: <LockKeyhole size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
+    category: 'Essential', status: 'active', component: PasswordGenerator, featured: true },
+  { id: 'jwt-decoder', name: 'JWT Decoder', description: 'Decode & inspect JWT tokens',
+    icon: <Shield size={48} strokeWidth={1.5} />, iconColor: '#27AE60',
+    category: 'Essential', status: 'active', component: JwtDecoder, featured: true },
+  { id: 'jwt-generator', name: 'JWT Generator', description: 'Sign & generate HS256 JWT tokens',
+    icon: <KeyRound size={48} strokeWidth={1.5} />, iconColor: '#0EA5E9',
+    category: 'Essential', status: 'active', component: JwtGenerator, featured: true },
+  { id: 'timestamp-converter', name: 'Timestamp Converter', description: 'Convert timestamps to dates',
+    icon: <CalendarClock size={48} strokeWidth={1.5} />, iconColor: '#34495E',
+    category: 'Essential', status: 'active', component: TimestampConverter, featured: true },
 
-  // Code Formatters
-  {
-    id: 'yaml-formatter',
-    name: 'YAML Formatter',
-    description: 'Format & validate YAML configs',
-    icon: <FileSpreadsheet size={48} strokeWidth={1.5} />,
-    iconColor: '#6366F1', // Indigo
-    category: 'Code Formatters',
-    status: 'active',
-    component: YamlFormatter
-  },
-  {
-    id: 'html-formatter',
-    name: 'HTML Formatter',
-    description: 'Beautify & minify HTML',
-    icon: <CodeXml size={48} strokeWidth={1.5} />,
-    iconColor: '#EF4444', // Red
-    category: 'Code Formatters',
-    status: 'active',
-    component: HtmlFormatter
-  },
-  {
-    id: 'xml-formatter',
-    name: 'XML Formatter',
-    description: 'Format & validate XML docs',
-    icon: <FileX size={48} strokeWidth={1.5} />,
-    iconColor: '#F97316', // Orange
-    category: 'Code Formatters',
-    status: 'active',
-    component: XmlFormatter
-  },
-  {
-    id: 'sql-formatter',
-    name: 'SQL Formatter',
-    description: 'Format SQL queries beautifully',
-    icon: <DatabaseIcon size={48} strokeWidth={1.5} />,
-    iconColor: '#3498DB', // Blue
-    category: 'Code Formatters',
-    status: 'active',
-    component: SqlFormatter
-  },
-  {
-    id: 'csv-to-json',
-    name: 'CSV ↔ JSON',
-    description: 'Convert between CSV & JSON',
-    icon: <Table2 size={48} strokeWidth={1.5} />,
-    iconColor: '#22C55E', // Green
-    category: 'Code Formatters',
-    status: 'active',
-    component: CsvToJsonConverter
-  },
-  {
-    id: 'json-xml-converter',
-    name: 'JSON ↔ XML',
-    description: 'Convert between JSON & XML',
-    icon: <FileType size={48} strokeWidth={1.5} />,
-    iconColor: '#F97316', // Orange
-    category: 'Code Formatters',
-    status: 'active',
-    component: JsonXmlConverter
-  },
-  {
-    id: 'css-formatter',
-    name: 'CSS Formatter',
-    description: 'Format & minify CSS',
-    icon: <Code size={48} strokeWidth={1.5} />,
-    iconColor: '#3B82F6', // Blue
-    category: 'Code Formatters',
-    status: 'active',
-    component: CssFormatter
-  },
-  {
-    id: 'javascript-formatter',
-    name: 'JS Formatter',
-    description: 'Format & minify JavaScript',
-    icon: <FileCodeIcon size={48} strokeWidth={1.5} />,
-    iconColor: '#F59E0B', // Amber
-    category: 'Code Formatters',
-    status: 'active',
-    component: JavaScriptFormatter
-  },
+  // ─── Code Tools — text & code manipulation ──────────────────────
+  { id: 'regex-tester', name: 'Regex Tester', description: 'Test regex patterns with live highlights',
+    icon: <Brackets size={48} strokeWidth={1.5} />, iconColor: '#E67E22',
+    category: 'Code Tools', status: 'active', component: RegexTester },
+  { id: 'diff-checker', name: 'Diff Checker', description: 'Compare code & text side-by-side',
+    icon: <GitBranch size={48} strokeWidth={1.5} />, iconColor: '#16A085',
+    category: 'Code Tools', status: 'active', component: DiffChecker },
+  { id: 'color-converter', name: 'Color Converter', description: 'Convert HEX, RGB, HSL with contrast',
+    icon: <Palette size={48} strokeWidth={1.5} />, iconColor: '#EC4899',
+    category: 'Code Tools', status: 'active', component: ColorConverter },
+  { id: 'text-case-converter', name: 'Case Converter', description: 'Transform text case instantly',
+    icon: <Type size={48} strokeWidth={1.5} />, iconColor: '#10B981',
+    category: 'Code Tools', status: 'active', component: TextCaseConverter },
+  { id: 'number-base-converter', name: 'Base Converter', description: 'Convert binary, hex, decimal, octal',
+    icon: <Binary size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
+    category: 'Code Tools', status: 'active', component: NumberBaseConverter },
+  { id: 'slug-converter', name: 'Slug Converter', description: 'Convert text to URL-friendly slugs',
+    icon: <Link2 size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
+    category: 'Code Tools', status: 'active', component: SlugConverter },
+  { id: 'lorem-ipsum-generator', name: 'Lorem Generator', description: 'Generate placeholder text',
+    icon: <Sparkle size={48} strokeWidth={1.5} />, iconColor: '#64748B',
+    category: 'Code Tools', status: 'active', component: LoremIpsumGenerator },
+  { id: 'html-entity-encoder', name: 'HTML Entity', description: 'Encode & decode HTML entities',
+    icon: <Brackets size={48} strokeWidth={1.5} />, iconColor: '#EF4444',
+    category: 'Code Tools', status: 'active', component: HtmlEntityEncoder },
+  { id: 'email-validator', name: 'Email Validator', description: 'Validate email addresses',
+    icon: <Mail size={48} strokeWidth={1.5} />, iconColor: '#06B6D4',
+    category: 'Code Tools', status: 'active', component: EmailValidator },
 
-  // Code Tools
-  {
-    id: 'regex-tester',
-    name: 'Regex Tester',
-    description: 'Test regex patterns live',
-    icon: <Brackets size={48} strokeWidth={1.5} />,
-    iconColor: '#E67E22', // Orange
-    category: 'Code Tools',
-    status: 'active',
-    component: RegexTester
-  },
-  {
-    id: 'diff-checker',
-    name: 'Diff Checker',
-    description: 'Compare code & text side-by-side',
-    icon: <GitBranch size={48} strokeWidth={1.5} />,
-    iconColor: '#16A085', // Green
-    category: 'Code Tools',
-    status: 'active',
-    component: DiffChecker
-  },
-  {
-    id: 'text-case-converter',
-    name: 'Case Converter',
-    description: 'Transform text case instantly',
-    icon: <Type size={48} strokeWidth={1.5} />,
-    iconColor: '#10B981', // Green
-    category: 'Code Tools',
-    status: 'active',
-    component: TextCaseConverter
-  },
-  {
-    id: 'color-converter',
-    name: 'Color Converter',
-    description: 'Convert HEX, RGB, HSL',
-    icon: <Palette size={48} strokeWidth={1.5} />,
-    iconColor: '#EC4899', // Pink
-    category: 'Code Tools',
-    status: 'active',
-    component: ColorConverter
-  },
-  {
-    id: 'number-base-converter',
-    name: 'Base Converter',
-    description: 'Convert binary, hex, decimal, octal',
-    icon: <Binary size={48} strokeWidth={1.5} />,
-    iconColor: '#8B5CF6', // Purple
-    category: 'Code Tools',
-    status: 'active',
-    component: NumberBaseConverter
-  },
-  {
-    id: 'lorem-ipsum-generator',
-    name: 'Lorem Generator',
-    description: 'Generate placeholder text',
-    icon: <Sparkle size={48} strokeWidth={1.5} />,
-    iconColor: '#64748B', // Slate
-    category: 'Code Tools',
-    status: 'active',
-    component: LoremIpsumGenerator
-  },
-  {
-    id: 'html-entity-encoder',
-    name: 'HTML Entity',
-    description: 'Encode & decode HTML entities',
-    icon: <Brackets size={48} strokeWidth={1.5} />,
-    iconColor: '#EF4444', // Red
-    category: 'Code Tools',
-    status: 'active',
-    component: HtmlEntityEncoder
-  },
-  {
-    id: 'slug-converter',
-    name: 'Slug Converter',
-    description: 'Convert text to URL-friendly slugs',
-    icon: <Link2 size={48} strokeWidth={1.5} />,
-    iconColor: '#8B5CF6', // Purple
-    category: 'Code Tools',
-    status: 'active',
-    component: SlugConverter
-  },
-  {
-    id: 'email-validator',
-    name: 'Email Validator',
-    description: 'Validate email addresses',
-    icon: <Mail size={48} strokeWidth={1.5} />,
-    iconColor: '#06B6D4', // Cyan
-    category: 'Code Tools',
-    status: 'active',
-    component: EmailValidator
-  },
+  // ─── Formatters — code beautification & conversion ──────────────
+  { id: 'javascript-formatter', name: 'JS Formatter', description: 'Format & minify JavaScript',
+    icon: <FileCodeIcon size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
+    category: 'Formatters', status: 'active', component: JavaScriptFormatter },
+  { id: 'html-formatter', name: 'HTML Formatter', description: 'Beautify & minify HTML',
+    icon: <CodeXml size={48} strokeWidth={1.5} />, iconColor: '#EF4444',
+    category: 'Formatters', status: 'active', component: HtmlFormatter },
+  { id: 'css-formatter', name: 'CSS Formatter', description: 'Format & minify CSS',
+    icon: <Code size={48} strokeWidth={1.5} />, iconColor: '#3B82F6',
+    category: 'Formatters', status: 'active', component: CssFormatter },
+  { id: 'sql-formatter', name: 'SQL Formatter', description: 'Format SQL queries beautifully',
+    icon: <DatabaseIcon size={48} strokeWidth={1.5} />, iconColor: '#3498DB',
+    category: 'Formatters', status: 'active', component: SqlFormatter },
+  { id: 'yaml-formatter', name: 'YAML Formatter', description: 'Format & validate YAML configs',
+    icon: <FileSpreadsheet size={48} strokeWidth={1.5} />, iconColor: '#6366F1',
+    category: 'Formatters', status: 'active', component: YamlFormatter },
+  { id: 'xml-formatter', name: 'XML Formatter', description: 'Format & validate XML docs',
+    icon: <FileX size={48} strokeWidth={1.5} />, iconColor: '#F97316',
+    category: 'Formatters', status: 'active', component: XmlFormatter },
+  { id: 'csv-to-json', name: 'CSV ↔ JSON', description: 'Convert between CSV & JSON',
+    icon: <Table2 size={48} strokeWidth={1.5} />, iconColor: '#22C55E',
+    category: 'Formatters', status: 'active', component: CsvToJsonConverter },
+  { id: 'json-xml-converter', name: 'JSON ↔ XML', description: 'Convert between JSON & XML',
+    icon: <FileType size={48} strokeWidth={1.5} />, iconColor: '#F97316',
+    category: 'Formatters', status: 'active', component: JsonXmlConverter },
 
-  // Documents
-  {
-    id: 'md-converter',
-    name: 'MD Converter',
-    description: 'Export Markdown to DOCX, PDF, or HTML',
-    icon: <FileCodeIcon size={48} strokeWidth={1.5} />,
-    iconColor: '#875A7B', // Purple - Odoo style
-    category: 'Documents',
-    status: 'active',
-    component: MarkdownConverter
-  },
-  {
-    id: 'pdf-merger',
-    name: 'PDF Merger',
-    description: 'Merge PDFs into one file',
-    icon: <FileStack size={48} strokeWidth={1.5} />,
-    iconColor: '#E74C3C', // Red
-    category: 'Documents',
-    status: 'active',
-    component: PdfMerger
-  },
-  {
-    id: 'pdf-splitter',
-    name: 'PDF Splitter',
-    description: 'Split PDF into individual pages',
-    icon: <Scissors size={48} strokeWidth={1.5} />,
-    iconColor: '#F59E0B', // Amber
-    category: 'Documents',
-    status: 'active',
-    component: PdfSplitter
-  },
-  {
-    id: 'word-counter',
-    name: 'Word Counter',
-    description: 'Count words, characters & more',
-    icon: <BarChart3 size={48} strokeWidth={1.5} />,
-    iconColor: '#3B82F6', // Blue
-    category: 'Documents',
-    status: 'active',
-    component: WordCounter
-  },
-  {
-    id: 'text-summarizer',
-    name: 'Text Summarizer',
-    description: 'Summarize long text quickly',
-    icon: <AlignLeft size={48} strokeWidth={1.5} />,
-    iconColor: '#10B981', // Green
-    category: 'Documents',
-    status: 'active',
-    component: TextSummarizer
-  },
+  // ─── DevOps & System ────────────────────────────────────────────
+  { id: 'cron-parser', name: 'Cron Parser', description: 'Parse cron & preview next 10 runs',
+    icon: <Clock size={48} strokeWidth={1.5} />, iconColor: '#0891B2',
+    category: 'DevOps', status: 'active', component: CronParser },
+  { id: 'ip-cidr-calculator', name: 'IP / CIDR Calc', description: 'Subnet calculator for IP networks',
+    icon: <Network size={48} strokeWidth={1.5} />, iconColor: '#10B981',
+    category: 'DevOps', status: 'active', component: IpCidrCalculator },
+  { id: 'chmod-calculator', name: 'Chmod Calculator', description: 'Visual Unix file permission calculator',
+    icon: <Terminal size={48} strokeWidth={1.5} />, iconColor: '#16A34A',
+    category: 'DevOps', status: 'active', component: ChmodCalculator },
+  { id: 'api-tester', name: 'API Tester', description: 'Send HTTP requests & inspect responses',
+    icon: <Zap size={48} strokeWidth={1.5} />, iconColor: '#F1C40F',
+    category: 'DevOps', status: 'active', component: ApiTester },
 
-  // API & Testing
-  {
-    id: 'api-tester',
-    name: 'API Tester',
-    description: 'Test REST APIs with ease',
-    icon: <Network size={48} strokeWidth={1.5} />,
-    iconColor: '#F1C40F', // Yellow
-    category: 'API & Testing',
-    status: 'active',
-    component: ApiTester
-  },
+  // ─── Documents & PDF ────────────────────────────────────────────
+  { id: 'md-converter', name: 'MD Converter', description: 'Export Markdown to DOCX, PDF, or HTML',
+    icon: <FileCodeIcon size={48} strokeWidth={1.5} />, iconColor: '#875A7B',
+    category: 'Documents', status: 'active', component: MarkdownConverter },
+  { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge PDFs into one file',
+    icon: <FileStack size={48} strokeWidth={1.5} />, iconColor: '#E74C3C',
+    category: 'Documents', status: 'active', component: PdfMerger },
+  { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDF into individual pages',
+    icon: <Scissors size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
+    category: 'Documents', status: 'active', component: PdfSplitter },
+  { id: 'pdf-page-extractor', name: 'PDF Extractor', description: 'Extract specific pages to new PDF',
+    icon: <FileOutput size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
+    category: 'Documents', status: 'active', component: PdfPageExtractor },
+  { id: 'pdf-rotator', name: 'PDF Rotator', description: 'Rotate all pages of a PDF',
+    icon: <RotateCw size={48} strokeWidth={1.5} />, iconColor: '#06B6D4',
+    category: 'Documents', status: 'active', component: PdfRotator },
+  { id: 'pdf-to-image', name: 'PDF to Image', description: 'Convert PDF pages to PNG or JPG',
+    icon: <ImageIcon size={48} strokeWidth={1.5} />, iconColor: '#10B981',
+    category: 'Documents', status: 'active', component: PdfToImage },
+  { id: 'pdf-watermark', name: 'PDF Watermark', description: 'Add text watermark to PDF pages',
+    icon: <Droplet size={48} strokeWidth={1.5} />, iconColor: '#0EA5E9',
+    category: 'Documents', status: 'active', component: PdfWatermark },
+  { id: 'word-counter', name: 'Word Counter', description: 'Count words, characters & more',
+    icon: <BarChart3 size={48} strokeWidth={1.5} />, iconColor: '#3B82F6',
+    category: 'Documents', status: 'active', component: WordCounter },
+  { id: 'string-inspector', name: 'String Inspector', description: 'Analyze Unicode, encodings & character frequency',
+    icon: <Type size={48} strokeWidth={1.5} />, iconColor: '#6366F1',
+    category: 'Documents', status: 'active', component: StringInspector },
 
-  // Business Logic
-  {
-    id: 'dmn-evaluator',
-    name: 'DMN Evaluator',
-    description: 'Evaluate decision tables',
-    icon: <Layers size={48} strokeWidth={1.5} />,
-    iconColor: '#9B59B6', // Purple
-    category: 'Business Logic',
-    status: 'active',
-    component: DmnEvaluator
-  },
-  {
-    id: 'workflow-validator',
-    name: 'Workflow Validator',
-    description: 'Validate BPMN workflows',
-    icon: <Wand2 size={48} strokeWidth={1.5} />,
-    iconColor: '#1ABC9C', // Teal
-    category: 'Business Logic',
-    status: 'active',
-    component: WorkflowValidator
-  },
+  // ─── Everyday ───────────────────────────────────────────────────
+  { id: 'age-calculator', name: 'Age Calculator', description: 'Calculate exact age, zodiac, next birthday',
+    icon: <Cake size={48} strokeWidth={1.5} />, iconColor: '#F472B6',
+    category: 'Everyday', status: 'active', component: AgeCalculator },
 
-  // Utilities
-  {
-    id: 'calculator',
-    name: 'Calculator',
-    description: 'Scientific calculations',
-    icon: <CalculatorIcon size={48} strokeWidth={1.5} />,
-    iconColor: '#8E44AD', // Purple
-    category: 'Utilities',
-    status: 'active',
-    component: Calculator
-  },
-
-  // Finance
-  {
-    id: 'loan-emi-calculator',
-    name: 'Loan EMI Calculator',
-    description: 'Calculate loan EMI & interest',
-    icon: <CreditCard size={48} strokeWidth={1.5} />,
-    iconColor: '#3B82F6', // Blue
-    category: 'Finance',
-    status: 'active',
-    component: LoanEmiCalculator
-  },
-  {
-    id: 'sip-calculator',
-    name: 'SIP Calculator',
-    description: 'Calculate SIP returns',
-    icon: <TrendingUp size={48} strokeWidth={1.5} />,
-    iconColor: '#10B981', // Green
-    category: 'Finance',
-    status: 'active',
-    component: SipCalculator
-  },
-  {
-    id: 'compound-interest-calculator',
-    name: 'Compound Interest',
-    description: 'Calculate compound interest',
-    icon: <Percent size={48} strokeWidth={1.5} />,
-    iconColor: '#8B5CF6', // Purple
-    category: 'Finance',
-    status: 'active',
-    component: CompoundInterestCalculator
-  },
-  {
-    id: 'loan-repayment-calculator',
-    name: 'Loan Repayment',
-    description: 'Plan loan repayment strategy',
-    icon: <DollarSign size={48} strokeWidth={1.5} />,
-    iconColor: '#F59E0B', // Amber
-    category: 'Finance',
-    status: 'active',
-    component: LoanRepaymentCalculator
-  },
-  {
-    id: 'investment-return-calculator',
-    name: 'Investment Return',
-    description: 'Calculate investment returns & CAGR',
-    icon: <TrendingDown size={48} strokeWidth={1.5} />,
-    iconColor: '#EC4899', // Pink
-    category: 'Finance',
-    status: 'active',
-    component: InvestmentReturnCalculator
-  }
+  // ─── Finance ────────────────────────────────────────────────────
+  { id: 'loan-emi-calculator', name: 'Loan EMI Calculator', description: 'Calculate loan EMI & interest',
+    icon: <CreditCard size={48} strokeWidth={1.5} />, iconColor: '#3B82F6',
+    category: 'Finance', status: 'active', component: LoanEmiCalculator },
+  { id: 'loan-repayment-calculator', name: 'Loan Repayment', description: 'Plan loan repayment strategy',
+    icon: <DollarSign size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
+    category: 'Finance', status: 'active', component: LoanRepaymentCalculator },
+  { id: 'sip-calculator', name: 'SIP Calculator', description: 'Calculate SIP returns',
+    icon: <TrendingUp size={48} strokeWidth={1.5} />, iconColor: '#10B981',
+    category: 'Finance', status: 'active', component: SipCalculator },
+  { id: 'compound-interest-calculator', name: 'Compound Interest', description: 'Calculate compound interest',
+    icon: <Percent size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
+    category: 'Finance', status: 'active', component: CompoundInterestCalculator },
+  { id: 'investment-return-calculator', name: 'Investment Return', description: 'Calculate investment returns & CAGR',
+    icon: <TrendingDown size={48} strokeWidth={1.5} />, iconColor: '#EC4899',
+    category: 'Finance', status: 'active', component: InvestmentReturnCalculator },
 ]
 
 const ToolCard = memo(({ tool, onClick, showDescription }: {
