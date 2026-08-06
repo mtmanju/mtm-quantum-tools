@@ -1,168 +1,85 @@
-# Quantum Tools by MTM
+# Quantum Tools
 
-**Enterprise Utility Platform - Accelerate Your Workflow**
+**45 developer utilities that run entirely in your browser.**
 
-Quantum Tools is a comprehensive web-based platform providing enterprise-grade utilities for document conversion, DMN evaluation, and various development tools.
+No accounts, no uploads, no server. Every tool — formatters, encoders, PDF
+manipulation, calculators — executes as client-side JavaScript, so nothing you
+paste ever leaves your machine.
 
-## 🚀 Features
+## Tools
 
-### Currently Available:
-- **Markdown to DOCX Converter** - Convert Markdown files to professional Word documents
-  - Drag & drop file upload
-  - Live preview and editing
-  - Support for headers, bold text, lists, and more
-  - Professional formatting with proper margins and spacing
+| Category | Tools |
+|---|---|
+| **Essential** (9) | JSON Formatter · Base64 Converter · URL Encoder · Hash Generator · UUID Generator · Password Generator · JWT Decoder · JWT Generator · Timestamp Converter |
+| **Code Tools** (9) | Regex Tester · Diff Checker · Color Converter · Case Converter · Base Converter · Slug Converter · Lorem Generator · HTML Entity · Email Validator |
+| **Formatters** (8) | JS · HTML · CSS · SQL · YAML · XML · CSV ↔ JSON · JSON ↔ XML |
+| **DevOps** (4) | Cron Parser · IP/CIDR Calculator · Chmod Calculator · API Tester |
+| **Documents** (9) | MD Converter (DOCX/PDF/HTML) · PDF Merger · Splitter · Extractor · Rotator · to Image · Watermark · Word Counter · String Inspector |
+| **Everyday** (1) | Age Calculator |
+| **Finance** (5) | Loan EMI · Loan Repayment · SIP · Compound Interest · Investment Return |
 
-### Coming Soon:
-- **DMN Evaluator** - Decision Model and Notation evaluation engine
-- **JSON Formatter** - Format, validate, and beautify JSON
-- **Advanced Calculator** - Scientific and business calculations
-- And 100+ more enterprise utilities!
-
-## 📦 Project Structure
-
-```
-quantum-tools/
-├── packages/
-│   ├── web/              # React frontend application
-│   ├── md-converter/     # Markdown to DOCX converter module
-│   ├── common/           # Shared utilities
-│   └── cli/              # CLI tools (future)
-├── docs/                 # Documentation
-└── README.md
-```
-
-## 🛠️ Technology Stack
-
-- **Frontend:** React 18 + TypeScript + Vite
-- **UI Components:** Lucide Icons
-- **Document Processing:** docx, markdown-it
-- **File Handling:** react-dropzone, file-saver
-- **Build Tool:** Vite
-- **Package Manager:** npm workspaces
-
-## 🚦 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm 9+
-
-### Installation
+## Getting started
 
 ```bash
-# Clone the repository
-cd quantum-tools
-
-# Install dependencies
 npm install
-
-# Start development server
-npm run dev
+npm run dev --workspace @mtm/web     # http://localhost:5173
 ```
 
-The application will be available at `http://localhost:5173`
+## Scripts
 
-### Building for Production
+Run from the repo root, or add `--workspace @mtm/web`.
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Vite dev server |
+| `npm run build` | Typecheck, bundle, and generate `robots.txt` + `sitemap.xml` |
+| `npm test` | Unit tests (vitest) |
+| `npm run test:watch` | Tests in watch mode |
+| `npm run lint` | ESLint |
+| `npm run preview` | Serve the production build locally |
+
+Set `SITE_URL` when building for production so the sitemap uses real URLs:
 
 ```bash
-# Build all packages
-npm run build
-
-# Build specific package
-npm run build --workspace=@mtm/web
+SITE_URL=https://your-domain.com npm run build
 ```
 
-## 📖 Usage
+## Architecture
 
-### Markdown to DOCX Converter
-
-1. Navigate to the Markdown to DOCX tool
-2. Drag and drop your `.md` file or click to browse
-3. Preview and edit the content if needed
-4. Click "Convert to DOCX" to download your Word document
-
-**Supported Markdown Features:**
-- ✅ Headers (H1, H2, H3)
-- ✅ Bold text (`**bold**`)
-- ✅ Bullet lists (`- item`)
-- ✅ Horizontal rules (`---`)
-- ✅ Paragraphs
-- 🔄 Tables (coming soon)
-- 🔄 Mermaid diagrams (coming soon)
-
-## 🏗️ Adding New Tools
-
-Quantum Tools is built with extensibility in mind. To add a new tool:
-
-1. Create a new component in `packages/web/src/tools/`
-2. Add the tool definition to the `tools` array in `App.tsx`
-3. Implement the tool's functionality
-4. Update this README
-
-Example:
-```typescript
-{
-  id: 'my-tool',
-  name: 'My Tool',
-  description: 'Description of my tool',
-  icon: <MyIcon size={24} />,
-  category: 'My Category',
-  status: 'active',
-  component: <MyToolComponent />
-}
+```
+packages/web/
+├── src/
+│   ├── App.tsx           # Tool registry + routing
+│   ├── tools/            # One component + stylesheet per tool
+│   ├── utils/            # Pure logic, framework-free (the unit-test surface)
+│   ├── components/ui/    # Shared primitives: Toolbar, EditorPanel, ErrorBar…
+│   ├── hooks/            # useCopy, useFileUpload, useDocumentMeta…
+│   └── App.css           # Design tokens + global layout
+└── scripts/              # Build-time SEO asset generation
 ```
 
-## 📁 Package Details
+**Stack:** React 19 · TypeScript 5.9 · Vite 7 · React Router 7 · lucide-react.
+Heavy dependencies (mermaid, pdf.js, pdf-lib, docx) are reachable only through
+`React.lazy()` boundaries, keeping first load to ~92 KB gzipped.
 
-### @mtm/web
-React-based web application providing the UI for all tools.
+### Adding a tool
 
-### @mtm/md-converter
-Standalone markdown to DOCX conversion library.
+1. Create `src/tools/MyTool.tsx` and `MyTool.css`.
+2. Put the logic in `src/utils/myTool.ts` — pure functions, no React — and test it.
+3. Register it in `src/App.tsx`: add a `lazy()` import and an entry in `tools[]`.
 
-### @mtm/common
-Shared utilities, types, and helpers used across packages.
+The sitemap picks it up automatically from the registry.
 
-## 🤝 Contributing
+## Conventions
 
-This is an internal MTM project. For feature requests or bug reports, please contact the development team.
+- **Logic lives in `utils/`, not components.** Components wire UI to pure
+  functions; that's what makes the behaviour testable.
+- **No hardcoded colours.** Use the CSS custom properties in `App.css` so both
+  themes work.
+- **Nothing leaves the browser.** No analytics beacons, no CDN fetches at
+  runtime, no network calls except the ones the API Tester makes on the user's
+  explicit instruction.
 
-## 📝 License
+## License
 
-MIT License - © 2025 MTM
-
-## 🎯 Roadmap
-
-### Phase 1 (Current)
-- [x] Project setup and architecture
-- [x] Markdown to DOCX converter
-- [ ] Enhanced MD converter (tables, Mermaid)
-
-### Phase 2 (Q1 2025)
-- [ ] DMN Evaluator
-- [ ] JSON Formatter & Validator
-- [ ] Advanced Calculator
-- [ ] API Client/Tester
-
-### Phase 3 (Q2 2025)
-- [ ] 20+ additional tools
-- [ ] User preferences and saved configurations
-- [ ] Export/Import tool configurations
-- [ ] Plugin system for custom tools
-
-### Phase 4 (Q3 2025)
-- [ ] 100+ tools in marketplace
-- [ ] Cloud sync
-- [ ] Team collaboration features
-- [ ] Enterprise SSO integration
-
-## 📧 Contact
-
-**Quantum Tools by MTM**  
-Enterprise Utility Platform  
-
-For support or inquiries, contact: [your-email@mtm.com]
-
----
-
-**Built with ⚡ by MTM**
+MIT

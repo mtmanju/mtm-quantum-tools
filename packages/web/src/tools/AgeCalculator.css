@@ -14,16 +14,19 @@
 .age-inputs {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-end;
+  gap: 1.25rem;
+  /* Start, not stretch: a date field needs ~200px, and letting it grow to fill
+     a 1400px viewport left two enormous boxes holding eight characters. */
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .age-date-field {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  flex: 1 1 220px;
-  min-width: 200px;
+  flex: 0 0 auto;
+  width: 220px;
 }
 
 .age-date-label {
@@ -36,6 +39,9 @@
 
 .age-date-input {
   width: 100%;
+  /* Native date widgets size to their locale's format; without this the
+     control's intrinsic width leaks past the field. */
+  box-sizing: border-box;
   padding: 0.625rem 0.875rem;
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -236,4 +242,15 @@
   .age-hero-unit {
     font-size: 0.875rem;
   }
+}
+
+/* Confirms which date the browser's locale-formatted widget actually parsed.
+   Always occupies its line so the two fields never differ in height. */
+.age-date-echo {
+  display: block;
+  min-height: 1.1em;
+  font-size: 0.75rem;
+  line-height: 1.1em;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
 }

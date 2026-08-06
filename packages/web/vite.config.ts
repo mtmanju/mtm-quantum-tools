@@ -42,67 +42,21 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // React and core dependencies
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'react-vendor'
-          }
-          
-          // Router
-          if (id.includes('node_modules/react-router')) {
-            return 'router-vendor'
-          }
-          
-          // UI libraries - split lucide-react to load on demand
-          if (id.includes('node_modules/lucide-react')) {
-            return 'icons-vendor'
-          }
-          
-          if (id.includes('node_modules/react-dropzone')) {
-            return 'ui-vendor'
-          }
-          
-          // Document processing - only load when needed
-          if (id.includes('node_modules/docx')) {
-            return 'docx-vendor'
-          }
-          
-          // Mermaid - huge library, load only when MarkdownConverter is used
-          if (id.includes('node_modules/mermaid')) {
-            return 'mermaid-vendor'
-          }
-          
-          // Split vendor libraries more aggressively to avoid huge chunks
-          if (id.includes('node_modules')) {
-            const match = id.match(/node_modules\/(@?[^/]+)/)
-            if (match) {
-              const packageName = match[1]
-              
-              // Split scoped packages by full name
-              if (packageName.startsWith('@')) {
-                const fullName = packageName.replace('@', '').replace('/', '-')
-                return `vendor-${fullName.substring(0, 15)}`
-              }
-              
-              // Large utility libraries get their own chunk
-              const largePackages = ['lodash', 'moment', 'date-fns', 'axios', 'uuid', 'express', 'body-parser', 'elkjs', 'elk', 'cytoscape']
-              if (largePackages.some(pkg => packageName.includes(pkg))) {
-                return `vendor-${packageName}`
-              }
-              
-              // Very large packages that need their own chunk
-              if (packageName.includes('cytoscape') || packageName.includes('elk')) {
-                return `vendor-${packageName.substring(0, 8)}`
-              }
-              
-              // Simplified chunking - group by first 3 characters to reduce chunk count
-              const prefix = packageName.substring(0, Math.min(3, packageName.length)).toLowerCase()
-              return `vendor-${prefix}`
-            }
-            // Fallback for any unmatched packages
-            return 'vendor-misc'
-          }
-        },
+        // NO manualChunks.
+        //
+        // A hand-rolled manualChunks() used to group vendors by the first 3
+        // characters of the package name. That swept Vite's __vitePreload
+        // helper into the `mermaid-vendor` chunk, which made the entry chunk
+        // *statically* depend on mermaid — and therefore on elkjs (1.5 MB),
+        // cytoscape (428 KB), d3, dagre and katex. Every route, including the
+        // homepage, downloaded ~989 KB gzipped of a diagram engine that only
+        // MarkdownConverter uses.
+        //
+        // Rollup's default splitting already respects the dynamic import
+        // boundaries created by React.lazy(), which is exactly what we want:
+        // each tool gets its own chunk and heavy deps land in the chunk of the
+        // tool that imports them. First load is ~92 KB gzipped across 2 files.
+        // Do not reintroduce manualChunks without measuring the entry graph.
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
@@ -118,7 +72,10 @@ export default defineConfig({
     cssCodeSplit: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'lucide-react', 'mermaid'],
+    // mermaid is deliberately absent: it is only reachable through a dynamic
+    // import inside MarkdownConverter, and pre-bundling it slows cold dev start
+    // for every other tool.
+    include: ['react', 'react-dom', 'lucide-react'],
   },
   // esbuild options only apply when using esbuild minifier
   // Since we're using terser, these are not needed

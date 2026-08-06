@@ -10,10 +10,14 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatJavaScript, minifyJavaScript } from '../utils/javascript'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './JavaScriptFormatter.css'
 
 const JavaScriptFormatter = () => {
   const [jsContent, setJsContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('javascript-formatter', setJsContent)
   const [error, setError] = useState('')
 
   const copyInputHook = useCopy()

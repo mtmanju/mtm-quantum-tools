@@ -297,3 +297,176 @@
   }
 }
 
+
+/* Encode pane: text input by default, swapped for a summary once a file is
+   encoded (a file has no meaningful text representation to show). */
+.base64-encode-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Explicit "or encode a file" affordance under the text area, so file input
+   is discoverable rather than only reachable by dragging onto the textarea. */
+.base64-file-prompt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.base64-file-prompt button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.25rem 0.625rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.base64-file-prompt button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.base64-file-prompt-hint { color: var(--text-muted); }
+
+/* Summary shown once a file has been encoded — a binary file has no useful
+   text representation to display in the input pane. */
+.base64-file-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.875rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .base64-file-card {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.base64-file-card > svg { color: var(--accent); flex-shrink: 0; }
+
+.base64-file-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.base64-file-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.base64-file-sub { font-size: 0.75rem; color: var(--text-tertiary); }
+
+.base64-file-actions { display: flex; gap: 0.375rem; flex-shrink: 0; }
+
+.base64-file-actions button {
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.base64-file-actions button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.base64-encode-pane { position: relative; }
+
+.base64-encode-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 0.875rem;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.base64-encode-textarea::placeholder { color: var(--text-muted); }
+
+.base64-drop-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--accent-light);
+  border: 2px dashed var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* Styled as a button, but it is a <label for> so the browser opens the file
+   picker natively — no scripted click on a hidden input. */
+.base64-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.base64-file-label:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.base64-file-label:focus-within {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.base64-file-actions .base64-file-label {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+}

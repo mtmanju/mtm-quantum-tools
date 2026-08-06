@@ -8,7 +8,7 @@
 export const formatSql = (sql: string): string => {
   if (!sql.trim()) return ''
 
-  let formatted = sql.trim()
+  const formatted = sql.trim()
   
   // Basic SQL formatting
   // Split by common delimiters while preserving them

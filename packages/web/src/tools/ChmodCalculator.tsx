@@ -4,6 +4,7 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { useCopy } from '../hooks/useCopy'
+import { useHandoff } from '../hooks/useHandoff'
 import './ChmodCalculator.css'
 
 type PermBits = {
@@ -122,6 +123,9 @@ const PRESETS = [
 const ChmodCalculator = () => {
   const [bits, setBits] = useState<PermBits>(DEFAULT_BITS)
   const [octalInput, setOctalInput] = useState('644')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('chmod-calculator', setOctalInput)
   const [octalError, setOctalError] = useState('')
   const [error, setError] = useState('')
 

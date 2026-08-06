@@ -12,14 +12,17 @@ const LoanRepaymentCalculator = memo(() => {
   const [tenure, setTenure] = useState('')
   const [tenureUnit, setTenureUnit] = useState<'years' | 'months'>('years')
   const [extraPayment, setExtraPayment] = useState('')
-  const [error, setError] = useState('')
   const [showSchedule, setShowSchedule] = useState(false)
 
-  const results = useMemo(() => {
-    setError('')
-    
+  /**
+   * Validation errors are derived from the inputs and never stored — writing
+   * state during render forces an extra render pass and leaves the message
+   * one render behind the value that caused it. There are no user *action*
+   * errors in this tool, so no error state is held at all.
+   */
+  const calculation = useMemo(() => {
     if (!principal || !rate || !tenure) {
-      return null
+      return { results: null, error: '' }
     }
 
     const principalNum = parseFloat(principal)
@@ -29,13 +32,11 @@ const LoanRepaymentCalculator = memo(() => {
     const extraPaymentNum = parseFloat(extraPayment) || 0
 
     if (principalNum <= 0 || rateNum < 0 || tenureNum <= 0 || extraPaymentNum < 0) {
-      setError('Please enter valid positive values')
-      return null
+      return { results: null, error: 'Please enter valid positive values' }
     }
 
     if (principalNum > 1000000000 || rateNum > 100 || tenureMonths > 600) {
-      setError('Values are too large. Please enter reasonable amounts.')
-      return null
+      return { results: null, error: 'Values are too large. Please enter reasonable amounts.' }
     }
 
     const emi = calculateEMI(principalNum, rateNum, tenureMonths)
@@ -47,16 +48,22 @@ const LoanRepaymentCalculator = memo(() => {
     const actualTenure = schedule.length
 
     return {
-      emi,
-      schedule,
-      totalInterest,
-      totalPrincipal: principalNum, // Original principal amount
-      totalPrincipalPaid, // Total principal actually paid (from EMI + extra)
-      totalExtraPayment,
-      actualTenure,
-      originalTenure: tenureMonths
+      results: {
+        emi,
+        schedule,
+        totalInterest,
+        totalPrincipal: principalNum, // Original principal amount
+        totalPrincipalPaid, // Total principal actually paid (from EMI + extra)
+        totalExtraPayment,
+        actualTenure,
+        originalTenure: tenureMonths
+      },
+      error: ''
     }
   }, [principal, rate, tenure, tenureUnit, extraPayment])
+
+  const results = calculation.results
+  const error = calculation.error
 
   const schedulePagination = usePagination(
     results?.schedule || [],

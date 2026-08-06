@@ -31,6 +31,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { downloadBinaryFile, downloadTextFile } from '../utils/file'
 import { useCopy } from '../hooks/useCopy'
+import { useHandoff } from '../hooks/useHandoff'
 import './MarkdownConverter.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -46,15 +47,27 @@ const md = new MarkdownIt({ html: false, linkify: true, typographer: true, break
 
 // ─── Mermaid Singleton ─────────────────────────────────────────────────────────
 
-let _mermaidInstance: any = null
-let _mermaidInitPromise: Promise<any> | null = null
+/**
+ * The slice of mermaid's API this file uses.
+ *
+ * mermaid is loaded through a dynamic import and ships no types we can rely
+ * on here, so rather than `any` we describe exactly what we call — which is
+ * all of two methods.
+ */
+interface MermaidApi {
+  initialize(config: Record<string, unknown>): void
+  render(id: string, code: string): Promise<{ svg: string }>
+}
+
+let _mermaidInstance: MermaidApi | null = null
+let _mermaidInitPromise: Promise<MermaidApi> | null = null
 let _previewDiagramCounter = 0
 
-async function getMermaid(): Promise<any> {
+async function getMermaid(): Promise<MermaidApi> {
   if (_mermaidInstance) return _mermaidInstance
   if (_mermaidInitPromise) return _mermaidInitPromise
   _mermaidInitPromise = import('mermaid').then(m => {
-    _mermaidInstance = m.default
+    _mermaidInstance = m.default as unknown as MermaidApi
     _mermaidInstance.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict', fontFamily: 'Arial', logLevel: 'error' })
     _mermaidInitPromise = null
     return _mermaidInstance
@@ -305,7 +318,12 @@ async function buildDocxBlob(
           const targetW = Math.min(img.width * 0.75, 600)
           const targetH = img.height * (targetW / img.width)
           children.push(new Paragraph({
-            children: [new ImageRun({ data: img.data, transformation: { width: targetW, height: targetH }, type: 'png' } as any)],
+            children: [new ImageRun({
+              data: img.data,
+              transformation: { width: targetW, height: targetH },
+              // `type` is required at runtime but missing from docx's typings.
+              type: 'png',
+            } as ConstructorParameters<typeof ImageRun>[0])],
             spacing: { before: 120, after: 120 },
           }))
         } else {
@@ -417,36 +435,61 @@ function sanitizeSvg(svg: string): string {
   return new XMLSerializer().serializeToString(doc.documentElement)
 }
 
-async function renderPreviewDiagrams(container: HTMLDivElement) {
-  const divs = container.querySelectorAll<HTMLElement>('.mermaid-diagram')
-  if (!divs.length) return
-  const m = await getMermaid()
-  await Promise.all(Array.from(divs).map(async div => {
-    const encoded = div.getAttribute('data-mermaid-code')
-    if (!encoded) return
-    const code = decodeURIComponent(encoded)
-    if (!code.trim()) return
-    try {
-      const id = `mermaid-preview-${_previewDiagramCounter++}`
-      const { svg } = await m.render(id, code)
-      const safe = sanitizeSvg(svg)
-      const wrapper = document.createElement('div')
-      wrapper.className = 'mermaid-preview'
-      wrapper.innerHTML = safe
-      div.replaceChildren(wrapper)
-    } catch (err) {
-      const errDiv = document.createElement('div')
-      errDiv.className = 'mermaid-error'
-      errDiv.textContent = `Diagram error: ${err instanceof Error ? err.message : 'Unknown'}`
-      div.replaceChildren(errDiv)
-    }
-  }))
+/**
+ * Cache of rendered diagrams, keyed by the diagram source.
+ *
+ * Diagrams are rendered once and then substituted into the preview HTML
+ * string, so React owns the resulting DOM. An earlier implementation rendered
+ * asynchronously and then mutated the placeholder node directly — but React
+ * re-creates the preview subtree on unrelated state changes (autosave status,
+ * for one), so by the time mermaid resolved the captured node was detached and
+ * the SVG was written to an orphan. The diagram silently never appeared.
+ */
+const _diagramCache = new Map<string, { ok: true; svg: string } | { ok: false; error: string }>()
+
+/** Render every uncached diagram in `codes`. Resolves once the cache is populated. */
+async function renderDiagramsToCache(codes: string[]): Promise<void> {
+  const pending = codes.filter(c => !_diagramCache.has(c))
+  if (!pending.length) return
+
+  let m: { render: (id: string, code: string) => Promise<{ svg: string }> }
+  try {
+    m = await getMermaid()
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Failed to load the diagram renderer'
+    pending.forEach(c => _diagramCache.set(c, { ok: false, error }))
+    return
+  }
+
+  await Promise.all(
+    pending.map(async code => {
+      try {
+        const id = `mermaid-preview-${_previewDiagramCounter++}`
+        const { svg } = await m.render(id, code)
+        const safe = sanitizeSvg(svg)
+        _diagramCache.set(
+          code,
+          safe
+            ? { ok: true, svg: safe }
+            : { ok: false, error: 'Diagram output could not be safely displayed' }
+        )
+      } catch (err) {
+        _diagramCache.set(code, {
+          ok: false,
+          error: err instanceof Error ? err.message : 'Invalid diagram syntax',
+        })
+      }
+    })
+  )
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const MarkdownConverter = () => {
   const [markdownContent, setMarkdownContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('md-converter', setMarkdownContent)
   const [fileName, setFileName] = useState('')
   const [isConverting, setIsConverting] = useState(false)
   const [conversionProgress, setConversionProgress] = useState('')
@@ -462,9 +505,29 @@ const MarkdownConverter = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorLayoutRef = useRef<HTMLDivElement>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const mermaidRaf = useRef<number>(0)
 
   // ── Derived state ────────────────────────────────────────────────────────────
+
+  /**
+   * Diagrams that have finished rendering, as state rather than a version
+   * counter — so the memo below has a real dependency instead of one the
+   * linter can see through. The module-level cache still dedupes the async
+   * work across mounts; this is the render-visible view of it.
+   */
+  const [renderedDiagrams, setRenderedDiagrams] = useState<typeof _diagramCache>(new Map())
+
+  /** Diagram sources found in the current document, in order. */
+  const diagramCodes = useMemo(() => {
+    if (!markdownContent.trim()) return [] as string[]
+    const codes: string[] = []
+    const fence = /^[ \t]*```[ \t]*mermaid[ \t]*\r?\n([\s\S]*?)^[ \t]*```[ \t]*$/gm
+    let match: RegExpExecArray | null
+    while ((match = fence.exec(markdownContent)) !== null) {
+      const code = match[1].trim()
+      if (code) codes.push(code)
+    }
+    return codes
+  }, [markdownContent])
 
   const htmlPreview = useMemo(() => {
     if (!markdownContent.trim()) return ''
@@ -477,17 +540,33 @@ const MarkdownConverter = () => {
         if (!code) return
         const pre = block.parentElement
         if (!pre) return
+
         const div = doc.createElement('div')
         div.className = 'mermaid-diagram'
         div.setAttribute('data-mermaid-code', encodeURIComponent(code))
         div.setAttribute('data-mermaid-index', String(idx++))
+
+        // Substitute the rendered diagram inline so React owns it. Anything
+        // still uncached keeps the placeholder and its "rendering" affordance
+        // until the effect below populates the cache.
+        const cached = renderedDiagrams.get(code) ?? _diagramCache.get(code)
+        if (cached?.ok) {
+          div.classList.add('is-rendered')
+          div.innerHTML = `<div class="mermaid-preview">${cached.svg}</div>`
+        } else if (cached && !cached.ok) {
+          div.classList.add('is-error')
+          const errDiv = doc.createElement('div')
+          errDiv.className = 'mermaid-error'
+          errDiv.textContent = `Diagram error: ${cached.error}`
+          div.replaceChildren(errDiv)
+        }
         pre.replaceWith(div)
       })
       return doc.body.innerHTML
     } catch {
       return '<p>Error rendering preview</p>'
     }
-  }, [markdownContent])
+  }, [markdownContent, renderedDiagrams])
 
   const documentStats = useMemo(() => computeStats(markdownContent), [markdownContent])
 
@@ -526,13 +605,15 @@ const MarkdownConverter = () => {
   // ── Mermaid preview rendering ────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!htmlPreview || !previewRef.current) return
-    cancelAnimationFrame(mermaidRaf.current)
-    mermaidRaf.current = requestAnimationFrame(() => {
-      if (previewRef.current) renderPreviewDiagrams(previewRef.current)
+    const uncached = diagramCodes.filter(c => !_diagramCache.has(c))
+    if (!uncached.length) return
+    let cancelled = false
+    renderDiagramsToCache(uncached).then(() => {
+      // Publish the cache so the memo above re-runs and paints the diagrams.
+      if (!cancelled) setRenderedDiagrams(new Map(_diagramCache))
     })
-    return () => cancelAnimationFrame(mermaidRaf.current)
-  }, [htmlPreview])
+    return () => { cancelled = true }
+  }, [diagramCodes])
 
   // ── File loading ─────────────────────────────────────────────────────────────
 

@@ -6,54 +6,57 @@ import { ErrorBar } from '../components/ui/ErrorBar'
 import { EditorPanel } from '../components/ui/EditorPanel'
 import { useCopy } from '../hooks/useCopy'
 import { textToSlug, slugToText } from '../utils/slug'
+import { useHandoff } from '../hooks/useHandoff'
 import './SlugConverter.css'
 
 const SlugConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('slug-converter', setInput)
   const [mode, setMode] = useState<'text-to-slug' | 'slug-to-text'>('text-to-slug')
   const [separator, setSeparator] = useState('-')
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
 
-  const output = useMemo(() => {
-    if (!input.trim()) return ''
+  const conversion = useMemo(() => {
+    if (!input.trim()) return { value: '', error: '' }
 
     try {
-      if (mode === 'text-to-slug') {
-        const result = textToSlug(input, separator)
-        if (!result.isValid) {
-          setError(result.error || 'Slug generation failed')
-          return ''
+      const result = mode === 'text-to-slug' ? textToSlug(input, separator) : slugToText(input)
+      if (!result.isValid) {
+        return {
+          value: '',
+          error: result.error || (mode === 'text-to-slug' ? 'Slug generation failed' : 'Text conversion failed'),
         }
-        setError('')
-        return result.slug || ''
-      } else {
-        const result = slugToText(input)
-        if (!result.isValid) {
-          setError(result.error || 'Text conversion failed')
-          return ''
-        }
-        setError('')
-        return result.slug || ''
       }
+      return { value: result.slug || '', error: '' }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed')
-      return ''
+      return { value: '', error: err instanceof Error ? err.message : 'Conversion failed' }
     }
   }, [input, mode, separator])
 
+  const output = conversion.value
+  const error = actionError || conversion.error
+
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -61,7 +64,7 @@ const SlugConverter = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
-      onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
     },
@@ -86,7 +89,7 @@ const SlugConverter = () => {
             className={`slug-mode-btn ${mode === 'text-to-slug' ? 'active' : ''}`}
             onClick={() => {
               setMode('text-to-slug')
-              setError('')
+              setActionError('')
             }}
           >
             Text → Slug
@@ -96,7 +99,7 @@ const SlugConverter = () => {
             className={`slug-mode-btn ${mode === 'slug-to-text' ? 'active' : ''}`}
             onClick={() => {
               setMode('slug-to-text')
-              setError('')
+              setActionError('')
             }}
           >
             Slug → Text
@@ -125,7 +128,7 @@ const SlugConverter = () => {
       <div className="slug-converter-container">
         <EditorPanel
           title={mode === 'text-to-slug' ? 'Text Input' : 'Slug Input'}
-          onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+          onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
           copied={copyInputHook.copied}
         >
           <div className="slug-input-wrapper">
@@ -136,7 +139,7 @@ const SlugConverter = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
             />
           </div>
@@ -145,7 +148,7 @@ const SlugConverter = () => {
         {output && (
           <EditorPanel
             title={mode === 'text-to-slug' ? 'Slug Output' : 'Text Output'}
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(output, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
           >
             <div className="slug-output-wrapper">

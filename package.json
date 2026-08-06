@@ -8,8 +8,10 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@mtm/web",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces"
+    "build": "npm run build --workspace=@mtm/web",
+    "preview": "npm run preview --workspace=@mtm/web",
+    "test": "npm run test --workspace=@mtm/web",
+    "lint": "npm run lint --workspace=@mtm/web"
   },
   "keywords": [
     "enterprise",
@@ -19,8 +21,5 @@
     "document-converter"
   ],
   "author": "MTM",
-  "license": "MIT",
-  "dependencies": {
-    "d3-sankey": "^0.12.3"
-  }
+  "license": "MIT"
 }

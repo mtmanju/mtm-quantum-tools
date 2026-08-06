@@ -33,7 +33,10 @@ export const DropzoneTextarea = memo(({
   acceptedFiles: _af, fileRejections: _fr, rootRef: _rr, inputRef: _ir,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   open: _o, handleUploadClick: _hu,
-  dropzoneText = 'Drag & drop file or paste content',
+  // Absorbed so it never reaches the <textarea>; the overlay uses
+  // dropzoneActiveText instead.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  dropzoneText: _dt,
   dropzoneHint = 'Supports file upload or paste directly',
   dropzoneActiveText = 'Drop file here',
   value,

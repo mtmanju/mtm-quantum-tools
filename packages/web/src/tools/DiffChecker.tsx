@@ -10,6 +10,7 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { computeDiff } from '../utils/diff'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './DiffChecker.css'
 
 const EXAMPLES = [
@@ -37,6 +38,9 @@ const EXAMPLES = [
 
 const DiffChecker = () => {
   const [oldText, setOldText] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('diff-checker', setOldText)
   const [newText, setNewText] = useState('')
   const [ignoreWhitespace, setIgnoreWhitespace] = useState(false)
   const [error, setError] = useState('')

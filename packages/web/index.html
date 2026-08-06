@@ -3,30 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Quantum Tools - Essential utilities for modern development. Document conversion, DMN evaluation, and developer tools." />
-    <meta name="theme-color" content="#000000" />
-    
-    <!-- Preconnect to external resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- DNS prefetch for faster resource loading -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <meta name="description" content="45 free developer utilities that run entirely in your browser — formatters, converters, encoders, PDF tools and calculators. Nothing you paste is ever uploaded." />
+    <meta name="theme-color" content="#0B0D17" />
 
-    <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https: http:; worker-src 'self' blob: https://unpkg.com; frame-src 'none'; object-src 'none';" />
+    <!-- CSP: no third-party origins. connect-src stays broad only because the
+         API Tester calls user-supplied endpoints. -->
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    
-    <!-- Preload critical resources for faster initial load -->
-    <!-- Removed modulepreload for main.tsx as it uses data URI in production -->
-    <!-- Removed prefetch for routes - they're handled by React Router -->
-    
-    <title>Quantum Tools - Essential Utilities for Modern Development</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <title>Quantum Tools — Free Developer Utilities</title>
+
+    <!--
+      Runs before the body is painted, so the rules below apply on the very
+      first frame. Without this, the prerendered prose is visible for the
+      100–300 ms it takes React to boot and flashes away — a centred wall of
+      text that then jumps to the real layout.
+    -->
+    <script>document.documentElement.className += ' js'</script>
+
+    <style>
+      /* With JS: show the skeleton, hide the prerendered prose.
+         Without JS (non-rendering crawlers): the reverse — they get the
+         real content, which is the entire point of prerendering. */
+      .js .prerender { display: none; }
+      html:not(.js) #boot-skeleton { display: none; }
+
+      #boot-skeleton { padding: 5rem 1.5rem; text-align: center; font-family: system-ui, sans-serif; }
+      #boot-skeleton .s-title { height: 1.75rem; width: 8rem; margin: 0 auto 2rem; border-radius: 8px; background: rgba(128,128,128,0.15); }
+      #boot-skeleton .s-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.875rem; max-width: 1600px; margin: 0 auto; }
+      #boot-skeleton .s-card { height: 200px; border-radius: 14px; background: rgba(128,128,128,0.1); }
+      .prerender { max-width: 46rem; margin: 0 auto; padding: 4rem 1.5rem; font-family: system-ui, sans-serif; line-height: 1.65; color: #1f2430; }
+      .prerender h1 { font-size: 2rem; margin: 0 0 0.75rem; letter-spacing: -0.02em; }
+      .prerender h2 { font-size: 1.125rem; margin: 2rem 0 0.5rem; letter-spacing: -0.01em; }
+      .prerender ul, .prerender dl { padding-left: 1.1rem; }
+      .prerender li, .prerender dd { margin: 0 0 0.35rem; }
+      .prerender dt { font-weight: 600; margin-top: 0.85rem; }
+      .prerender dd { margin-left: 0; color: #4b5361; }
+      .prerender a { color: #8A6A2F; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0B0D17; }
+        .prerender { color: #E6E8EC; }
+        .prerender dd { color: #A8B0BD; }
+        .prerender a { color: #D4AF6A; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-skeleton" aria-hidden="true">
+        <div class="s-title"></div>
+        <div class="s-grid">
+          <div class="s-card"></div><div class="s-card"></div><div class="s-card"></div>
+          <div class="s-card"></div><div class="s-card"></div><div class="s-card"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,9 +1,10 @@
 import { Binary, Check, Copy, Eye, EyeOff, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
+import { useHandoff } from '../hooks/useHandoff'
 import './IpCidrCalculator.css'
 
 interface SubnetResult {
@@ -89,28 +90,25 @@ function formatHosts(n: number): string {
 const IpCidrCalculator = () => {
   const [ipInput, setIpInput] = useState('192.168.1.0')
   const [cidrInput, setCidrInput] = useState('24')
-  const [result, setResult] = useState<SubnetResult | null>(null)
-  const [error, setError] = useState('')
+  /** Errors from user actions (copy). Calculation errors are derived below. */
+  const [actionError, setActionError] = useState('')
   const [showBinary, setShowBinary] = useState(false)
 
   const copyHook = useCopy()
 
-  const calculate = useCallback((ip: string, cidr: string) => {
-    setError('')
-    const prefix = parseInt(cidr, 10)
-    if (!ip.trim() || cidr === '') return
+  // Derived, not stored: the subnet is a pure function of the two inputs, so
+  // computing it in an effect only bought an extra render per keystroke.
+  const { result, error: calcError } = useMemo(() => {
+    const prefix = parseInt(cidrInput, 10)
+    if (!ipInput.trim() || cidrInput === '') return { result: null, error: '' }
     try {
-      const res = calculateSubnet(ip.trim(), prefix)
-      setResult(res)
+      return { result: calculateSubnet(ipInput.trim(), prefix), error: '' }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Calculation failed')
-      setResult(null)
+      return { result: null, error: err instanceof Error ? err.message : 'Calculation failed' }
     }
-  }, [])
+  }, [ipInput, cidrInput])
 
-  useEffect(() => {
-    calculate(ipInput, cidrInput)
-  }, [ipInput, cidrInput, calculate])
+  const error = actionError || calcError
 
   const handleIpChange = useCallback((value: string) => {
     // Support pasting CIDR notation like 192.168.1.0/24
@@ -121,18 +119,23 @@ const IpCidrCalculator = () => {
     } else {
       setIpInput(value)
     }
-    setError('')
+    setActionError('')
   }, [cidrInput])
+
+  // Accept a value handed over by the paste bar. Routed through
+  // handleIpChange so a pasted CIDR block splits into address + prefix
+  // rather than landing "/24" in the address field.
+  useHandoff('ip-cidr-calculator', handleIpChange)
 
   const handleCidrChange = useCallback((value: string) => {
     setCidrInput(value)
-    setError('')
+    setActionError('')
   }, [])
 
   const handleClear = useCallback(() => {
     setIpInput('192.168.1.0')
     setCidrInput('24')
-    setError('')
+    setActionError('')
   }, [])
 
   const buildSummary = useCallback((): string => {
@@ -155,7 +158,7 @@ const IpCidrCalculator = () => {
     {
       icon: copyHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyHook.copied ? 'Copied!' : 'Copy Summary',
-      onClick: () => copyHook.copy(buildSummary(), (err) => setError(err)),
+      onClick: () => copyHook.copy(buildSummary(), (err) => setActionError(err)),
       disabled: !result,
       title: 'Copy subnet summary',
       showDividerBefore: true,

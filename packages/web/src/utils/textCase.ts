@@ -45,10 +45,11 @@ export const convertCase = (text: string, caseType: CaseType): string => {
           })
           .join(' ')
 
-      case 'sentence':
+      case 'sentence': {
         const firstChar = text.charAt(0)
         if (!firstChar) return text
         return firstChar.toUpperCase() + text.slice(1).toLowerCase()
+      }
 
       case 'camel':
         return text
@@ -99,7 +100,7 @@ export const convertCase = (text: string, caseType: CaseType): string => {
       default:
         return text
     }
-  } catch (error) {
+  } catch {
     // If any error occurs, return original text
     return text
   }

@@ -10,14 +10,24 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { csvToJson, jsonToCsv } from '../utils/csv'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './CsvToJsonConverter.css'
 
 const CsvToJsonConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('csv-to-json', setInput)
   const [mode, setMode] = useState<'csv-to-json' | 'json-to-csv'>('csv-to-json')
   const [delimiter, setDelimiter] = useState(',')
   const [hasHeaders, setHasHeaders] = useState(true)
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
@@ -25,45 +35,43 @@ const CsvToJsonConverter = () => {
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
       setInput(text)
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'text/csv': ['.csv'],
       'text/plain': ['.txt', '.csv']
     }
   })
 
-  const output = useMemo(() => {
-    if (!input.trim()) return ''
+  const conversion = useMemo(() => {
+    if (!input.trim()) return { value: '', error: '' }
 
     try {
       if (mode === 'csv-to-json') {
         const result = csvToJson(input, { delimiter, hasHeaders })
         if (!result.isValid) {
-          setError(result.error || 'Failed to convert CSV to JSON')
-          return ''
+          return { value: '', error: result.error || 'Failed to convert CSV to JSON' }
         }
-        setError('')
-        return result.json || ''
+        return { value: result.json || '', error: '' }
       } else {
         const result = jsonToCsv(input, { delimiter, hasHeaders })
         if (!result.isValid) {
-          setError(result.error || 'Failed to convert JSON to CSV')
-          return ''
+          return { value: '', error: result.error || 'Failed to convert JSON to CSV' }
         }
-        setError('')
-        return result.json || ''
+        return { value: result.json || '', error: '' }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed')
-      return ''
+      return { value: '', error: err instanceof Error ? err.message : 'Conversion failed' }
     }
   }, [input, mode, delimiter, hasHeaders])
 
+  const output = conversion.value
+  const error = actionError || conversion.error
+
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -76,7 +84,7 @@ const CsvToJsonConverter = () => {
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -84,7 +92,7 @@ const CsvToJsonConverter = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
-      onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
     },
@@ -121,7 +129,7 @@ const CsvToJsonConverter = () => {
           className={`csv-json-mode-btn ${mode === 'csv-to-json' ? 'active' : ''}`}
           onClick={() => {
             setMode('csv-to-json')
-            setError('')
+            setActionError('')
           }}
         >
           <FileSpreadsheet size={16} />
@@ -132,7 +140,7 @@ const CsvToJsonConverter = () => {
           className={`csv-json-mode-btn ${mode === 'json-to-csv' ? 'active' : ''}`}
           onClick={() => {
             setMode('json-to-csv')
-            setError('')
+            setActionError('')
           }}
         >
           <ArrowRightLeft size={16} />
@@ -175,7 +183,7 @@ const CsvToJsonConverter = () => {
         left={
           <EditorPanel
             title={mode === 'csv-to-json' ? 'CSV Input' : 'JSON Input'}
-            onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+            onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
             copied={copyInputHook.copied}
           >
             <DropzoneTextarea
@@ -183,7 +191,7 @@ const CsvToJsonConverter = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
               placeholder={
                 mode === 'csv-to-json'
@@ -200,7 +208,7 @@ const CsvToJsonConverter = () => {
         right={
           <EditorPanel
             title={mode === 'csv-to-json' ? 'JSON Output' : 'CSV Output'}
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(output, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
           >
             {!input.trim() ? (

@@ -1,10 +1,14 @@
 import { PDFDocument } from 'pdf-lib'
 import * as pdfjsLib from 'pdfjs-dist'
+// Bundle the worker locally. It used to be fetched from unpkg.com, which
+// disclosed every PDF user's IP to a third party — directly contradicting the
+// site's "your data never leaves your browser" promise — and hard-failed all
+// six PDF tools whenever unpkg was blocked (corporate proxies) or unreachable.
+// Vite rewrites this to a hashed asset in the build output.
+import PdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url'
 
-// Configure pdf.js worker - use CDN for reliability
 if (typeof window !== 'undefined') {
-  // Always set worker - use unpkg as it's more reliable
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorker
 }
 
 export interface PdfFile {
@@ -79,7 +83,7 @@ export const generatePdfThumbnail = async (file: File, width: number = 200): Pro
   try {
     // Ensure worker is configured before any operations
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+      pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorker
     }
 
     const arrayBuffer = await file.arrayBuffer()

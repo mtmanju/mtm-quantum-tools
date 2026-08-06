@@ -24,7 +24,7 @@ export const encodeUrl = (text: string, component: boolean = true): string => {
     // encodeURIComponent: Encodes special characters (use for URL components like query params)
     // encodeURI: Encodes only characters that are not valid in URLs (use for full URLs)
     return component ? encodeURIComponent(text) : encodeURI(text)
-  } catch (error) {
+  } catch {
     // If encoding fails, return empty string
     return ''
   }

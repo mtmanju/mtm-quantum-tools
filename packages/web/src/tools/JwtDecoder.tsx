@@ -1,5 +1,6 @@
 import { AlertCircle, AlertTriangle, Check, Copy, Eye, EyeOff, Shield, Upload, X, Clock } from 'lucide-react'
 import { useCallback, useMemo, useState, useEffect } from 'react'
+import { useHandoff } from '../hooks/useHandoff'
 import { decodeJwt, formatJwtTimestamp, isJwtExpired, type JwtDecodeResult } from '../utils/jwt'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
@@ -35,6 +36,9 @@ const EXAMPLES = [
 
 const JwtDecoder = () => {
   const [token, setToken] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('jwt-decoder', setToken)
   const [copiedStates, setCopiedStates] = useState({ token: false, header: false, payload: false, signature: false })
   const [showToken, setShowToken] = useState(true)
   const [error, setError] = useState('')
@@ -46,50 +50,39 @@ const JwtDecoder = () => {
     return decodeJwt(token)
   }, [token])
 
-  const [expirationCountdown, setExpirationCountdown] = useState<string>('')
+  /**
+   * A ticking clock, not a stored countdown.
+   *
+   * The countdown used to be state written from inside an effect — including
+   * synchronously on mount, which renders twice for every token. Ticking a
+   * timestamp and deriving the label from it is the same behaviour with one
+   * render per second and no state written during render or mount.
+   */
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
 
   useEffect(() => {
-    if (!decodeResult.valid || !decodeResult.payload) {
-      setExpirationCountdown('')
-      return
-    }
-
-    const exp = decodeResult.payload.exp
-    if (!exp || typeof exp !== 'number') {
-      setExpirationCountdown('')
-      return
-    }
-
-    const updateCountdown = () => {
-      const now = Math.floor(Date.now() / 1000)
-      const remaining = exp - now
-      
-      if (remaining <= 0) {
-        setExpirationCountdown('Expired')
-        return
-      }
-
-      const days = Math.floor(remaining / 86400)
-      const hours = Math.floor((remaining % 86400) / 3600)
-      const minutes = Math.floor((remaining % 3600) / 60)
-      const seconds = remaining % 60
-
-      if (days > 0) {
-        setExpirationCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`)
-      } else if (hours > 0) {
-        setExpirationCountdown(`${hours}h ${minutes}m ${seconds}s`)
-      } else if (minutes > 0) {
-        setExpirationCountdown(`${minutes}m ${seconds}s`)
-      } else {
-        setExpirationCountdown(`${seconds}s`)
-      }
-    }
-
-    updateCountdown()
-    const interval = setInterval(updateCountdown, 1000)
-
+    const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000)
     return () => clearInterval(interval)
-  }, [decodeResult])
+  }, [])
+
+  const expirationCountdown = useMemo(() => {
+    if (!decodeResult.valid || !decodeResult.payload) return ''
+    const exp = decodeResult.payload.exp
+    if (!exp || typeof exp !== 'number') return ''
+
+    const remaining = exp - now
+    if (remaining <= 0) return 'Expired'
+
+    const days = Math.floor(remaining / 86400)
+    const hours = Math.floor((remaining % 86400) / 3600)
+    const minutes = Math.floor((remaining % 3600) / 60)
+    const seconds = remaining % 60
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`
+    if (minutes > 0) return `${minutes}m ${seconds}s`
+    return `${seconds}s`
+  }, [decodeResult, now])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {

@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { testRegex, highlightMatches, replaceRegex, type RegexFlags } from '../utils/regex'
+import { useHandoff } from '../hooks/useHandoff'
 import './RegexTester.css'
 
 const EXAMPLES = [
@@ -23,6 +24,9 @@ const EXAMPLES = [
 const RegexTester = () => {
   const [pattern, setPattern] = useState('')
   const [testString, setTestString] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('regex-tester', setTestString)
   const [replacement, setReplacement] = useState('')
   const [mode, setMode] = useState<'test' | 'replace'>('test')
   const [flags, setFlags] = useState<RegexFlags>({
@@ -33,25 +37,31 @@ const RegexTester = () => {
     unicode: false,
     sticky: false
   })
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Regex errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyPatternHook = useCopy()
   const copyTestStringHook = useCopy()
   const copyResultHook = useCopy()
   const copyHook = useCopy()
 
-  const testResult = useMemo(() => {
+  const testComputed = useMemo(() => {
     if (!pattern.trim() || !testString.trim()) {
-      return null
+      return { value: null, error: '' }
     }
     const result = testRegex(pattern, testString, flags)
     if (!result.isValid) {
-      setError(result.error || 'Invalid regex pattern')
-    } else {
-      setError('')
+      return { value: result, error: result.error || 'Invalid regex pattern' }
     }
-    return result
+    return { value: result, error: '' }
   }, [pattern, testString, flags])
+
+  const testResult = testComputed.value
 
   const highlightedParts = useMemo(() => {
     if (!testResult || !testResult.isValid || testResult.matches.length === 0) {
@@ -60,18 +70,24 @@ const RegexTester = () => {
     return highlightMatches(testString, testResult.matches)
   }, [testResult, testString])
 
-  const replaceResult = useMemo(() => {
+  const replaceComputed = useMemo(() => {
     if (mode !== 'replace' || !pattern.trim() || !testString.trim()) {
-      return null
+      return { value: null, error: '' }
     }
     const result = replaceRegex(pattern, testString, replacement, flags)
     if (!result.isValid) {
-      setError(result.error || 'Replace failed')
-    } else {
-      setError('')
+      return { value: result, error: result.error || 'Replace failed' }
     }
-    return result
+    return { value: result, error: '' }
   }, [pattern, testString, replacement, flags, mode])
+
+  const replaceResult = replaceComputed.value
+
+  // Surface only the error belonging to the mode currently on screen — a
+  // replace failure reported while the Test tab is open would describe a
+  // computation the user isn't looking at.
+  const error =
+    actionError || (mode === 'replace' ? replaceComputed.error : testComputed.error)
 
   const resultText = useMemo(() => {
     if (mode === 'replace') {
@@ -115,9 +131,9 @@ const RegexTester = () => {
   const patternFileUpload = useFileUpload({
     onFileRead: (text) => {
       setPattern(text.trim())
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'text/plain': ['.txt', '.regex']
     }
@@ -126,9 +142,9 @@ const RegexTester = () => {
   const testStringFileUpload = useFileUpload({
     onFileRead: (text) => {
       setTestString(text)
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'text/plain': ['.txt']
     }
@@ -137,14 +153,14 @@ const RegexTester = () => {
   const handleLoadExample = useCallback((ex: { pattern: string; test: string }) => {
     setPattern(ex.pattern)
     setTestString(ex.test)
-    setError('')
+    setActionError('')
   }, [])
 
   const handleClear = useCallback(() => {
     setPattern('')
     setTestString('')
     setReplacement('')
-    setError('')
+    setActionError('')
     setFlags({
       global: true,
       caseInsensitive: false,
@@ -172,7 +188,7 @@ const RegexTester = () => {
     {
       icon: copyPatternHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyPatternHook.copied ? 'Copied!' : 'Copy Pattern',
-      onClick: () => copyPatternHook.copy(pattern, (err) => setError(err)),
+      onClick: () => copyPatternHook.copy(pattern, (err) => setActionError(err)),
       disabled: !pattern.trim(),
       title: 'Copy pattern',
       showDividerBefore: true
@@ -180,14 +196,14 @@ const RegexTester = () => {
     {
       icon: copyTestStringHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyTestStringHook.copied ? 'Copied!' : 'Copy Test',
-      onClick: () => copyTestStringHook.copy(testString, (err) => setError(err)),
+      onClick: () => copyTestStringHook.copy(testString, (err) => setActionError(err)),
       disabled: !testString.trim(),
       title: 'Copy test string',
     },
     {
       icon: copyResultHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyResultHook.copied ? 'Copied!' : 'Copy Result',
-      onClick: () => copyResultHook.copy(resultText, (err) => setError(err)),
+      onClick: () => copyResultHook.copy(resultText, (err) => setActionError(err)),
       disabled: !resultText.trim(),
       title: 'Copy results',
       showDividerBefore: true
@@ -304,7 +320,7 @@ const RegexTester = () => {
           <div className="regex-input-panel">
             <EditorPanel
               title="Regex Pattern"
-              onCopy={() => copyPatternHook.copy(pattern, (err) => setError(err))}
+              onCopy={() => copyPatternHook.copy(pattern, (err) => setActionError(err))}
               copied={copyPatternHook.copied}
             >
               <DropzoneTextarea
@@ -312,7 +328,7 @@ const RegexTester = () => {
                 value={pattern}
                 onChange={(e) => {
                   setPattern(e.target.value)
-                  setError('')
+                  setActionError('')
                 }}
                 placeholder="Enter regex pattern (e.g., /hello/g)"
                 spellCheck={false}
@@ -323,7 +339,7 @@ const RegexTester = () => {
             </EditorPanel>
             <EditorPanel
               title={mode === 'test' ? 'Test String' : 'Input Text'}
-              onCopy={() => copyTestStringHook.copy(testString, (err) => setError(err))}
+              onCopy={() => copyTestStringHook.copy(testString, (err) => setActionError(err))}
               copied={copyTestStringHook.copied}
             >
               <DropzoneTextarea
@@ -331,7 +347,7 @@ const RegexTester = () => {
                 value={testString}
                 onChange={(e) => {
                   setTestString(e.target.value)
-                  setError('')
+                  setActionError('')
                 }}
                 placeholder={mode === 'test' ? 'Enter text to test against the regex pattern' : 'Enter text to replace matches in'}
                 spellCheck={false}
@@ -343,14 +359,14 @@ const RegexTester = () => {
             {mode === 'replace' && (
               <EditorPanel
                 title="Replacement"
-                onCopy={() => copyHook.copy(replacement, (err) => setError(err))}
+                onCopy={() => copyHook.copy(replacement, (err) => setActionError(err))}
                 copied={copyHook.copied}
               >
                 <textarea
                   value={replacement}
                   onChange={(e) => {
                     setReplacement(e.target.value)
-                    setError('')
+                    setActionError('')
                   }}
                   placeholder="Enter replacement text (use $1, $2 for groups)"
                   spellCheck={false}
@@ -363,7 +379,7 @@ const RegexTester = () => {
         right={
           <EditorPanel
             title={mode === 'test' ? 'Match Results' : 'Replaced Text'}
-            onCopy={() => copyResultHook.copy(resultText, (err) => setError(err))}
+            onCopy={() => copyResultHook.copy(resultText, (err) => setActionError(err))}
             copied={copyResultHook.copied}
           >
             <div className="regex-results">

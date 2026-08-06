@@ -1,0 +1,19 @@
+{
+  "name": "Quantum Tools — Free Developer Utilities",
+  "short_name": "Quantum Tools",
+  "description": "45 developer utilities that run entirely in your browser. Nothing you paste is ever uploaded.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B0D17",
+  "theme_color": "#0B0D17",
+  "categories": ["developer", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

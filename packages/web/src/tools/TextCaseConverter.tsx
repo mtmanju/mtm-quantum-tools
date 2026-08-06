@@ -9,10 +9,14 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { convertCase, type CaseType } from '../utils/textCase'
+import { useHandoff } from '../hooks/useHandoff'
 import './TextCaseConverter.css'
 
 const TextCaseConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('text-case-converter', setInput)
   const [caseType, setCaseType] = useState<CaseType>('lowercase')
   const [error, setError] = useState('')
 

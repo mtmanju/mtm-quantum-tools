@@ -9,12 +9,22 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { jsonToXml, xmlToJson } from '../utils/jsonXml'
+import { useHandoff } from '../hooks/useHandoff'
 import './JsonXmlConverter.css'
 
 const JsonXmlConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('json-xml-converter', setInput)
   const [mode, setMode] = useState<'json-to-xml' | 'xml-to-json'>('json-to-xml')
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
@@ -22,9 +32,9 @@ const JsonXmlConverter = () => {
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
       setInput(text)
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'application/json': ['.json'],
       'text/xml': ['.xml'],
@@ -33,36 +43,34 @@ const JsonXmlConverter = () => {
     }
   })
 
-  const output = useMemo(() => {
-    if (!input.trim()) return ''
+  const conversion = useMemo(() => {
+    if (!input.trim()) return { value: '', error: '' }
 
     try {
       if (mode === 'json-to-xml') {
         const result = jsonToXml(input)
         if (!result.isValid) {
-          setError(result.error || 'Conversion failed')
-          return ''
+          return { value: '', error: result.error || 'Conversion failed' }
         }
-        setError('')
-        return result.converted || ''
+        return { value: result.converted || '', error: '' }
       } else {
         const result = xmlToJson(input)
         if (!result.isValid) {
-          setError(result.error || 'Conversion failed')
-          return ''
+          return { value: '', error: result.error || 'Conversion failed' }
         }
-        setError('')
-        return result.converted || ''
+        return { value: result.converted || '', error: '' }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed')
-      return ''
+      return { value: '', error: err instanceof Error ? err.message : 'Conversion failed' }
     }
   }, [input, mode])
 
+  const output = conversion.value
+  const error = actionError || conversion.error
+
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -75,7 +83,7 @@ const JsonXmlConverter = () => {
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -83,7 +91,7 @@ const JsonXmlConverter = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
-      onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
     },
@@ -107,7 +115,7 @@ const JsonXmlConverter = () => {
           className={`json-xml-mode-btn ${mode === 'json-to-xml' ? 'active' : ''}`}
           onClick={() => {
             setMode('json-to-xml')
-            setError('')
+            setActionError('')
           }}
         >
           <ArrowRightLeft size={16} />
@@ -118,7 +126,7 @@ const JsonXmlConverter = () => {
           className={`json-xml-mode-btn ${mode === 'xml-to-json' ? 'active' : ''}`}
           onClick={() => {
             setMode('xml-to-json')
-            setError('')
+            setActionError('')
           }}
         >
           <ArrowRightLeft size={16} />
@@ -132,7 +140,7 @@ const JsonXmlConverter = () => {
         left={
           <EditorPanel
             title={mode === 'json-to-xml' ? 'JSON Input' : 'XML Input'}
-            onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+            onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
             copied={copyInputHook.copied}
           >
             <DropzoneTextarea
@@ -140,7 +148,7 @@ const JsonXmlConverter = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
               placeholder={mode === 'json-to-xml' ? 'Paste JSON here...' : 'Paste XML here...'}
               spellCheck={false}
@@ -153,7 +161,7 @@ const JsonXmlConverter = () => {
         right={
           <EditorPanel
             title={mode === 'json-to-xml' ? 'XML Output' : 'JSON Output'}
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(output, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
           >
             {!input.trim() ? (

@@ -9,6 +9,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { encodeUrl, decodeUrl } from '../utils/url'
+import { useHandoff } from '../hooks/useHandoff'
 import './UrlEncoder.css'
 
 const ENCODE_EXAMPLES = [
@@ -27,9 +28,18 @@ const DECODE_EXAMPLES = [
 
 const UrlEncoder = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('url-encoder', setInput)
   const [mode, setMode] = useState<'encode' | 'decode'>('encode')
   const [encodeMode, setEncodeMode] = useState<'component' | 'full'>('component')
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
@@ -37,38 +47,39 @@ const UrlEncoder = () => {
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
       setInput(text)
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'text/plain': ['.txt']
     }
   })
 
-  const output = useMemo(() => {
-    if (!input.trim()) return ''
-    
+  const conversion = useMemo(() => {
+    if (!input.trim()) return { value: '', error: '' }
+
     if (mode === 'encode') {
-      return encodeUrl(input, encodeMode === 'component')
+      return { value: encodeUrl(input, encodeMode === 'component'), error: '' }
     } else {
       const result = decodeUrl(input)
       if (!result.isValid) {
-        setError(result.error || 'Invalid URL encoding')
-        return ''
+        return { value: '', error: result.error || 'Invalid URL encoding' }
       }
-      setError('')
-      return result.decoded
+      return { value: result.decoded, error: '' }
     }
   }, [input, mode, encodeMode])
 
+  const output = conversion.value
+  const error = actionError || conversion.error
+
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const handleLoadExample = useCallback((text: string) => {
     setInput(text)
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -81,7 +92,7 @@ const UrlEncoder = () => {
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -89,7 +100,7 @@ const UrlEncoder = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
-      onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
     },
@@ -128,7 +139,7 @@ const UrlEncoder = () => {
             className={`url-mode-btn ${mode === 'encode' ? 'active' : ''}`}
             onClick={() => {
               setMode('encode')
-              setError('')
+              setActionError('')
             }}
           >
             Encode
@@ -138,7 +149,7 @@ const UrlEncoder = () => {
             className={`url-mode-btn ${mode === 'decode' ? 'active' : ''}`}
             onClick={() => {
               setMode('decode')
-              setError('')
+              setActionError('')
             }}
           >
             Decode
@@ -176,7 +187,7 @@ const UrlEncoder = () => {
         left={
           <EditorPanel
             title={mode === 'encode' ? 'Text to Encode' : 'URL to Decode'}
-            onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+            onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
             copied={copyInputHook.copied}
           >
             <DropzoneTextarea
@@ -184,7 +195,7 @@ const UrlEncoder = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
               placeholder={mode === 'encode' ? 'Enter text to URL encode...' : 'Enter URL-encoded text to decode...'}
               spellCheck={false}
@@ -197,7 +208,7 @@ const UrlEncoder = () => {
         right={
           <EditorPanel
             title={mode === 'encode' ? 'Encoded URL' : 'Decoded Text'}
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(output, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
           >
             <div className="url-output">

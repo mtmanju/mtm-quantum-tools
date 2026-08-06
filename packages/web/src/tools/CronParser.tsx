@@ -6,6 +6,7 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './CronParser.css'
 
 // ---------------------------------------------------------------------------
@@ -230,24 +231,34 @@ const FIELD_ROWS = [
 
 const CronParser = () => {
   const [expression, setExpression] = useState('*/5 * * * *')
-  const [error, setError] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('cron-parser', setExpression)
+  /**
+   * Errors raised by user *actions* (copy, upload). Parse errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyHook = useCopy()
 
-  const parsed = useMemo(() => {
+  const computed = useMemo(() => {
     const expr = expression.trim()
-    if (!expr) return null
+    if (!expr) return { parsed: null, error: '' }
     try {
       const executions = getNextExecutions(expr, 10)
       const description = describeCron(expr)
       const fields = expr.split(/\s+/)
-      setError('')
-      return { executions, description, fields }
+      return { parsed: { executions, description, fields }, error: '' }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid cron expression')
-      return null
+      return { parsed: null, error: err instanceof Error ? err.message : 'Invalid cron expression' }
     }
   }, [expression])
+
+  const parsed = computed.parsed
+  const error = actionError || computed.error
 
   const executionsText = useMemo(() => {
     if (!parsed) return ''
@@ -256,11 +267,11 @@ const CronParser = () => {
 
   const handleClear = useCallback(() => {
     setExpression('')
-    setError('')
+    setActionError('')
   }, [])
 
   const handleCopy = useCallback(() => {
-    copyHook.copy(executionsText, (err) => setError(err))
+    copyHook.copy(executionsText, (err) => setActionError(err))
   }, [copyHook, executionsText])
 
   const handleDownload = useCallback(() => {
@@ -311,7 +322,7 @@ const CronParser = () => {
           value={expression}
           onChange={(e) => {
             setExpression(e.target.value)
-            setError('')
+            setActionError('')
           }}
           spellCheck={false}
           autoComplete="off"
@@ -368,7 +379,7 @@ const CronParser = () => {
                     className={`cron-example-chip ${expression === ex.label ? 'active' : ''}`}
                     onClick={() => {
                       setExpression(ex.label)
-                      setError('')
+                      setActionError('')
                     }}
                     title={ex.desc}
                   >

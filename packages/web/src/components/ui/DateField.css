@@ -1,0 +1,102 @@
+.datefield {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 220px;
+  flex: 0 0 auto;
+}
+
+.datefield-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.datefield-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.datefield-control:focus-within {
+  border-color: var(--focus-color);
+  box-shadow: var(--focus-ring);
+}
+
+.datefield-control.is-invalid {
+  border-color: var(--status-error);
+}
+
+.datefield-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.625rem 0.5rem 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.datefield-input::placeholder {
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.datefield-picker-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 0.25rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.datefield-picker-btn:hover {
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+/*
+ * The native control exists only so showPicker() has something to open.
+ * It must stay rendered and focusable-by-script, so it is collapsed rather
+ * than display:none — browsers refuse to open a picker for a hidden input.
+ */
+.datefield-native {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.datefield-hint {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  min-height: 1.1em;
+  line-height: 1.1em;
+}
+
+.datefield-control.is-invalid ~ .datefield-hint {
+  color: var(--status-error);
+}

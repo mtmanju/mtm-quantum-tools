@@ -6,10 +6,14 @@ import { ErrorBar } from '../components/ui/ErrorBar'
 import { EditorPanel } from '../components/ui/EditorPanel'
 import { useCopy } from '../hooks/useCopy'
 import { validateEmail } from '../utils/email'
+import { useHandoff } from '../hooks/useHandoff'
 import './EmailValidator.css'
 
 const EmailValidator = () => {
   const [email, setEmail] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('email-validator', setEmail)
   const [strictMode, setStrictMode] = useState(false)
   const [error, setError] = useState('')
 

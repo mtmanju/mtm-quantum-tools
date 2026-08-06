@@ -1,5 +1,6 @@
 import { Cake, Calendar, Check, Clock, Copy, FileDown, RotateCcw } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
+import { DateField } from '../components/ui/DateField'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
@@ -137,12 +138,8 @@ function formatLocalDate(date: Date): string {
 }
 
 function formatNiceDate(date: Date): string {
-  return date.toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+  return `${weekday}, ${formatDMY(date)}`
 }
 
 function formatNumber(n: number): string {
@@ -151,28 +148,38 @@ function formatNumber(n: number): string {
 
 const todayStr = (): string => formatLocalDate(new Date())
 
+/** Renders a date as dd/mm/yyyy, the format used throughout this tool. */
+function formatDMY(date: Date): string {
+  const d = String(date.getDate()).padStart(2, '0')
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  return `${d}/${m}/${date.getFullYear()}`
+}
+
 const AgeCalculator = () => {
   const [birthDate, setBirthDate] = useState('')
   const [asOfDate, setAsOfDate] = useState(todayStr())
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, download). Validation errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyHook = useCopy()
 
   const today = todayStr()
 
-  const result = useMemo<AgeResult | null>(() => {
-    if (!birthDate) return null
+  const computed = useMemo<{ result: AgeResult | null; error: string }>(() => {
+    if (!birthDate) return { result: null, error: '' }
     const birth = parseLocalDate(birthDate)
     const asOf = parseLocalDate(asOfDate) ?? new Date()
     if (!birth) {
-      setError('Invalid birth date')
-      return null
+      return { result: null, error: 'Invalid birth date' }
     }
     if (birth > asOf) {
-      setError('Birth date cannot be after the "as of" date')
-      return null
+      return { result: null, error: 'Birth date cannot be after the "as of" date' }
     }
-    setError('')
 
     const age = calculateAge(birth, asOf)
     const diffMs = asOf.getTime() - birth.getTime()
@@ -191,21 +198,27 @@ const AgeCalculator = () => {
     const birthdayThisYearDayOfWeek = WEEKDAYS[birthdayThisYear.getDay()]
 
     return {
-      age,
-      totalYears,
-      totalMonths,
-      totalWeeks,
-      totalDays,
-      totalHours,
-      totalMinutes,
-      bornDayOfWeek,
-      zodiac,
-      chineseZodiac,
-      nextBirthdayDays: next.days,
-      nextBirthdayDate: next.date,
-      birthdayThisYearDayOfWeek,
+      result: {
+        age,
+        totalYears,
+        totalMonths,
+        totalWeeks,
+        totalDays,
+        totalHours,
+        totalMinutes,
+        bornDayOfWeek,
+        zodiac,
+        chineseZodiac,
+        nextBirthdayDays: next.days,
+        nextBirthdayDate: next.date,
+        birthdayThisYearDayOfWeek,
+      },
+      error: '',
     }
   }, [birthDate, asOfDate])
+
+  const result = computed.result
+  const error = actionError || computed.error
 
   const buildSummary = useCallback((): string => {
     if (!result) return ''
@@ -248,21 +261,21 @@ const AgeCalculator = () => {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Download failed')
+      setActionError(err instanceof Error ? err.message : 'Download failed')
     }
   }, [result, buildSummary])
 
   const handleReset = useCallback(() => {
     setBirthDate('')
     setAsOfDate(todayStr())
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
     {
       icon: copyHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyHook.copied ? 'Copied!' : 'Copy Summary',
-      onClick: () => copyHook.copy(buildSummary(), (err) => setError(err)),
+      onClick: () => copyHook.copy(buildSummary(), (err) => setActionError(err)),
       disabled: !result,
       title: 'Copy age summary',
       showDividerBefore: true,
@@ -316,11 +329,7 @@ const AgeCalculator = () => {
         },
         {
           label: 'Next Birthday Date',
-          value: result.nextBirthdayDate.toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          }),
+          value: formatDMY(result.nextBirthdayDate),
           icon: <Cake size={14} />,
         },
       ]
@@ -334,38 +343,19 @@ const AgeCalculator = () => {
 
       <div className="age-body">
         <div className="age-inputs">
-          <div className="age-date-field">
-            <label className="age-date-label" htmlFor="age-birth-date">
-              Birth Date
-            </label>
-            <input
-              id="age-birth-date"
-              type="date"
-              className="age-date-input"
-              value={birthDate}
-              max={today}
-              onChange={(e) => {
-                setBirthDate(e.target.value)
-                setError('')
-              }}
-            />
-          </div>
-
-          <div className="age-date-field">
-            <label className="age-date-label" htmlFor="age-as-of-date">
-              As of Date
-            </label>
-            <input
-              id="age-as-of-date"
-              type="date"
-              className="age-date-input"
-              value={asOfDate}
-              onChange={(e) => {
-                setAsOfDate(e.target.value)
-                setError('')
-              }}
-            />
-          </div>
+          <DateField
+            id="age-birth-date"
+            label="Birth Date"
+            value={birthDate}
+            max={today}
+            onChange={iso => { setBirthDate(iso); setActionError('') }}
+          />
+          <DateField
+            id="age-as-of-date"
+            label="As of Date"
+            value={asOfDate}
+            onChange={iso => { setAsOfDate(iso); setActionError('') }}
+          />
         </div>
 
         {result && (

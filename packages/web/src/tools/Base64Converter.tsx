@@ -9,6 +9,7 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { downloadBinaryFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import {
   bytesToBase64,
   decodeFromBase64,
@@ -33,12 +34,36 @@ const DECODE_EXAMPLES = [
   { label: 'URL', text: 'aHR0cHM6Ly9leGFtcGxlLmNvbS9wYXRoP3E9dGVzdA==' },
 ]
 
+/**
+ * The encode-mode file input is driven by <label for>, not by a scripted
+ * .click() on a hidden input — the latter is silently ignored by some
+ * browsers, which left the "Choose file" button doing nothing while
+ * drag-and-drop (a different code path) worked fine.
+ */
+const ENCODE_FILE_INPUT_ID = 'base64-encode-file-input'
+
+/** A file the user encoded, when the source is a file rather than typed text. */
+interface EncodedFile {
+  base64: string
+  mimeType: string
+  name: string
+}
+
 const Base64Converter = () => {
   const [input, setInput] = useState('')
-  const [output, setOutput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('base64-converter', setInput)
   const [mode, setMode] = useState<'encode' | 'decode'>('encode')
-  const [error, setError] = useState('')
-  const [detectedType, setDetectedType] = useState<string>('')
+  /**
+   * Errors raised by user *actions* (file read, clipboard). Conversion errors
+   * are derived below, never stored — storing them meant the message could
+   * lag a render behind the value that caused it.
+   */
+  const [actionError, setActionError] = useState('')
+  const [encodedFile, setEncodedFile] = useState<EncodedFile | null>(null)
+  /** Whether Base64 output is wrapped at 76 chars or emitted as one line. */
+  const [wrap, setWrap] = useState(true)
 
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
@@ -49,23 +74,23 @@ const Base64Converter = () => {
       if (acceptedFiles.length === 0) return
       
       const file = acceptedFiles[0]
-      setError('')
+      setActionError('')
       
       try {
         // In encode mode, convert file to Base64
         const base64 = await fileToBase64(file)
-        setInput('') // Clear any text input
-        setOutput(formatBase64(base64))
-        setDetectedType(file.type || '')
+        setInput('') // a file supersedes any typed text
+        setEncodedFile({ base64, mimeType: file.type || '', name: file.name })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to read file')
+        setActionError(err instanceof Error ? err.message : 'Failed to read file')
       }
     },
-    accept: {
-      '*/*': [] // Accept all files in encode mode
-    },
+    // No accept map: any file type can be encoded.
     multiple: false,
-    noClick: false // Allow click in encode mode
+    // The encode pane wraps a textarea, so a click must place the caret rather
+    // than open a file dialog. Files come from the drop target or the explicit
+    // "Choose file" button.
+    noClick: true,
   })
 
   const decodeDropzone = useDropzone({
@@ -73,120 +98,115 @@ const Base64Converter = () => {
       if (acceptedFiles.length === 0) return
       
       const file = acceptedFiles[0]
-      setError('')
+      setActionError('')
       
       try {
-        // In decode mode, treat as Base64 file
+        // In decode mode, treat the file's contents as Base64 to decode
         const base64 = await fileToBase64(file)
         setInput(base64)
-        setDetectedType(file.type || '')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to read file')
+        setActionError(err instanceof Error ? err.message : 'Failed to read file')
       }
     },
-    accept: {
-      'text/*': ['.txt', '.json', '.xml', '.html', '.css', '.js'],
-      '*/*': []
-    },
+    // The file is read as text and treated as Base64, so any type is allowed.
     multiple: false,
     noClick: true // Don't allow click in decode mode (use textarea)
   })
 
+  /**
+   * Opens the OS file picker via react-dropzone's `open()`.
+   *
+   * This used to build a detached `<input type="file">` and call .click() on
+   * it. Browsers refuse to show a picker for an input that was never inserted
+   * into the document, so the button silently did nothing. `open()` drives the
+   * same hidden input react-dropzone already renders (and which is in the DOM),
+   * so the picker actually appears and the normal onDrop path runs.
+   */
   const handleUploadClick = useCallback(() => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (file) {
-        setError('')
-        try {
-          if (mode === 'encode') {
-            // In encode mode, convert file to Base64
-            const base64 = await fileToBase64(file)
-            setInput('') // Clear any text input
-            setOutput(formatBase64(base64))
-            setDetectedType(file.type || '')
-          } else {
-            // In decode mode, treat as Base64 file
-            const base64 = await fileToBase64(file)
-            setInput(base64)
-            setDetectedType(file.type || '')
-          }
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to read file')
+    setActionError('')
+    if (mode === 'encode') {
+      // Prefer the real, labelled input: clicking it directly is honoured by
+      // every browser, whereas react-dropzone's open() goes through a hidden
+      // input that some browsers refuse to open a picker for.
+      const el = document.getElementById(ENCODE_FILE_INPUT_ID) as HTMLInputElement | null
+      if (el) el.click()
+      else encodeDropzone.open()
+    } else {
+      decodeDropzone.open()
+    }
+  }, [mode, encodeDropzone, decodeDropzone])
+
+  /**
+   * Everything downstream of the input is derived, not stored.
+   *
+   * This used to keep `output` in state and write to it from inside a
+   * useMemo, guarded by `!output` — so once anything had been converted the
+   * guard was false forever and editing the input silently stopped updating
+   * the result. The only way to get a new answer was to reload the page.
+   */
+  const conversion = useMemo(() => {
+    if (mode === 'encode') {
+      // A file takes precedence until the user types over it.
+      if (encodedFile) {
+        return {
+          output: wrap ? formatBase64(encodedFile.base64) : minifyBase64(encodedFile.base64),
+          error: '',
+          mimeType: encodedFile.mimeType,
+          decode: null,
         }
       }
-    }
-    input.click()
-  }, [mode])
-
-  const decodeResult = useMemo(() => {
-    if (!input.trim() || mode !== 'decode') return null
-    
-    // Don't set error immediately - let the validation run first
-    const result = decodeFromBase64(input)
-    
-    if (!result.isValid) {
-      // Show detailed error message
-      const errorMsg = result.error || 'Invalid Base64 format'
-      setError(errorMsg)
-      
-      // Log for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Base64 decode error:', errorMsg)
-        console.log('Input length:', input.length)
-        console.log('Input preview (first 100 chars):', input.substring(0, 100))
-        console.log('Input preview (last 100 chars):', input.substring(Math.max(0, input.length - 100)))
-      }
-      
-      return null
-    }
-    
-    // Clear error if validation passes
-    setError('')
-    
-    if (result.mimeType) {
-      setDetectedType(result.mimeType)
-    } else {
-      setDetectedType('')
-    }
-    
-    return result
-  }, [input, mode])
-
-  // Update output when input changes in encode mode (text input)
-  useMemo(() => {
-    if (mode === 'encode' && input.trim() && !output) {
-      setError('')
+      if (!input.trim()) return { output: '', error: '', mimeType: '', decode: null }
       try {
         const encoded = encodeToBase64(input)
-        setOutput(formatBase64(encoded))
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to encode')
-        setOutput('')
-      }
-    } else if (mode === 'decode') {
-      // For decode mode, calculate output from decodeResult
-      if (decodeResult) {
-        // If it's a binary file (image, PDF, etc.), don't show decoded text
-        if (decodeResult.mimeType && 
-            (decodeResult.mimeType.startsWith('image/') || 
-             decodeResult.mimeType === 'application/pdf' || 
-             decodeResult.mimeType === 'application/zip' ||
-             decodeResult.mimeType === 'application/octet-stream')) {
-          setOutput('') // Will be handled by preview/download
-        } else {
-          setOutput(decodeResult.decoded || '')
+        return {
+          output: wrap ? formatBase64(encoded) : minifyBase64(encoded),
+          error: '',
+          mimeType: '',
+          decode: null,
         }
-      } else {
-        setOutput('')
+      } catch (err) {
+        return {
+          output: '',
+          error: err instanceof Error ? err.message : 'Failed to encode',
+          mimeType: '',
+          decode: null,
+        }
       }
     }
-  }, [input, mode, decodeResult, output])
 
-  const displayOutput = useMemo(() => {
-    return output
-  }, [output])
+    // decode
+    if (!input.trim()) return { output: '', error: '', mimeType: '', decode: null }
+    const result = decodeFromBase64(input)
+    if (!result.isValid) {
+      return {
+        output: '',
+        error: result.error || 'Invalid Base64 format',
+        mimeType: '',
+        decode: null,
+      }
+    }
+
+    const mimeType = result.mimeType || ''
+    const isBinary =
+      mimeType.startsWith('image/') ||
+      mimeType === 'application/pdf' ||
+      mimeType === 'application/zip' ||
+      mimeType === 'application/octet-stream'
+
+    return {
+      // Binary payloads are shown as a preview / download, not as text.
+      output: isBinary ? '' : result.decoded || '',
+      error: '',
+      mimeType,
+      decode: result,
+    }
+  }, [input, mode, encodedFile, wrap])
+
+  const decodeResult = conversion.decode
+  const detectedType = conversion.mimeType
+  const output = conversion.output
+  const displayOutput = output
+  const error = actionError || conversion.error
 
   const handleDownload = useCallback(() => {
     if (mode !== 'decode' || !decodeResult) return
@@ -220,23 +240,14 @@ const Base64Converter = () => {
 
   const handleClear = useCallback(() => {
     setInput('')
-    setOutput('')
-    setError('')
-    setDetectedType('')
-    // Reset copy state by copying empty string
-    copyInputHook.copy('', () => {})
-    copyOutputHook.copy('', () => {})
-  }, [copyInputHook, copyOutputHook])
+    setEncodedFile(null)
+    setActionError('')
+  }, [])
 
-  const handleFormat = useCallback(() => {
-    if (!output.trim() || mode !== 'encode') return
-    setOutput(formatBase64(output))
-  }, [output, mode])
-
-  const handleMinify = useCallback(() => {
-    if (!output.trim() || mode !== 'encode') return
-    setOutput(minifyBase64(output))
-  }, [output, mode])
+  // Wrapping is a view preference, so it re-derives instead of mutating the
+  // result — toggling it back and forth is now lossless.
+  const handleFormat = useCallback(() => setWrap(true), [])
+  const handleMinify = useCallback(() => setWrap(false), [])
 
   const toolbarButtons = [
     {
@@ -262,7 +273,7 @@ const Base64Converter = () => {
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -270,7 +281,7 @@ const Base64Converter = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy',
-      onClick: () => copyOutputHook.copy(displayOutput, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(displayOutput, (err) => setActionError(err)),
       disabled: !displayOutput.trim(),
       title: 'Copy output'
     },
@@ -323,15 +334,9 @@ const Base64Converter = () => {
             type="button"
             className="b64-example-chip"
             onClick={() => {
-              setError('')
-              setDetectedType('')
-              if (mode === 'encode') {
-                setOutput(formatBase64(encodeToBase64(ex.text)))
-                setInput('')
-              } else {
-                setInput(ex.text)
-                setOutput('')
-              }
+              setActionError('')
+              setEncodedFile(null)
+              setInput(ex.text)
             }}
             title={ex.label}
           >
@@ -346,10 +351,9 @@ const Base64Converter = () => {
           className={`base64-mode-btn ${mode === 'encode' ? 'active' : ''}`}
           onClick={() => {
             setMode('encode')
-            setError('')
-            setDetectedType('')
+            setActionError('')
+            setEncodedFile(null)
             setInput('')
-            setOutput('')
           }}
         >
           To Base64
@@ -359,8 +363,9 @@ const Base64Converter = () => {
           className={`base64-mode-btn ${mode === 'decode' ? 'active' : ''}`}
           onClick={() => {
             setMode('decode')
-            setError('')
-            setOutput('')
+            setActionError('')
+            setEncodedFile(null)
+            setInput('')
           }}
         >
           From Base64
@@ -379,43 +384,78 @@ const Base64Converter = () => {
       <EditorLayout
         left={
           <EditorPanel
-            title={mode === 'encode' ? 'Upload File' : 'Base64 to Decode'}
-            onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+            title={mode === 'encode' ? 'Text or File' : 'Base64 to Decode'}
+            onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
             copied={copyInputHook.copied}
           >
             {mode === 'encode' ? (
-              <div 
-                className="base64-upload-area" 
-                {...encodeDropzone.getRootProps({
-                  onClick: (e: React.MouseEvent) => {
-                    // Prevent file picker from opening when clicking on the uploaded info
-                    const target = e.target as HTMLElement
-                    if (target.closest('.base64-uploaded-info')) {
-                      e.stopPropagation()
-                      e.preventDefault()
-                      return false
-                    }
-                  }
-                })}
-              >
-                <input {...encodeDropzone.getInputProps()} />
-                {encodeDropzone.isDragActive ? (
-                  <div className="base64-upload-active">
-                    <Upload size={48} />
-                    <p>Drop file here to convert to Base64</p>
+              // The pane itself owns the dropzone root and the single hidden
+              // file input. Rendering a second input from the same dropzone
+              // instance makes the two share one ref, and whichever mounted
+              // last silently swallows the selection.
+              <div className="base64-encode-pane" {...encodeDropzone.getRootProps()}>
+                <input
+                  {...encodeDropzone.getInputProps({
+                    id: ENCODE_FILE_INPUT_ID,
+                    // react-dropzone defaults to display:none, which some
+                    // browsers refuse to open a picker for. Visually hidden but
+                    // still rendered keeps <label> activation reliable.
+                    style: {
+                      position: 'absolute',
+                      width: 1,
+                      height: 1,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                    },
+                  })}
+                />
+
+                {encodedFile ? (
+                  <div className="base64-file-card">
+                    <FileText size={20} />
+                    <div className="base64-file-meta">
+                      <span className="base64-file-name">{encodedFile.name}</span>
+                      <span className="base64-file-sub">
+                        {encodedFile.mimeType || 'unknown type'} · encoded to Base64
+                      </span>
+                    </div>
+                    <div className="base64-file-actions">
+                      <label className="base64-file-label" htmlFor={ENCODE_FILE_INPUT_ID}>
+                        Replace
+                      </label>
+                      <button type="button" onClick={() => setEncodedFile(null)}>Use text</button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="base64-upload-placeholder">
-                    <Upload size={48} />
-                    <p className="base64-upload-title">Drag & drop a file here</p>
-                    <p className="base64-upload-subtitle">or click to browse</p>
-                    <p className="base64-upload-hint">Supports any file type</p>
-                  </div>
+                  <>
+                    <textarea
+                      className="base64-encode-textarea"
+                      value={input}
+                      onChange={(e) => {
+                        setInput(e.target.value)
+                        setActionError('')
+                      }}
+                      placeholder="Type or paste text to encode — or drop a file here…"
+                      spellCheck={false}
+                      aria-label="Text to encode"
+                    />
+                    <div className="base64-file-prompt">
+                      <span>Encoding a file instead?</span>
+                      <label className="base64-file-label" htmlFor={ENCODE_FILE_INPUT_ID}>
+                        <Upload size={13} />
+                        Choose file
+                      </label>
+                      <span className="base64-file-prompt-hint">
+                        any type — PNG, JPG, PDF, ZIP, binary
+                      </span>
+                    </div>
+                  </>
                 )}
-                {output && (
-                  <div className="base64-uploaded-info" onClick={(e) => e.stopPropagation()}>
-                    <FileText size={16} />
-                    <span>File converted to Base64 ({detectedType || 'unknown type'})</span>
+
+                {encodeDropzone.isDragActive && (
+                  <div className="base64-drop-overlay">
+                    <Upload size={32} />
+                    <p>Drop file to encode</p>
                   </div>
                 )}
               </div>
@@ -428,23 +468,8 @@ const Base64Converter = () => {
                 }}
                 value={input}
                 onChange={(e) => {
-                  const value = e.target.value
-                  setInput(value)
-                  setError('')
-                  // Only validate if there's content
-                  if (value.trim()) {
-                    const result = decodeFromBase64(value)
-                    if (result.isValid && result.mimeType) {
-                      setDetectedType(result.mimeType)
-                    } else if (!result.isValid) {
-                      // Don't set error on every keystroke, only show it when user stops typing
-                      // The error will be shown by the decodeResult useMemo
-                    } else {
-                      setDetectedType('')
-                    }
-                  } else {
-                    setDetectedType('')
-                  }
+                  setInput(e.target.value)
+                  setActionError('')
                 }}
                 onPaste={(e) => {
                   const pastedText = e.clipboardData.getData('text')
@@ -464,7 +489,7 @@ const Base64Converter = () => {
                     cleaned = minifyBase64(cleaned)
                     
                     setInput(cleaned)
-                    setError('')
+                    setActionError('')
                   }
                 }}
                 placeholder="Enter Base64 string to decode..."
@@ -479,7 +504,7 @@ const Base64Converter = () => {
         right={
           <EditorPanel
             title={mode === 'encode' ? 'Base64 Encoded' : 'Decoded Output'}
-            onCopy={() => copyOutputHook.copy(displayOutput, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(displayOutput, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
             headerActions={
               mode === 'decode' && isBinaryFile && decodeResult ? (
@@ -505,7 +530,7 @@ const Base64Converter = () => {
                   alt="Decoded image"
                   onError={(e) => {
                     const errorMsg = 'Failed to display image. The Base64 string may be corrupted or incomplete. Try using the download button instead.'
-                    setError(errorMsg)
+                    setActionError(errorMsg)
                     if (process.env.NODE_ENV === 'development') {
                       console.error('Image decode error:', e)
                       console.log('MIME type:', detectedType || decodeResult.mimeType)

@@ -1,3 +1,15 @@
+/**
+ * Anything `JSON.parse` can produce. Recursive, so it models nested objects
+ * and arrays without falling back to `any`.
+ */
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue }
+
 export interface JsonXmlResult {
   isValid: boolean
   converted?: string
@@ -64,7 +76,7 @@ export const xmlToJson = (xml: string): JsonXmlResult => {
   }
 }
 
-const convertObjectToXml = (obj: any, rootName: string): string => {
+const convertObjectToXml = (obj: JsonValue | undefined, rootName: string): string => {
   if (obj === null || obj === undefined) {
     return `<${rootName}></${rootName}>`
   }
@@ -100,7 +112,7 @@ const convertObjectToXml = (obj: any, rootName: string): string => {
   return xml
 }
 
-const convertXmlToObject = (node: Element): any => {
+const convertXmlToObject = (node: Element): JsonValue => {
   if (node.childNodes.length === 0) {
     return node.textContent || ''
   }
@@ -109,7 +121,7 @@ const convertXmlToObject = (node: Element): any => {
     return node.textContent || ''
   }
 
-  const obj: any = {}
+  const obj: { [key: string]: JsonValue } = {}
   const children = Array.from(node.children)
   
   if (children.length === 0) {

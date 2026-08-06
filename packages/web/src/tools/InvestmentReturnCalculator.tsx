@@ -10,13 +10,16 @@ const InvestmentReturnCalculator = memo(() => {
   const [finalValue, setFinalValue] = useState('')
   const [time, setTime] = useState('')
   const [timeUnit, setTimeUnit] = useState<'years' | 'months'>('years')
-  const [error, setError] = useState('')
 
-  const results = useMemo(() => {
-    setError('')
-    
+  /**
+   * Validation errors are derived from the inputs and never stored — writing
+   * state during render forces an extra render pass and leaves the message
+   * one render behind the value that caused it. There are no user *action*
+   * errors in this tool, so no error state is held at all.
+   */
+  const calculation = useMemo(() => {
     if (!initialInvestment || !finalValue || !time) {
-      return null
+      return { results: null, error: '' }
     }
 
     const initialNum = parseFloat(initialInvestment)
@@ -25,27 +28,30 @@ const InvestmentReturnCalculator = memo(() => {
     const timeYears = timeUnit === 'years' ? timeNum : timeNum / 12
 
     if (initialNum <= 0 || finalNum < 0 || timeNum <= 0) {
-      setError('Please enter valid positive values')
-      return null
+      return { results: null, error: 'Please enter valid positive values' }
     }
 
     if (initialNum > 1000000000 || finalNum > 10000000000 || timeYears > 100) {
-      setError('Values are too large. Please enter reasonable amounts.')
-      return null
+      return { results: null, error: 'Values are too large. Please enter reasonable amounts.' }
     }
 
     if (timeYears <= 0) {
-      setError('Time period must be at least 1 month')
-      return null
+      return { results: null, error: 'Time period must be at least 1 month' }
     }
 
     const result = calculateInvestmentReturn(initialNum, finalNum, timeYears)
 
     return {
-      ...result,
-      timeYears
+      results: {
+        ...result,
+        timeYears
+      },
+      error: ''
     }
   }, [initialInvestment, finalValue, time, timeUnit])
+
+  const results = calculation.results
+  const error = calculation.error
 
   const handleDownload = useCallback(() => {
     if (!results) return

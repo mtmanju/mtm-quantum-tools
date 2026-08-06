@@ -25,13 +25,21 @@ const Header = memo(({
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-content">
         <div className="header-left">
-          <div className="logo" onClick={() => onNavigate('/')}>
-            <Layout size={28} strokeWidth={1.5} />
-            <div className="logo-text">
-              <h1>Quantum</h1>
+          {/* A button, not a click-handling div — and not an <h1>: the site
+              name is not the heading of any given page, and having it here
+              gave every page two <h1>s (three on /about). */}
+          <button
+            type="button"
+            className="logo"
+            onClick={() => onNavigate('/')}
+            aria-label="Quantum Tools — go to all tools"
+          >
+            <Layout size={28} strokeWidth={1.5} aria-hidden="true" />
+            <span className="logo-text">
+              <span className="logo-title">Quantum</span>
               <span className="logo-subtitle">Tools</span>
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
 
         <div className="header-right">

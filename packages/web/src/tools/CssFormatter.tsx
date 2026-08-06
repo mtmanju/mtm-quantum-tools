@@ -10,10 +10,14 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatCss, minifyCss, validateCss } from '../utils/css'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './CssFormatter.css'
 
 const CssFormatter = () => {
   const [cssContent, setCssContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('css-formatter', setCssContent)
   const [error, setError] = useState('')
 
   const copyInputHook = useCopy()

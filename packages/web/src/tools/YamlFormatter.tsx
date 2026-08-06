@@ -10,10 +10,14 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatYaml, validateYaml } from '../utils/yaml'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './YamlFormatter.css'
 
 const YamlFormatter = () => {
   const [yamlContent, setYamlContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('yaml-formatter', setYamlContent)
   const [indentSize, setIndentSize] = useState(2)
   const [error, setError] = useState('')
 

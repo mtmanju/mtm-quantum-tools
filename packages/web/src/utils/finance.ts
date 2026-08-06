@@ -11,7 +11,13 @@ const roundCurrency = (value: number): number => {
 }
 
 /**
- * Round to 4 decimal places (for rates/percentages)
+ * Round to 4 decimal places.
+ *
+ * IMPORTANT: only ever apply this to a FINAL displayed percentage.
+ * Never round an interest rate before compounding it — a 4-decimal rate
+ * carries up to 5e-5 of error, which `Math.pow(1 + r, n)` amplifies over
+ * hundreds of periods (e.g. 8.5% p.a. over 240 months skews the EMI by
+ * ~₹63/month = ~₹15,000 across the loan).
  */
 const roundPrecise = (value: number): number => {
   return Math.round(value * 10000) / 10000
@@ -27,14 +33,15 @@ const roundPrecise = (value: number): number => {
  */
 export const calculateEMI = (principal: number, rate: number, tenure: number): number => {
   if (principal <= 0 || rate < 0 || tenure <= 0) return 0
-  
-  const monthlyRate = roundPrecise(rate / 12 / 100)
-  
+
+  // Full precision — see roundPrecise() note.
+  const monthlyRate = rate / 12 / 100
+
   // Handle edge case: zero interest rate
-  if (monthlyRate === 0) {
+  if (rate === 0) {
     return roundCurrency(principal / tenure)
   }
-  
+
   const powerTerm = Math.pow(1 + monthlyRate, tenure)
   const emi = (principal * monthlyRate * powerTerm) / (powerTerm - 1)
   
@@ -65,14 +72,15 @@ export const calculateTotalInterest = (principal: number, emi: number, tenure: n
  */
 export const calculateSIP = (monthlyAmount: number, rate: number, tenure: number): number => {
   if (monthlyAmount <= 0 || rate < 0 || tenure <= 0) return 0
-  
-  const monthlyRate = roundPrecise(rate / 12 / 100)
-  
+
+  // Full precision — see roundPrecise() note.
+  const monthlyRate = rate / 12 / 100
+
   // Handle edge case: zero return rate
-  if (monthlyRate === 0) {
+  if (rate === 0) {
     return roundCurrency(monthlyAmount * tenure)
   }
-  
+
   const powerTerm = Math.pow(1 + monthlyRate, tenure)
   const futureValue = monthlyAmount * ((powerTerm - 1) / monthlyRate) * (1 + monthlyRate)
   
@@ -114,12 +122,13 @@ export const calculateCompoundInterest = (
     return { finalAmount: 0, interestEarned: 0, totalInvestment: 0 }
   }
   
-  const rateDecimal = roundPrecise(rate / 100)
+  // Full precision — see roundPrecise() note.
+  const rateDecimal = rate / 100
   const n = compoundingFrequency
   const t = time
-  
+
   // Handle edge case: zero interest rate
-  if (rateDecimal === 0) {
+  if (rate === 0) {
     return {
       finalAmount: roundCurrency(principal),
       interestEarned: 0,
@@ -161,9 +170,15 @@ export const calculateLoanRepaymentSchedule = (
   closingBalance: number
 }> => {
   if (principal <= 0 || rate < 0 || tenure <= 0) return []
-  
+
+  // Same derivation as calculateEMI, so the schedule reconciles with the
+  // EMI shown to the user.
   const monthlyRate = rate / 12 / 100
   const emi = calculateEMI(principal, rate, tenure)
+
+  // A payment that never covers the accruing interest can never amortise the
+  // loan — emit nothing rather than a schedule with a growing balance.
+  if (emi + extraPayment <= principal * monthlyRate) return []
   const schedule: Array<{
     month: number
     openingBalance: number

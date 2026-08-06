@@ -9,19 +9,25 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { timestampToDate, formatTimestampOutput, getCurrentTimestamp } from '../utils/timestamp'
+import { useHandoff } from '../hooks/useHandoff'
 import './TimestampConverter.css'
 
 const TimestampConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('timestamp-converter', setInput)
   const [timezone, setTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone)
   const [error, setError] = useState('')
 
-  // Set default example on mount
+  // Seed with the current time on mount — but only if nothing arrived from the
+  // paste bar. Both are mount effects, and this one runs second, so writing
+  // unconditionally would clobber a handed-over value.
   useEffect(() => {
     const current = getCurrentTimestamp()
-    if (current.isValid && current.formatted) {
-      setInput(current.formatted.unix.toString())
-    }
+    if (!current.isValid || !current.formatted) return
+    const now = current.formatted.unix.toString()
+    setInput(prev => prev || now)
   }, [])
 
   const copyInputHook = useCopy()

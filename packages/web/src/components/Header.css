@@ -56,6 +56,13 @@
   cursor: pointer;
   color: var(--text-primary);
   transition: opacity 0.3s var(--ease-out);
+  /* <button> reset */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
 }
 
 .logo:hover {
@@ -74,7 +81,12 @@
   color: var(--text-primary);
 }
 
-.logo-text h1 {
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-title {
   font-size: 1.375rem;
   font-weight: 700;
   margin: 0;

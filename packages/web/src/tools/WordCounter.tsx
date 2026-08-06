@@ -9,10 +9,14 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { analyzeText } from '../utils/textAnalysis'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './WordCounter.css'
 
 const WordCounter = () => {
   const [text, setText] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('word-counter', setText)
   const [error, setError] = useState('')
 
   const copyHook = useCopy()

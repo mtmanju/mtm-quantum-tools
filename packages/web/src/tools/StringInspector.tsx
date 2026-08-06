@@ -8,6 +8,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './StringInspector.css'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -59,6 +60,9 @@ const MAX_CODE_POINTS = 200
 
 const StringInspector = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('string-inspector', setInput)
   const [error, setError] = useState('')
   const [activeSection, setActiveSection] = useState<ActiveSection>('codepoints')
 

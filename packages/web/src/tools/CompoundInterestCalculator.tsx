@@ -10,13 +10,16 @@ const CompoundInterestCalculator = memo(() => {
   const [rate, setRate] = useState('')
   const [time, setTime] = useState('')
   const [compoundingFrequency, setCompoundingFrequency] = useState('12')
-  const [error, setError] = useState('')
 
-  const results = useMemo(() => {
-    setError('')
-    
+  /**
+   * Validation errors are derived from the inputs and never stored — writing
+   * state during render forces an extra render pass and leaves the message
+   * one render behind the value that caused it. There are no user *action*
+   * errors in this tool, so no error state is held at all.
+   */
+  const calculation = useMemo(() => {
     if (!principal || !rate || !time) {
-      return null
+      return { results: null, error: '' }
     }
 
     const principalNum = parseFloat(principal)
@@ -25,19 +28,20 @@ const CompoundInterestCalculator = memo(() => {
     const frequencyNum = parseFloat(compoundingFrequency)
 
     if (principalNum <= 0 || rateNum < 0 || timeNum <= 0 || frequencyNum <= 0) {
-      setError('Please enter valid positive values')
-      return null
+      return { results: null, error: 'Please enter valid positive values' }
     }
 
     if (principalNum > 1000000000 || rateNum > 100 || timeNum > 100) {
-      setError('Values are too large. Please enter reasonable amounts.')
-      return null
+      return { results: null, error: 'Values are too large. Please enter reasonable amounts.' }
     }
 
     const result = calculateCompoundInterest(principalNum, rateNum, timeNum, frequencyNum)
 
-    return result
+    return { results: result, error: '' }
   }, [principal, rate, time, compoundingFrequency])
+
+  const results = calculation.results
+  const error = calculation.error
 
   const frequencyOptions = [
     { value: '1', label: 'Annually' },

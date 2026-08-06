@@ -9,10 +9,8 @@ import { validatePdf, getPdfPageCount, formatFileSize, generatePdfThumbnail, typ
 import { downloadBinaryFile } from '../utils/file'
 import './PdfToImage.css'
 
-// Ensure worker is configured (pdf.ts already sets this globally, but be safe)
-if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
-}
+// The worker is configured once, locally, in utils/pdf.ts — which this module
+// already imports. Nothing to do here.
 
 type ImageFormat = 'png' | 'jpg'
 

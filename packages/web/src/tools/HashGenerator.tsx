@@ -10,6 +10,7 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { generateHash, type HashAlgorithm } from '../utils/hash'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './HashGenerator.css'
 
 const EXAMPLES = [
@@ -22,6 +23,9 @@ const EXAMPLES = [
 
 const HashGenerator = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('hash-generator', setInput)
   const [hashes, setHashes] = useState<Record<HashAlgorithm, string>>({
     md5: '',
     sha1: '',

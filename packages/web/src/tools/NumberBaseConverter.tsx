@@ -5,6 +5,7 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { EditorPanel } from '../components/ui/EditorPanel'
 import { useCopy } from '../hooks/useCopy'
+import { useHandoff } from '../hooks/useHandoff'
 import {
   convertNumberBase,
   formatBinary,
@@ -17,26 +18,36 @@ import './NumberBaseConverter.css'
 
 const NumberBaseConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('number-base-converter', setInput)
   const [fromBase, setFromBase] = useState<NumberBase>('decimal')
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyBinaryHook = useCopy()
   const copyOctalHook = useCopy()
   const copyDecimalHook = useCopy()
   const copyHexHook = useCopy()
 
-  const conversionResult = useMemo(() => {
-    if (!input.trim()) return null
+  const conversion = useMemo(() => {
+    if (!input.trim()) return { value: null, error: '' }
 
     const result = convertNumberBase(input, fromBase)
     if (!result.isValid) {
-      setError(result.error || 'Conversion failed')
-      return null
+      return { value: null, error: result.error || 'Conversion failed' }
     }
 
-    setError('')
-    return result.result
+    return { value: result.result ?? null, error: '' }
   }, [input, fromBase])
+
+  const conversionResult = conversion.value
+  const error = actionError || conversion.error
 
   const bitwiseOps = useMemo(() => {
     if (!conversionResult) return null
@@ -51,7 +62,7 @@ const NumberBaseConverter = () => {
 
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -88,7 +99,7 @@ const NumberBaseConverter = () => {
                 className={`number-base-btn ${fromBase === base.value ? 'active' : ''}`}
                 onClick={() => {
                   setFromBase(base.value)
-                  setError('')
+                  setActionError('')
                 }}
               >
                 {base.label}
@@ -104,7 +115,7 @@ const NumberBaseConverter = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
             />
           </div>
@@ -122,7 +133,7 @@ const NumberBaseConverter = () => {
                       type="button"
                       className="number-base-copy-btn"
                       onClick={() =>
-                        copyBinaryHook.copy(conversionResult.binary, (err) => setError(err))
+                        copyBinaryHook.copy(conversionResult.binary, (err) => setActionError(err))
                       }
                       title="Copy binary"
                     >
@@ -139,7 +150,7 @@ const NumberBaseConverter = () => {
                       type="button"
                       className="number-base-copy-btn"
                       onClick={() =>
-                        copyOctalHook.copy(conversionResult.octal, (err) => setError(err))
+                        copyOctalHook.copy(conversionResult.octal, (err) => setActionError(err))
                       }
                       title="Copy octal"
                     >
@@ -156,7 +167,7 @@ const NumberBaseConverter = () => {
                       type="button"
                       className="number-base-copy-btn"
                       onClick={() =>
-                        copyDecimalHook.copy(conversionResult.decimal, (err) => setError(err))
+                        copyDecimalHook.copy(conversionResult.decimal, (err) => setActionError(err))
                       }
                       title="Copy decimal"
                     >
@@ -173,7 +184,7 @@ const NumberBaseConverter = () => {
                       type="button"
                       className="number-base-copy-btn"
                       onClick={() =>
-                        copyHexHook.copy(conversionResult.hexadecimal, (err) => setError(err))
+                        copyHexHook.copy(conversionResult.hexadecimal, (err) => setActionError(err))
                       }
                       title="Copy hexadecimal"
                     >

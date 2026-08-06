@@ -8,6 +8,7 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
+import { useHandoff } from '../hooks/useHandoff'
 import './ApiTester.css'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'
@@ -66,6 +67,9 @@ const ApiTester = () => {
   const [method, setMethod] = useState<HttpMethod>('GET')
   const [headers, setHeaders] = useState('Accept: application/json')
   const [body, setBody] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('api-tester', setBody)
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')

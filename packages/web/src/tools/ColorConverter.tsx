@@ -4,6 +4,7 @@ import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
+import { useHandoff } from '../hooks/useHandoff'
 import {
   calculateContrast,
   getContrastRating,
@@ -22,90 +23,103 @@ type ColorFormat = 'hex' | 'rgb' | 'hsl'
 
 const ColorConverter = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('color-converter', setInput)
   const [format, setFormat] = useState<ColorFormat>('hex')
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyHexHook = useCopy()
   const copyRgbHook = useCopy()
   const copyHslHook = useCopy()
 
-  const colorResult = useMemo(() => {
-    if (!input.trim()) return null
+  const computed = useMemo(() => {
+    if (!input.trim()) return { colorResult: null, error: '' }
 
     const trimmed = input.trim()
 
     try {
       if (format === 'hex') {
         if (!isValidHex(trimmed)) {
-          setError('Invalid hex color format. Use #RRGGBB or #RGB')
-          return null
+          return { colorResult: null, error: 'Invalid hex color format. Use #RRGGBB or #RGB' }
         }
 
         const rgb = hexToRgb(trimmed)
         if (!rgb) {
-          setError('Failed to convert hex to RGB')
-          return null
+          return { colorResult: null, error: 'Failed to convert hex to RGB' }
         }
 
         const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b)
         const hex = trimmed.startsWith('#') ? trimmed : `#${trimmed}`
 
-        setError('')
         return {
-          hex: hex.toUpperCase(),
-          rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-          hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
-          rgbValues: rgb,
-          hslValues: hsl
+          colorResult: {
+            hex: hex.toUpperCase(),
+            rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
+            hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
+            rgbValues: rgb,
+            hslValues: hsl
+          },
+          error: ''
         }
       } else if (format === 'rgb') {
         const rgb = parseRgb(trimmed)
         if (!rgb) {
-          setError('Invalid RGB format. Use: r, g, b or rgb(r, g, b)')
-          return null
+          return { colorResult: null, error: 'Invalid RGB format. Use: r, g, b or rgb(r, g, b)' }
         }
 
         const hex = rgbToHex(rgb.r, rgb.g, rgb.b)
         const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b)
 
-        setError('')
         return {
-          hex,
-          rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-          hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
-          rgbValues: rgb,
-          hslValues: hsl
+          colorResult: {
+            hex,
+            rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
+            hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
+            rgbValues: rgb,
+            hslValues: hsl
+          },
+          error: ''
         }
       } else if (format === 'hsl') {
         const hsl = parseHsl(trimmed)
         if (!hsl) {
-          setError('Invalid HSL format. Use: h, s%, l% or hsl(h, s%, l%)')
-          return null
+          return { colorResult: null, error: 'Invalid HSL format. Use: h, s%, l% or hsl(h, s%, l%)' }
         }
 
         const rgb = hslToRgb(hsl.h, hsl.s, hsl.l)
         const hex = hslToHex(hsl.h, hsl.s, hsl.l)
 
-        setError('')
         return {
-          hex,
-          rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-          hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
-          rgbValues: rgb,
-          hslValues: hsl
+          colorResult: {
+            hex,
+            rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
+            hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
+            rgbValues: rgb,
+            hslValues: hsl
+          },
+          error: ''
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Color conversion failed')
-      return null
+      return { colorResult: null, error: err instanceof Error ? err.message : 'Color conversion failed' }
     }
 
-    return null
+    return { colorResult: null, error: '' }
   }, [input, format])
+
+  const colorResult = computed.colorResult
+  const error = actionError || computed.error
 
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -114,7 +128,7 @@ const ColorConverter = () => {
       label: copyHexHook.copied ? 'Copied!' : 'Copy Hex',
       onClick: () => {
         if (colorResult) {
-          copyHexHook.copy(colorResult.hex, (err) => setError(err))
+          copyHexHook.copy(colorResult.hex, (err) => setActionError(err))
         }
       },
       disabled: !colorResult,
@@ -145,7 +159,7 @@ const ColorConverter = () => {
               className={`color-format-btn ${format === 'hex' ? 'active' : ''}`}
               onClick={() => {
                 setFormat('hex')
-                setError('')
+                setActionError('')
               }}
             >
               HEX
@@ -155,7 +169,7 @@ const ColorConverter = () => {
               className={`color-format-btn ${format === 'rgb' ? 'active' : ''}`}
               onClick={() => {
                 setFormat('rgb')
-                setError('')
+                setActionError('')
               }}
             >
               RGB
@@ -165,7 +179,7 @@ const ColorConverter = () => {
               className={`color-format-btn ${format === 'hsl' ? 'active' : ''}`}
               onClick={() => {
                 setFormat('hsl')
-                setError('')
+                setActionError('')
               }}
             >
               HSL
@@ -189,7 +203,7 @@ const ColorConverter = () => {
                   ? e.target.value 
                   : e.target.value
                 setInput(value)
-                setError('')
+                setActionError('')
               }}
             />
             {format === 'hex' && (
@@ -200,7 +214,7 @@ const ColorConverter = () => {
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value)
-                  setError('')
+                  setActionError('')
                 }}
               />
             )}
@@ -271,7 +285,7 @@ const ColorConverter = () => {
                   <button
                     type="button"
                     className="color-copy-btn"
-                    onClick={() => copyHexHook.copy(colorResult.hex, (err) => setError(err))}
+                    onClick={() => copyHexHook.copy(colorResult.hex, (err) => setActionError(err))}
                     title="Copy hex"
                   >
                     {copyHexHook.copied ? <Check size={14} /> : <Copy size={14} />}
@@ -286,7 +300,7 @@ const ColorConverter = () => {
                   <button
                     type="button"
                     className="color-copy-btn"
-                    onClick={() => copyRgbHook.copy(colorResult.rgb, (err) => setError(err))}
+                    onClick={() => copyRgbHook.copy(colorResult.rgb, (err) => setActionError(err))}
                     title="Copy RGB"
                   >
                     {copyRgbHook.copied ? <Check size={14} /> : <Copy size={14} />}
@@ -301,7 +315,7 @@ const ColorConverter = () => {
                   <button
                     type="button"
                     className="color-copy-btn"
-                    onClick={() => copyHslHook.copy(colorResult.hsl, (err) => setError(err))}
+                    onClick={() => copyHslHook.copy(colorResult.hsl, (err) => setActionError(err))}
                     title="Copy HSL"
                   >
                     {copyHslHook.copied ? <Check size={14} /> : <Copy size={14} />}

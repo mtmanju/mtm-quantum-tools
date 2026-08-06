@@ -7,6 +7,7 @@ import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
+import { useHandoff } from '../hooks/useHandoff'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatJson, minifyJson, validateJson } from '../utils/json'
 import { downloadTextFile } from '../utils/file'
@@ -37,6 +38,9 @@ const EXAMPLES = [
 
 const JsonFormatter = () => {
   const [jsonContent, setJsonContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('json-formatter', setJsonContent)
   const [indentSize, setIndentSize] = useState(2)
   const [error, setError] = useState('')
   

@@ -51,9 +51,15 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import './App.css'
 import Footer from './components/Footer'
 import Header from './components/Header'
+import { SmartPaste } from './components/SmartPaste'
+import { CommandPalette } from './components/ui/CommandPalette'
+import { Toaster } from './components/ui/Toaster'
 import { getToolId, getViewType, ROUTES } from './constants/routes'
-import { useTheme } from './context/ThemeContext'
+import { useTheme } from './context/useTheme'
+import { useDocumentMeta } from './hooks/useDocumentMeta'
 import { useScrollPosition } from './hooks/useScrollPosition'
+import { recordRecentTool } from './utils/recentTools'
+import { searchTools } from './utils/search'
 import About from './pages/About'
 
 // Lazy-load all tool components — each tool loads only when first navigated to
@@ -103,10 +109,15 @@ const ChmodCalculator = lazy(() => import('./tools/ChmodCalculator'))
 const StringInspector = lazy(() => import('./tools/StringInspector'))
 const AgeCalculator = lazy(() => import('./tools/AgeCalculator'))
 
-interface Tool {
+const isMacPlatform =
+  typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+
+export interface Tool {
   id: string
   name: string
   description: string
+  /** Synonyms and abbreviations users actually type — see utils/search.ts. */
+  keywords?: string[]
   icon: ReactElement
   iconColor?: string
   category: string
@@ -119,150 +130,195 @@ interface Tool {
 const tools: Tool[] = [
   // ─── Essential — the daily-driver tools ─────────────────────────
   { id: 'json-formatter', name: 'JSON Formatter', description: 'Beautify & validate JSON instantly',
+    keywords: ['beautify', 'prettify', 'pretty print', 'minify', 'validate', 'lint', 'parse'],
     icon: <FileJson size={48} strokeWidth={1.5} />, iconColor: '#F39C12',
     category: 'Essential', status: 'active', component: JsonFormatter, featured: true },
   { id: 'base64-converter', name: 'Base64 Converter', description: 'Convert files & text to Base64',
+    keywords: ['b64', 'encode', 'decode', 'atob', 'btoa', 'data uri'],
     icon: <FileCode size={48} strokeWidth={1.5} />, iconColor: '#2980B9',
     category: 'Essential', status: 'active', component: Base64Converter, featured: true },
   { id: 'url-encoder', name: 'URL Encoder', description: 'Encode & decode URLs quickly',
+    keywords: ['percent encoding', 'urlencode', 'urldecode', 'escape', 'query string', 'uri'],
     icon: <Globe size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
     category: 'Essential', status: 'active', component: UrlEncoder, featured: true },
   { id: 'hash-generator', name: 'Hash Generator', description: 'Generate MD5, SHA-1, SHA-256, SHA-512',
+    keywords: ['sha256', 'sha1', 'sha512', 'md5', 'checksum', 'digest', 'fingerprint'],
     icon: <KeyRound size={48} strokeWidth={1.5} />, iconColor: '#EC4899',
     category: 'Essential', status: 'active', component: HashGenerator, featured: true },
   { id: 'uuid-generator', name: 'UUID Generator', description: 'Create unique identifiers',
+    keywords: ['guid', 'unique id', 'v4', 'v1', 'random id'],
     icon: <Hash size={48} strokeWidth={1.5} />, iconColor: '#06B6D4',
     category: 'Essential', status: 'active', component: UuidGenerator, featured: true },
   { id: 'password-generator', name: 'Password Generator', description: 'Create strong, secure passwords',
+    keywords: ['passphrase', 'random', 'secure', 'credentials', 'entropy'],
     icon: <LockKeyhole size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
     category: 'Essential', status: 'active', component: PasswordGenerator, featured: true },
   { id: 'jwt-decoder', name: 'JWT Decoder', description: 'Decode & inspect JWT tokens',
+    keywords: ['json web token', 'bearer', 'claims', 'payload', 'auth', 'token'],
     icon: <Shield size={48} strokeWidth={1.5} />, iconColor: '#27AE60',
     category: 'Essential', status: 'active', component: JwtDecoder, featured: true },
   { id: 'jwt-generator', name: 'JWT Generator', description: 'Sign & generate HS256 JWT tokens',
+    keywords: ['json web token', 'sign', 'hs256', 'issue token', 'auth'],
     icon: <KeyRound size={48} strokeWidth={1.5} />, iconColor: '#0EA5E9',
     category: 'Essential', status: 'active', component: JwtGenerator, featured: true },
   { id: 'timestamp-converter', name: 'Timestamp Converter', description: 'Convert timestamps to dates',
+    keywords: ['epoch', 'unix time', 'unix timestamp', 'date', 'iso 8601', 'utc', 'millis'],
     icon: <CalendarClock size={48} strokeWidth={1.5} />, iconColor: '#34495E',
     category: 'Essential', status: 'active', component: TimestampConverter, featured: true },
 
   // ─── Code Tools — text & code manipulation ──────────────────────
   { id: 'regex-tester', name: 'Regex Tester', description: 'Test regex patterns with live highlights',
+    keywords: ['regexp', 'regular expression', 'pattern', 'match', 'capture group', 'replace'],
     icon: <Brackets size={48} strokeWidth={1.5} />, iconColor: '#E67E22',
     category: 'Code Tools', status: 'active', component: RegexTester },
   { id: 'diff-checker', name: 'Diff Checker', description: 'Compare code & text side-by-side',
+    keywords: ['compare', 'difference', 'patch', 'merge', 'side by side', 'changes'],
     icon: <GitBranch size={48} strokeWidth={1.5} />, iconColor: '#16A085',
     category: 'Code Tools', status: 'active', component: DiffChecker },
   { id: 'color-converter', name: 'Color Converter', description: 'Convert HEX, RGB, HSL with contrast',
+    keywords: ['colour', 'hex', 'rgb', 'hsl', 'contrast', 'wcag', 'palette'],
     icon: <Palette size={48} strokeWidth={1.5} />, iconColor: '#EC4899',
     category: 'Code Tools', status: 'active', component: ColorConverter },
   { id: 'text-case-converter', name: 'Case Converter', description: 'Transform text case instantly',
+    keywords: ['camelcase', 'snake case', 'kebab case', 'pascal case', 'uppercase', 'lowercase', 'title case'],
     icon: <Type size={48} strokeWidth={1.5} />, iconColor: '#10B981',
     category: 'Code Tools', status: 'active', component: TextCaseConverter },
   { id: 'number-base-converter', name: 'Base Converter', description: 'Convert binary, hex, decimal, octal',
+    keywords: ['binary', 'hexadecimal', 'octal', 'decimal', 'radix', 'bitwise'],
     icon: <Binary size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
     category: 'Code Tools', status: 'active', component: NumberBaseConverter },
   { id: 'slug-converter', name: 'Slug Converter', description: 'Convert text to URL-friendly slugs',
+    keywords: ['slugify', 'url friendly', 'permalink', 'seo'],
     icon: <Link2 size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
     category: 'Code Tools', status: 'active', component: SlugConverter },
   { id: 'lorem-ipsum-generator', name: 'Lorem Generator', description: 'Generate placeholder text',
+    keywords: ['placeholder text', 'dummy text', 'filler', 'sample text'],
     icon: <Sparkle size={48} strokeWidth={1.5} />, iconColor: '#64748B',
     category: 'Code Tools', status: 'active', component: LoremIpsumGenerator },
   { id: 'html-entity-encoder', name: 'HTML Entity', description: 'Encode & decode HTML entities',
+    keywords: ['escape html', 'unescape', 'ampersand', 'special characters', 'htmlspecialchars'],
     icon: <Brackets size={48} strokeWidth={1.5} />, iconColor: '#EF4444',
     category: 'Code Tools', status: 'active', component: HtmlEntityEncoder },
   { id: 'email-validator', name: 'Email Validator', description: 'Validate email addresses',
+    keywords: ['verify email', 'check email', 'mx', 'address'],
     icon: <Mail size={48} strokeWidth={1.5} />, iconColor: '#06B6D4',
     category: 'Code Tools', status: 'active', component: EmailValidator },
 
   // ─── Formatters — code beautification & conversion ──────────────
   { id: 'javascript-formatter', name: 'JS Formatter', description: 'Format & minify JavaScript',
+    keywords: ['beautify', 'prettify', 'minify', 'js', 'uglify', 'ecmascript'],
     icon: <FileCodeIcon size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
     category: 'Formatters', status: 'active', component: JavaScriptFormatter },
   { id: 'html-formatter', name: 'HTML Formatter', description: 'Beautify & minify HTML',
+    keywords: ['beautify', 'prettify', 'minify', 'markup', 'indent'],
     icon: <CodeXml size={48} strokeWidth={1.5} />, iconColor: '#EF4444',
     category: 'Formatters', status: 'active', component: HtmlFormatter },
   { id: 'css-formatter', name: 'CSS Formatter', description: 'Format & minify CSS',
+    keywords: ['beautify', 'prettify', 'minify', 'stylesheet', 'styles'],
     icon: <Code size={48} strokeWidth={1.5} />, iconColor: '#3B82F6',
     category: 'Formatters', status: 'active', component: CssFormatter },
   { id: 'sql-formatter', name: 'SQL Formatter', description: 'Format SQL queries beautifully',
+    keywords: ['beautify', 'prettify', 'query', 'select', 'database', 'indent'],
     icon: <DatabaseIcon size={48} strokeWidth={1.5} />, iconColor: '#3498DB',
     category: 'Formatters', status: 'active', component: SqlFormatter },
   { id: 'yaml-formatter', name: 'YAML Formatter', description: 'Format & validate YAML configs',
+    keywords: ['beautify', 'prettify', 'yml', 'validate', 'config'],
     icon: <FileSpreadsheet size={48} strokeWidth={1.5} />, iconColor: '#6366F1',
     category: 'Formatters', status: 'active', component: YamlFormatter },
   { id: 'xml-formatter', name: 'XML Formatter', description: 'Format & validate XML docs',
+    keywords: ['beautify', 'prettify', 'validate', 'indent', 'markup'],
     icon: <FileX size={48} strokeWidth={1.5} />, iconColor: '#F97316',
     category: 'Formatters', status: 'active', component: XmlFormatter },
   { id: 'csv-to-json', name: 'CSV ↔ JSON', description: 'Convert between CSV & JSON',
+    keywords: ['spreadsheet', 'tabular', 'excel', 'delimiter', 'convert'],
     icon: <Table2 size={48} strokeWidth={1.5} />, iconColor: '#22C55E',
     category: 'Formatters', status: 'active', component: CsvToJsonConverter },
   { id: 'json-xml-converter', name: 'JSON ↔ XML', description: 'Convert between JSON & XML',
+    keywords: ['convert', 'transform', 'serialize'],
     icon: <FileType size={48} strokeWidth={1.5} />, iconColor: '#F97316',
     category: 'Formatters', status: 'active', component: JsonXmlConverter },
 
   // ─── DevOps & System ────────────────────────────────────────────
   { id: 'cron-parser', name: 'Cron Parser', description: 'Parse cron & preview next 10 runs',
+    keywords: ['crontab', 'cronjob', 'schedule', 'scheduler', 'next run', 'expression'],
     icon: <Clock size={48} strokeWidth={1.5} />, iconColor: '#0891B2',
     category: 'DevOps', status: 'active', component: CronParser },
   { id: 'ip-cidr-calculator', name: 'IP / CIDR Calc', description: 'Subnet calculator for IP networks',
+    keywords: ['subnet', 'netmask', 'network', 'vlsm', 'ipv4', 'range', 'broadcast'],
     icon: <Network size={48} strokeWidth={1.5} />, iconColor: '#10B981',
     category: 'DevOps', status: 'active', component: IpCidrCalculator },
   { id: 'chmod-calculator', name: 'Chmod Calculator', description: 'Visual Unix file permission calculator',
+    keywords: ['permissions', 'octal', 'unix', 'file mode', 'chown', '755', '644'],
     icon: <Terminal size={48} strokeWidth={1.5} />, iconColor: '#16A34A',
     category: 'DevOps', status: 'active', component: ChmodCalculator },
   { id: 'api-tester', name: 'API Tester', description: 'Send HTTP requests & inspect responses',
+    keywords: ['http client', 'rest', 'postman', 'curl', 'request', 'endpoint', 'fetch'],
     icon: <Zap size={48} strokeWidth={1.5} />, iconColor: '#F1C40F',
     category: 'DevOps', status: 'active', component: ApiTester },
 
   // ─── Documents & PDF ────────────────────────────────────────────
   { id: 'md-converter', name: 'MD Converter', description: 'Export Markdown to DOCX, PDF, or HTML',
+    keywords: ['markdown', 'docx', 'word', 'pdf', 'html', 'export', 'mermaid'],
     icon: <FileCodeIcon size={48} strokeWidth={1.5} />, iconColor: '#875A7B',
     category: 'Documents', status: 'active', component: MarkdownConverter },
   { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge PDFs into one file',
+    keywords: ['combine pdf', 'join pdf', 'concat', 'merge documents'],
     icon: <FileStack size={48} strokeWidth={1.5} />, iconColor: '#E74C3C',
     category: 'Documents', status: 'active', component: PdfMerger },
   { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDF into individual pages',
+    keywords: ['split pdf', 'separate pages', 'divide', 'burst'],
     icon: <Scissors size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
     category: 'Documents', status: 'active', component: PdfSplitter },
   { id: 'pdf-page-extractor', name: 'PDF Extractor', description: 'Extract specific pages to new PDF',
+    keywords: ['extract pages', 'select pages', 'pick pages', 'subset'],
     icon: <FileOutput size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
     category: 'Documents', status: 'active', component: PdfPageExtractor },
   { id: 'pdf-rotator', name: 'PDF Rotator', description: 'Rotate all pages of a PDF',
+    keywords: ['rotate pdf', 'turn pages', 'orientation', 'landscape', 'portrait'],
     icon: <RotateCw size={48} strokeWidth={1.5} />, iconColor: '#06B6D4',
     category: 'Documents', status: 'active', component: PdfRotator },
   { id: 'pdf-to-image', name: 'PDF to Image', description: 'Convert PDF pages to PNG or JPG',
+    keywords: ['pdf to png', 'pdf to jpg', 'convert pdf', 'render pages', 'screenshot'],
     icon: <ImageIcon size={48} strokeWidth={1.5} />, iconColor: '#10B981',
     category: 'Documents', status: 'active', component: PdfToImage },
   { id: 'pdf-watermark', name: 'PDF Watermark', description: 'Add text watermark to PDF pages',
+    keywords: ['stamp', 'overlay', 'brand pdf', 'confidential'],
     icon: <Droplet size={48} strokeWidth={1.5} />, iconColor: '#0EA5E9',
     category: 'Documents', status: 'active', component: PdfWatermark },
   { id: 'word-counter', name: 'Word Counter', description: 'Count words, characters & more',
+    keywords: ['character count', 'reading time', 'text statistics', 'letters', 'paragraphs'],
     icon: <BarChart3 size={48} strokeWidth={1.5} />, iconColor: '#3B82F6',
     category: 'Documents', status: 'active', component: WordCounter },
   { id: 'string-inspector', name: 'String Inspector', description: 'Analyze Unicode, encodings & character frequency',
+    keywords: ['unicode', 'code points', 'encoding', 'utf8', 'character frequency', 'bytes'],
     icon: <Type size={48} strokeWidth={1.5} />, iconColor: '#6366F1',
     category: 'Documents', status: 'active', component: StringInspector },
 
   // ─── Everyday ───────────────────────────────────────────────────
   { id: 'age-calculator', name: 'Age Calculator', description: 'Calculate exact age, zodiac, next birthday',
+    keywords: ['birthday', 'date of birth', 'dob', 'how old', 'zodiac', 'days between'],
     icon: <Cake size={48} strokeWidth={1.5} />, iconColor: '#F472B6',
     category: 'Everyday', status: 'active', component: AgeCalculator },
 
   // ─── Finance ────────────────────────────────────────────────────
   { id: 'loan-emi-calculator', name: 'Loan EMI Calculator', description: 'Calculate loan EMI & interest',
+    keywords: ['mortgage', 'monthly payment', 'installment', 'interest', 'borrow'],
     icon: <CreditCard size={48} strokeWidth={1.5} />, iconColor: '#3B82F6',
     category: 'Finance', status: 'active', component: LoanEmiCalculator },
   { id: 'loan-repayment-calculator', name: 'Loan Repayment', description: 'Plan loan repayment strategy',
+    keywords: ['amortization', 'schedule', 'payoff', 'prepayment', 'extra payment'],
     icon: <DollarSign size={48} strokeWidth={1.5} />, iconColor: '#F59E0B',
     category: 'Finance', status: 'active', component: LoanRepaymentCalculator },
   { id: 'sip-calculator', name: 'SIP Calculator', description: 'Calculate SIP returns',
+    keywords: ['systematic investment', 'mutual fund', 'monthly investment', 'returns'],
     icon: <TrendingUp size={48} strokeWidth={1.5} />, iconColor: '#10B981',
     category: 'Finance', status: 'active', component: SipCalculator },
   { id: 'compound-interest-calculator', name: 'Compound Interest', description: 'Calculate compound interest',
+    keywords: ['compounding', 'growth', 'savings', 'future value'],
     icon: <Percent size={48} strokeWidth={1.5} />, iconColor: '#8B5CF6',
     category: 'Finance', status: 'active', component: CompoundInterestCalculator },
   { id: 'investment-return-calculator', name: 'Investment Return', description: 'Calculate investment returns & CAGR',
+    keywords: ['cagr', 'roi', 'annualized return', 'profit', 'gains'],
     icon: <TrendingDown size={48} strokeWidth={1.5} />, iconColor: '#EC4899',
     category: 'Finance', status: 'active', component: InvestmentReturnCalculator },
 ]
@@ -272,23 +328,28 @@ const ToolCard = memo(({ tool, onClick, showDescription }: {
   onClick: (tool: Tool) => void
   showDescription?: boolean
 }) => (
-  <div
+  // A real <button>, not a click-handling <div> — otherwise search results are
+  // completely unreachable by keyboard (WCAG 2.1.1).
+  <button
+    type="button"
     className={`tool-card ${tool.status}`}
     onClick={() => onClick(tool)}
+    disabled={tool.status !== 'active'}
+    aria-label={`${tool.name} — ${tool.description}`}
   >
-    <div className="tool-icon-wrapper" style={{ color: tool.iconColor }}>
+    <span className="tool-icon-wrapper" style={{ color: tool.iconColor }} aria-hidden="true">
       {tool.icon}
-    </div>
-    <div className="tool-info">
-      <h3>{tool.name}</h3>
-      {showDescription && <p className="tool-description">{tool.description}</p>}
-    </div>
+    </span>
+    <span className="tool-info">
+      <span className="tool-card-name">{tool.name}</span>
+      {showDescription && <span className="tool-description">{tool.description}</span>}
+    </span>
     {tool.status === 'coming-soon' && (
-      <div className="tool-badge">
+      <span className="tool-badge">
         <span>Soon</span>
-      </div>
+      </span>
     )}
-  </div>
+  </button>
 ))
 
 ToolCard.displayName = 'ToolCard'
@@ -343,22 +404,34 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredTools = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return null
-    return tools.filter(t =>
-      t.name.toLowerCase().includes(q) ||
-      t.description.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q)
-    )
+    if (!searchQuery.trim()) return null
+    return searchTools(tools, searchQuery)
   }, [searchQuery])
 
-  const handleToolClick = useCallback((tool: Tool) => {
-    if (tool.status === 'active') {
-      setSearchQuery('')
-      navigate(ROUTES.TOOL(tool.id))
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
+  const openTool = useCallback((toolId: string) => {
+    recordRecentTool(toolId)
+    setSearchQuery('')
+    navigate(ROUTES.TOOL(toolId))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [navigate])
+
+  const handleToolClick = useCallback((tool: Tool) => {
+    if (tool.status === 'active') openTool(tool.id)
+  }, [openTool])
+
+  /**
+   * Hand a pasted value to a tool. sessionStorage rather than the URL: the
+   * value can be large and is frequently sensitive, and putting it in the
+   * address bar would leak it into history and any future referrer.
+   */
+  const openToolWithValue = useCallback((toolId: string, value: string) => {
+    try {
+      sessionStorage.setItem(`qt-handoff:${toolId}`, value)
+    } catch {
+      /* private mode — the tool simply opens empty */
+    }
+    openTool(toolId)
+  }, [openTool])
 
   // All categories rendered side-by-side as glass cards with compact tool rows
   const categoryCards = useMemo(() => {
@@ -371,8 +444,13 @@ function App() {
       cards.push(
         <div key={category} className="category-card">
           <div className="category-card-header">
-            <span className="category-card-title">{category}</span>
-            <span className="category-card-count">{categoryTools.length}</span>
+            {/* A real <h2> so screen-reader users can navigate the 45 tools by
+                heading instead of tabbing through every row. */}
+            <h3 className="category-card-title">{category}</h3>
+            <span className="category-card-count">
+              <span className="visually-hidden">{categoryTools.length} tools</span>
+              <span aria-hidden="true">{categoryTools.length}</span>
+            </span>
           </div>
           <div className="category-card-tools">
             {categoryTools.map(tool => (
@@ -398,8 +476,21 @@ function App() {
     return <div className="categories-grid">{cards}</div>
   }, [categories, handleToolClick])
 
+  // Per-route title/description/canonical/OG.
+  useDocumentMeta(
+    currentView === 'tool' && selectedTool
+      ? { title: selectedTool.name, description: `${selectedTool.description}. Free, instant, and runs entirely in your browser — nothing is uploaded.` }
+      : currentView === 'about'
+        ? { title: 'About' }
+        : {}
+  )
+
   return (
     <div className="app">
+      {/* Keyboard users would otherwise traverse ~48 controls before reaching
+          content on the tools index (WCAG 2.4.1). */}
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
       <Header
         scrolled={scrolled}
         isDarkMode={isDarkMode}
@@ -409,7 +500,7 @@ function App() {
       />
 
       {currentView === 'about' ? (
-        <main className="main-content">
+        <main id="main-content" className="main-content">
           <div className="page-header">
             <h1 className="page-title">About</h1>
           </div>
@@ -420,22 +511,38 @@ function App() {
           />
         </main>
       ) : currentView === 'tools' ? (
-        <main className="main-content tools-page">
-          <div className="page-header tools-page-header">
-            <h1 className="page-title">Tools</h1>
+        <main id="main-content" className="main-content tools-page">
+          {/* The claim first, then the thing that acts on it. A grid of 45
+              icons makes the visitor do the classification work; this states
+              what the product is for and lets them use it immediately. */}
+          <section className="home-hero">
+            <h1 className="home-hero-title">
+              Developer tools that never see your data
+            </h1>
+            <p className="home-hero-sub">
+              {activeCount} utilities that run entirely in your browser. Nothing you paste
+              is uploaded, logged, or sent anywhere — so it is safe for the tokens and
+              payloads you are not allowed to put into a website.
+            </p>
+
+            <SmartPaste onOpenTool={openToolWithValue} />
+          </section>
+
+          <div className="home-browse-header">
+            <h2 className="home-browse-title">All {activeCount} tools</h2>
             <div className="tools-search-bar">
               <Search size={14} className="tools-search-icon" aria-hidden="true" />
               <input
                 type="search"
                 className="tools-search-input"
-                placeholder={`Search ${activeCount} tools…`}
+                placeholder="Search tools…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 aria-label="Search tools"
                 autoComplete="off"
                 spellCheck={false}
               />
-              {searchQuery && (
+              {searchQuery ? (
                 <button
                   type="button"
                   className="tools-search-clear"
@@ -444,16 +551,27 @@ function App() {
                 >
                   <X size={13} />
                 </button>
+              ) : (
+                <kbd className="tools-search-kbd" aria-hidden="true">
+                  {isMacPlatform ? '⌘' : 'Ctrl'} K
+                </kbd>
               )}
             </div>
+          </div>
+
+          {/* Announces result counts as the user types. */}
+          <div role="status" aria-live="polite" className="visually-hidden">
+            {filteredTools !== null
+              ? `${filteredTools.length} tool${filteredTools.length !== 1 ? 's' : ''} found for ${searchQuery}`
+              : ''}
           </div>
 
           {filteredTools !== null ? (
             filteredTools.length > 0 ? (
               <section className="category-section">
-                <h2 className="section-title">
+                <h3 className="section-title">
                   {filteredTools.length} tool{filteredTools.length !== 1 ? 's' : ''} found
-                </h2>
+                </h3>
                 <div className="tools-grid">
                   {filteredTools.map(tool => (
                     <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} showDescription />
@@ -468,7 +586,7 @@ function App() {
           ) : categoryCards}
         </main>
       ) : (
-        <main className="main-content tool-view">
+        <main id="main-content" className="main-content tool-view">
           <div className="tool-view-wrapper">
             <div className="page-header-with-back">
             <button
@@ -507,6 +625,9 @@ function App() {
         activeCount={activeCount}
         categoriesCount={categories.length}
       />
+
+      <CommandPalette tools={tools} onSelect={openTool} />
+      <Toaster />
     </div>
   )
 }

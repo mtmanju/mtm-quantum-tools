@@ -9,13 +9,23 @@ import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { encodeHtmlEntities, decodeHtmlEntities } from '../utils/htmlEntity'
+import { useHandoff } from '../hooks/useHandoff'
 import './HtmlEntityEncoder.css'
 
 const HtmlEntityEncoder = () => {
   const [input, setInput] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('html-entity-encoder', setInput)
   const [mode, setMode] = useState<'encode' | 'decode'>('encode')
   const [showReference, setShowReference] = useState(false)
-  const [error, setError] = useState('')
+  /**
+   * Errors raised by user *actions* (copy, upload). Conversion errors are
+   * derived below and never stored — writing state during render forces an
+   * extra render pass and leaves the message one render behind the value
+   * that caused it.
+   */
+  const [actionError, setActionError] = useState('')
 
   const commonEntities = [
     { entity: '&nbsp;', name: 'Non-breaking space', char: ' ' },
@@ -38,45 +48,43 @@ const HtmlEntityEncoder = () => {
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
       setInput(text)
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'text/plain': ['.txt'],
       'text/html': ['.html', '.htm']
     }
   })
 
-  const output = useMemo(() => {
-    if (!input.trim()) return ''
+  const conversion = useMemo(() => {
+    if (!input.trim()) return { value: '', error: '' }
 
     try {
       if (mode === 'encode') {
         const result = encodeHtmlEntities(input)
         if (!result.isValid) {
-          setError(result.error || 'Encoding failed')
-          return ''
+          return { value: '', error: result.error || 'Encoding failed' }
         }
-        setError('')
-        return result.encoded || ''
+        return { value: result.encoded || '', error: '' }
       } else {
         const result = decodeHtmlEntities(input)
         if (!result.isValid) {
-          setError(result.error || 'Decoding failed')
-          return ''
+          return { value: '', error: result.error || 'Decoding failed' }
         }
-        setError('')
-        return result.decoded || ''
+        return { value: result.decoded || '', error: '' }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed')
-      return ''
+      return { value: '', error: err instanceof Error ? err.message : 'Conversion failed' }
     }
   }, [input, mode])
 
+  const output = conversion.value
+  const error = actionError || conversion.error
+
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -89,7 +97,7 @@ const HtmlEntityEncoder = () => {
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -97,7 +105,7 @@ const HtmlEntityEncoder = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
-      onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
     },
@@ -122,7 +130,7 @@ const HtmlEntityEncoder = () => {
             className={`html-entity-mode-btn ${mode === 'encode' ? 'active' : ''}`}
             onClick={() => {
               setMode('encode')
-              setError('')
+              setActionError('')
             }}
           >
             Encode
@@ -132,7 +140,7 @@ const HtmlEntityEncoder = () => {
             className={`html-entity-mode-btn ${mode === 'decode' ? 'active' : ''}`}
             onClick={() => {
               setMode('decode')
-              setError('')
+              setActionError('')
             }}
           >
             Decode
@@ -170,7 +178,7 @@ const HtmlEntityEncoder = () => {
         left={
           <EditorPanel
             title={mode === 'encode' ? 'Text to Encode' : 'HTML Entities to Decode'}
-            onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+            onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
             copied={copyInputHook.copied}
           >
             <DropzoneTextarea
@@ -178,7 +186,7 @@ const HtmlEntityEncoder = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
               placeholder={mode === 'encode' ? 'Enter text to encode as HTML entities...' : 'Enter HTML entities to decode...'}
               spellCheck={false}
@@ -191,7 +199,7 @@ const HtmlEntityEncoder = () => {
         right={
           <EditorPanel
             title={mode === 'encode' ? 'Encoded HTML Entities' : 'Decoded Text'}
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(output, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
           >
             {!input.trim() ? (

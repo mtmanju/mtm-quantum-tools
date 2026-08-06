@@ -3,6 +3,8 @@
  * Reusable functions for downloading files across all tools
  */
 
+import { toast } from './toast'
+
 /**
  * Triggers a file download via a temporary anchor element.
  * Delays URL revocation so the browser has time to start the download —
@@ -17,8 +19,12 @@ function triggerDownload(url: string, filename: string): void {
   document.body.appendChild(a)
   a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: false, view: window }))
   document.body.removeChild(a)
-  // 60 s grace period — revoking synchronously causes silent download failures
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  // Grace period — revoking synchronously causes silent download failures.
+  // 5 s is ample for the browser to take ownership of the blob; the previous
+  // 60 s pinned every generated file in memory, which the PDF/image tools can
+  // run into tens of megabytes.
+  setTimeout(() => URL.revokeObjectURL(url), 5_000)
+  toast(`Downloaded ${filename}`, 'success')
 }
 
 /**

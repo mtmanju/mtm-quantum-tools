@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p packages/web/tsconfig.app.json
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://quantum-tools.example' }}
+
+      # The entry chunk used to statically pull in mermaid -> elkjs/cytoscape,
+      # shipping ~989 KB gzipped on every route. Fail the build if that returns.
+      - name: Guard first-load payload
+        run: |
+          cd packages/web/dist
+          BYTES=$(grep -oE '(src|href)="/assets/[^"]+"' index.html \
+            | sed 's/.*="//;s/"//' | sort -u \
+            | while read -r f; do [ -f ".$f" ] && gzip -c ".$f" | wc -c; done \
+            | paste -sd+ - | bc)
+          echo "First-load payload: $BYTES bytes gzipped"
+          if [ "$BYTES" -gt 204800 ]; then
+            echo "::error::First-load payload is ${BYTES} bytes gzipped, over the 200 KB budget."
+            exit 1
+          fi
+
+      - name: Guard against third-party origins in the bundle
+        run: |
+          if grep -rlE 'https?://(unpkg|cdn|jsdelivr|fonts\.googleapis)' packages/web/dist/assets/ 2>/dev/null; then
+            echo "::error::A third-party origin was found in the built assets. All dependencies must be bundled locally."
+            exit 1
+          fi
+          echo "No third-party origins in built assets."

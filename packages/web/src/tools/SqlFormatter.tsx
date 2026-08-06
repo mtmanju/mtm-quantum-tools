@@ -10,6 +10,7 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatSql, minifySql, validateSql } from '../utils/sql'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './SqlFormatter.css'
 
 const EXAMPLES = [
@@ -37,6 +38,9 @@ const EXAMPLES = [
 
 const SqlFormatter = () => {
   const [sqlContent, setSqlContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('sql-formatter', setSqlContent)
   const [error, setError] = useState('')
 
   const copyInputHook = useCopy()

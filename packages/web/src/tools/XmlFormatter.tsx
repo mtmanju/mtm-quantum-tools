@@ -10,10 +10,14 @@ import { useCopy } from '../hooks/useCopy'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { formatXml, minifyXml, validateXml } from '../utils/xml'
 import { downloadTextFile } from '../utils/file'
+import { useHandoff } from '../hooks/useHandoff'
 import './XmlFormatter.css'
 
 const XmlFormatter = () => {
   const [xmlContent, setXmlContent] = useState('')
+
+  // Accept a value handed over by the paste bar.
+  useHandoff('xml-formatter', setXmlContent)
   const [error, setError] = useState('')
 
   const copyInputHook = useCopy()
