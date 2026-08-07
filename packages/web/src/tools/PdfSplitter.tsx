@@ -105,9 +105,9 @@ const PdfSplitter = () => {
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
-      label: 'Upload',
+      label: 'Open',
       onClick: handleUploadClick,
-      title: 'Upload PDF'
+      title: 'Open PDF'
     },
     {
       icon: <Scissors size={16} />,
@@ -140,7 +140,7 @@ const PdfSplitter = () => {
             <div className="pdf-splitter-dropzone-content">
               <Upload size={48} />
               <h3>{isDragActive ? 'Drop PDF here' : 'Upload PDF to Split'}</h3>
-              <p>Drag & drop a PDF file or click "Upload" to select</p>
+              <p>Drag & drop a PDF file or click "Open" to select</p>
               <button
                 type="button"
                 className="pdf-splitter-upload-btn"

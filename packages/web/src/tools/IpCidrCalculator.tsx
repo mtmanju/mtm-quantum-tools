@@ -157,7 +157,7 @@ const IpCidrCalculator = () => {
   const toolbarButtons = [
     {
       icon: copyHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyHook.copied ? 'Copied!' : 'Copy Summary',
+      label: copyHook.copied ? 'Copied!' : 'Copy summary',
       onClick: () => copyHook.copy(buildSummary(), (err) => setActionError(err)),
       disabled: !result,
       title: 'Copy subnet summary',
@@ -167,7 +167,7 @@ const IpCidrCalculator = () => {
       icon: <X size={16} />,
       label: 'Clear',
       onClick: handleClear,
-      title: 'Reset to default',
+      title: 'Clear',
       showDividerBefore: true,
     },
   ]

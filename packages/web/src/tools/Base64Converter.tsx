@@ -272,7 +272,7 @@ const Base64Converter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
@@ -280,14 +280,14 @@ const Base64Converter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(displayOutput, (err) => setActionError(err)),
       disabled: !displayOutput.trim(),
       title: 'Copy output'
     },
     {
       icon: <FileDown size={16} />,
-      label: 'Save',
+      label: 'Download',
       onClick: handleDownload,
       disabled: !output.trim() || mode !== 'decode',
       title: 'Download decoded file',

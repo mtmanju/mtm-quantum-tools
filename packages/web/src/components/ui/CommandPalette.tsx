@@ -10,7 +10,6 @@ export interface PaletteTool {
   description: string
   keywords?: string[]
   category: string
-  iconColor?: string
   icon: React.ReactNode
   status: 'active' | 'coming-soon'
 }
@@ -176,7 +175,7 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
               onMouseMove={() => setActiveIndex(i)}
               onClick={() => commit(i)}
             >
-              <span className="cmdk-item-icon" style={{ color: tool.iconColor }} aria-hidden="true">
+              <span className="cmdk-item-icon" aria-hidden="true">
                 {tool.icon}
               </span>
               <span className="cmdk-item-text">

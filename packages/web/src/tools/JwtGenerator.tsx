@@ -142,7 +142,7 @@ const JwtGenerator = () => {
       icon: <X size={16} />,
       label: 'Clear',
       onClick: handleClear,
-      title: 'Reset to defaults',
+      title: 'Clear',
       showDividerBefore: true,
     },
   ]

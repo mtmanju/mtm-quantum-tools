@@ -146,7 +146,7 @@ const JsonFormatter = () => {
     },
     {
       icon: <FileJson size={16} />,
-      label: 'Save',
+      label: 'Download',
       onClick: handleDownload,
       disabled: !jsonContent.trim(),
       title: 'Download JSON'
@@ -223,7 +223,9 @@ const JsonFormatter = () => {
             onCopy={() => copyLeftHook.copy(jsonContent, (err) => setError(err))}
             copied={copyLeftHook.copied}
             headerActions={
-              validation.error && (
+              // Only once there is something to be wrong about — an untouched
+              // field was reporting "JSON string is empty" on first paint.
+              jsonContent.trim() && validation.error && (
                 <span className="json-panel-error">{validation.error}</span>
               )
             }

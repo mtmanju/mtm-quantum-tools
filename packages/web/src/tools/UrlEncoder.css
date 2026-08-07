@@ -1,48 +1,4 @@
-/* URL Encoder Tool Styles */
 
-.url-examples-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.url-examples-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-}
-.url-example-chip {
-  padding: 0.3125rem 0.625rem;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.url-example-chip:hover {
-  border-color: var(--accent);
-  background: var(--bg-hover);
-  color: var(--accent);
-}
-
-.url-mode-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-}
 
 .url-mode-group {
   display: flex;
@@ -60,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-primary);
   cursor: pointer;
 }
@@ -68,23 +24,6 @@
 .url-encode-mode-label input[type="radio"] {
   cursor: pointer;
   accent-color: var(--accent);
-}
-
-.url-mode-btn {
-  padding: 0.5rem 1.5rem;
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s var(--ease-out);
-}
-
-.url-mode-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent);
 }
 
 .url-mode-btn.active {
@@ -106,26 +45,14 @@
   min-height: 0;
 }
 
-.url-empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
 .url-result {
   flex: 1;
   width: 100%;
   padding: 1rem;
   background: var(--bg-elevated);
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
   color: var(--text-primary);
   border: none;
   resize: none;

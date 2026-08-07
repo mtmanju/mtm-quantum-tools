@@ -1,5 +1,7 @@
 import { memo, useMemo, useState, useCallback } from 'react'
+import { Calculator } from 'lucide-react'
 import { ToolContainer } from '../components/ui/ToolContainer'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateEMI, calculateTotalInterest, formatCurrency, formatPercentage } from '../utils/finance'
 import { downloadTextFile } from '../utils/file'
@@ -131,6 +133,14 @@ Generated on: ${new Date().toLocaleString()}
 
         {error && <ErrorBar message={error} />}
 
+        {!results && !error && (
+          <EmptyState
+            icon={<Calculator size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your EMI breakdown will appear here"
+            hint="Enter a loan amount, interest rate, and tenure."
+          />
+        )}
+
         {results && (
           <div className="calculator-results">
             <div className="result-card">
@@ -154,7 +164,7 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             <button className="download-btn" onClick={handleDownload}>
-              Download Report
+              Download report
             </button>
           </div>
         )}

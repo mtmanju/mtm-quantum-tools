@@ -8,7 +8,7 @@ interface FooterProps {
   categoriesCount: number
 }
 
-const Footer = memo(({ toolsCount, activeCount, categoriesCount }: FooterProps) => {
+const Footer = memo(({ toolsCount, categoriesCount }: FooterProps) => {
   return (
     <footer className="footer">
       <div className="footer-content">
@@ -23,20 +23,10 @@ const Footer = memo(({ toolsCount, activeCount, categoriesCount }: FooterProps) 
         </div>
         
         <div className="footer-center">
-          <div className="footer-stats">
-            <div className="footer-stat-item">
-              <span className="footer-stat-value">{toolsCount}</span>
-              <span className="footer-stat-label">Tools</span>
-            </div>
-            <div className="footer-stat-item">
-              <span className="footer-stat-value">{activeCount}</span>
-              <span className="footer-stat-label">Active</span>
-            </div>
-            <div className="footer-stat-item">
-              <span className="footer-stat-value">{categoriesCount}</span>
-              <span className="footer-stat-label">Categories</span>
-            </div>
-          </div>
+          <p className="footer-note">
+            {toolsCount} tools across {categoriesCount} categories. Everything runs
+            in your browser — nothing you paste is uploaded.
+          </p>
         </div>
 
         <div className="footer-right">

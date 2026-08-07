@@ -12,7 +12,7 @@
   padding: 1rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .word-counter-stat-card {
@@ -23,24 +23,24 @@
   padding: 1.5rem 1rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-align: center;
 }
 
 .word-counter-stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-bold);
   color: var(--accent);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   margin-bottom: 0.5rem;
 }
 
 .word-counter-stat-label {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
 }
 
 @media (max-width: 768px) {
@@ -59,7 +59,7 @@
   }
 
   .word-counter-stat-value {
-    font-size: 1.5rem;
+    font-size: var(--text-3xl);
   }
 }
 

@@ -157,9 +157,9 @@ const PdfToImage = () => {
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
-      label: 'Upload',
+      label: 'Open',
       onClick: handleUploadClick,
-      title: 'Upload PDF'
+      title: 'Open PDF'
     },
     {
       icon: <ImageIcon size={16} />,
@@ -192,7 +192,7 @@ const PdfToImage = () => {
             <div className="pdf-to-image-dropzone-content">
               <Upload size={48} />
               <h3>{isDragActive ? 'Drop PDF here' : 'Upload PDF to Convert'}</h3>
-              <p>Drag &amp; drop a PDF file or click "Upload" to select</p>
+              <p>Drag &amp; drop a PDF file or click "Open" to select</p>
               <button
                 type="button"
                 className="pdf-to-image-upload-btn"

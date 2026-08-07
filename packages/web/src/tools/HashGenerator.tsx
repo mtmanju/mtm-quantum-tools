@@ -144,7 +144,7 @@ SHA-512: ${hashes.sha512}`
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(input, (err) => setError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
@@ -152,10 +152,10 @@ SHA-512: ${hashes.sha512}`
     },
     {
       icon: <FileText size={16} />,
-      label: 'Export',
+      label: 'Download',
       onClick: handleDownload,
       disabled: !input.trim() || Object.values(hashes).every(h => !h),
-      title: 'Export hash report',
+      title: 'Download hash report',
     },
     {
       icon: <X size={16} />,

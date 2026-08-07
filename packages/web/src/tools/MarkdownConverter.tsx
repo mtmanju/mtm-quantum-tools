@@ -958,7 +958,7 @@ hr{border:none;border-top:1px solid #e5e7eb;margin:1.5em 0}
                 <button type="button" className="converter-panel-download-btn" onClick={handleExportHtml} disabled={!hasContent} title="Download as HTML file">
                   <FileCode size={12} /><span>HTML</span>
                 </button>
-                <button type="button" className="converter-panel-download-btn" onClick={handleExportPdf} disabled={!hasContent} title="Export as PDF via print dialog">
+                <button type="button" className="converter-panel-download-btn" onClick={handleExportPdf} disabled={!hasContent} title="Download as PDF via print dialog">
                   <Printer size={12} /><span>PDF</span>
                 </button>
               </div>

@@ -18,7 +18,7 @@
   padding: 1rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .email-input-wrapper {
@@ -39,10 +39,10 @@
   padding: 0.875rem 1rem 0.875rem 3rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-size: 0.9375rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--text-md);
+  font-family: var(--font-mono);
   transition: all 0.2s var(--ease-out);
 }
 
@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -81,9 +81,9 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
 
 .email-validation-status.valid {
@@ -102,12 +102,12 @@
   padding: 0.75rem 1rem;
   background: rgba(239, 68, 68, 0.05);
   border: 1px solid rgba(239, 68, 68, 0.1);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .email-validation-error p {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--text-md);
   color: var(--text-error);
 }
 
@@ -118,7 +118,7 @@
   padding: 1rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .email-detail-item {
@@ -134,15 +134,15 @@
 }
 
 .email-detail-label {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .email-detail-value {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-primary);
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 @media (max-width: 768px) {

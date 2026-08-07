@@ -1,5 +1,7 @@
 import { memo, useMemo, useState, useCallback } from 'react'
+import { TrendingUp } from 'lucide-react'
 import { ToolContainer } from '../components/ui/ToolContainer'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateCompoundInterest, formatCurrency, formatPercentage } from '../utils/finance'
 import { downloadTextFile } from '../utils/file'
@@ -137,6 +139,14 @@ Generated on: ${new Date().toLocaleString()}
 
         {error && <ErrorBar message={error} />}
 
+        {!results && !error && (
+          <EmptyState
+            icon={<TrendingUp size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your compounded balance will appear here"
+            hint="Enter a principal, an interest rate, and a duration."
+          />
+        )}
+
         {results && (
           <div className="calculator-results">
             <div className="result-card">
@@ -162,7 +172,7 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             <button className="download-btn" onClick={handleDownload}>
-              Download Report
+              Download report
             </button>
           </div>
         )}

@@ -1,5 +1,7 @@
 import { memo, useMemo, useState, useEffect, useCallback } from 'react'
+import { Calculator } from 'lucide-react'
 import { ToolContainer } from '../components/ui/ToolContainer'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { calculateLoanRepaymentSchedule, calculateEMI, formatCurrency, formatPercentage } from '../utils/finance'
 import { downloadTextFile } from '../utils/file'
@@ -181,6 +183,14 @@ Results:
 
         {error && <ErrorBar message={error} />}
 
+        {!results && !error && (
+          <EmptyState
+            icon={<Calculator size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your repayment schedule will appear here"
+            hint="Enter a loan amount, interest rate, and tenure. Add an extra monthly payment to see how much time it saves."
+          />
+        )}
+
         {results && (
           <>
             <div className="calculator-results">
@@ -277,7 +287,7 @@ Results:
             )}
 
             <button className="download-btn" onClick={handleDownload}>
-              Download Report
+              Download report
             </button>
           </>
         )}

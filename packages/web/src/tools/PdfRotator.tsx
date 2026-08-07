@@ -120,9 +120,9 @@ const PdfRotator = () => {
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
-      label: 'Upload',
+      label: 'Open',
       onClick: handleUploadClick,
-      title: 'Upload PDF'
+      title: 'Open PDF'
     },
     {
       icon: <RotateCw size={16} />,
@@ -155,7 +155,7 @@ const PdfRotator = () => {
             <div className="pdf-rotator-dropzone-content">
               <Upload size={48} />
               <h3>{isDragActive ? 'Drop PDF here' : 'Upload PDF to Rotate'}</h3>
-              <p>Drag & drop a PDF file or click "Upload" to select</p>
+              <p>Drag & drop a PDF file or click "Open" to select</p>
               <button
                 type="button"
                 className="pdf-rotator-upload-btn"

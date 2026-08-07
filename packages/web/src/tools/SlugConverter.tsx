@@ -1,6 +1,7 @@
-import { Check, Copy, X } from 'lucide-react'
+import { Check, Copy, Link, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
+import { EmptyState } from '../components/ui/EmptyState'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -55,7 +56,7 @@ const SlugConverter = () => {
   const toolbarButtons = [
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
@@ -63,7 +64,7 @@ const SlugConverter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
@@ -144,6 +145,14 @@ const SlugConverter = () => {
             />
           </div>
         </EditorPanel>
+
+        {!output && !error && (
+          <EmptyState
+            icon={<Link size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your slug will appear here"
+            hint="Type or paste a title above."
+          />
+        )}
 
         {output && (
           <EditorPanel

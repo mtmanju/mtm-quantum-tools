@@ -123,7 +123,7 @@ const SqlFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(sqlContent, (err) => setError(err)),
       disabled: !sqlContent.trim(),
       title: 'Copy input',
@@ -131,7 +131,7 @@ const SqlFormatter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(formattedSql, (err) => setError(err)),
       disabled: !formattedSql.trim(),
       title: 'Copy output',

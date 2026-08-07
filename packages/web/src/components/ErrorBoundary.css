@@ -14,13 +14,13 @@
 }
 
 .error-boundary-content h1 {
-  font-size: 2rem;
+  font-size: var(--text-5xl);
   margin-bottom: 1rem;
   color: var(--text-primary);
 }
 
 .error-boundary-content p {
-  font-size: 1.1rem;
+  font-size: var(--text-xl);
   margin-bottom: 2rem;
   color: var(--text-secondary);
 }
@@ -30,13 +30,13 @@
   text-align: left;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 1rem;
 }
 
 .error-details summary {
   cursor: pointer;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   margin-bottom: 0.5rem;
   color: var(--text-primary);
 }
@@ -45,8 +45,8 @@
   margin-top: 0.5rem;
   padding: 0.5rem;
   background: var(--bg-primary);
-  border-radius: 4px;
-  font-size: 0.875rem;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-base);
   overflow-x: auto;
   color: var(--text-secondary);
 }
@@ -55,11 +55,9 @@
   background: var(--accent);
   color: #FFFFFF;
   border: none;
-  padding: 0.875rem 1.75rem;
-  border-radius: 100px;
+
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
+
   transition: all 0.3s var(--ease-out);
   margin-top: 1rem;
 }

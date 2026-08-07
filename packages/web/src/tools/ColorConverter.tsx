@@ -1,6 +1,7 @@
-import { Check, Contrast, Copy, X } from 'lucide-react'
+import { Check, Contrast, Copy, Palette, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { ErrorBar } from '../components/ui/ErrorBar'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
@@ -125,7 +126,7 @@ const ColorConverter = () => {
   const toolbarButtons = [
     {
       icon: copyHexHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyHexHook.copied ? 'Copied!' : 'Copy Hex',
+      label: copyHexHook.copied ? 'Copied!' : 'Copy hex',
       onClick: () => {
         if (colorResult) {
           copyHexHook.copy(colorResult.hex, (err) => setActionError(err))
@@ -220,6 +221,14 @@ const ColorConverter = () => {
             )}
           </div>
         </div>
+
+        {!colorResult && (
+          <EmptyState
+            icon={<Palette size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your colour, in every format"
+            hint="Paste a hex, rgb(), or hsl() value above to see the others."
+          />
+        )}
 
         {colorResult && (
           <div className="color-preview-section">

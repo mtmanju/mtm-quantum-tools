@@ -187,7 +187,7 @@ const RegexTester = () => {
     },
     {
       icon: copyPatternHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyPatternHook.copied ? 'Copied!' : 'Copy Pattern',
+      label: copyPatternHook.copied ? 'Copied!' : 'Copy pattern',
       onClick: () => copyPatternHook.copy(pattern, (err) => setActionError(err)),
       disabled: !pattern.trim(),
       title: 'Copy pattern',
@@ -195,14 +195,14 @@ const RegexTester = () => {
     },
     {
       icon: copyTestStringHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyTestStringHook.copied ? 'Copied!' : 'Copy Test',
+      label: copyTestStringHook.copied ? 'Copied!' : 'Copy test',
       onClick: () => copyTestStringHook.copy(testString, (err) => setActionError(err)),
       disabled: !testString.trim(),
       title: 'Copy test string',
     },
     {
       icon: copyResultHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyResultHook.copied ? 'Copied!' : 'Copy Result',
+      label: copyResultHook.copied ? 'Copied!' : 'Copy result',
       onClick: () => copyResultHook.copy(resultText, (err) => setActionError(err)),
       disabled: !resultText.trim(),
       title: 'Copy results',

@@ -120,7 +120,7 @@ const XmlFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(xmlContent, (err) => setError(err)),
       disabled: !xmlContent.trim(),
       title: 'Copy input',
@@ -128,7 +128,7 @@ const XmlFormatter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(formattedXml, (err) => setError(err)),
       disabled: !formattedXml.trim(),
       title: 'Copy output',

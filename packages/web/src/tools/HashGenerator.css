@@ -1,41 +1,4 @@
-/* Hash Generator Tool Styles */
 
-.hash-examples-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.hash-examples-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-}
-.hash-example-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.3125rem 0.625rem;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.hash-example-chip:hover {
-  border-color: var(--accent);
-  background: var(--bg-hover);
-  color: var(--accent);
-}
 
 .hash-generating {
   display: flex;
@@ -45,8 +8,8 @@
   background: rgba(59, 130, 246, 0.1);
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
   color: var(--status-info);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
   flex-shrink: 0;
 }
 
@@ -70,18 +33,6 @@
   overflow: auto;
   background: var(--bg-elevated);
   min-height: 0;
-}
-
-.hash-empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-secondary);
 }
 
 .hash-list {
@@ -116,34 +67,33 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
   color: var(--status-warning);
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 0.1rem 0.375rem;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .hash-algorithm {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .hash-copy-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
+  
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
   flex-shrink: 0;
@@ -161,10 +111,10 @@
 }
 
 .hash-value {
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
   color: var(--text-primary);
   word-break: break-all;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 

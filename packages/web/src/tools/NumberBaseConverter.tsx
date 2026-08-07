@@ -1,6 +1,7 @@
-import { Check, Copy, X } from 'lucide-react'
+import { Binary, Check, Copy, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
+import { EmptyState } from '../components/ui/EmptyState'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -120,6 +121,14 @@ const NumberBaseConverter = () => {
             />
           </div>
         </div>
+
+        {!conversionResult && (
+          <EmptyState
+            icon={<Binary size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your number in every base"
+            hint="Enter a value above to see binary, octal, decimal, and hex."
+          />
+        )}
 
         {conversionResult && (
           <div className="number-base-results">

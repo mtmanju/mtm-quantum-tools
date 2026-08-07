@@ -1,6 +1,7 @@
-import { Check, Copy, X, Mail, CheckCircle, XCircle } from 'lucide-react'
+import { Check, CheckCircle, Copy, Mail, MailCheck, X, XCircle } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { ToolContainer } from '../components/ui/ToolContainer'
+import { EmptyState } from '../components/ui/EmptyState'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -80,6 +81,14 @@ const EmailValidator = () => {
             </label>
           </div>
         </div>
+
+        {!email.trim() && (
+          <EmptyState
+            icon={<MailCheck size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Validation results will appear here"
+            hint="Enter an address to check its syntax, domain, and common typos."
+          />
+        )}
 
         {email.trim() && validationResult && (
           <EditorPanel title="Validation Result">

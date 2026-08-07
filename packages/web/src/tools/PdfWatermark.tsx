@@ -203,9 +203,9 @@ const PdfWatermark = () => {
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
-      label: 'Upload',
+      label: 'Open',
       onClick: handleUploadClick,
-      title: 'Upload PDF'
+      title: 'Open PDF'
     },
     {
       icon: <Stamp size={16} />,
@@ -238,7 +238,7 @@ const PdfWatermark = () => {
             <div className="pdf-watermark-dropzone-content">
               <Upload size={48} />
               <h3>{isDragActive ? 'Drop PDF here' : 'Upload PDF to Watermark'}</h3>
-              <p>Drag &amp; drop a PDF file or click "Upload" to select</p>
+              <p>Drag &amp; drop a PDF file or click "Open" to select</p>
               <button
                 type="button"
                 className="pdf-watermark-upload-btn"

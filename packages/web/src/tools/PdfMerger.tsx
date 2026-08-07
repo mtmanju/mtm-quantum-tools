@@ -184,9 +184,9 @@ const PdfMerger = () => {
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
-      label: 'Add PDFs',
+      label: 'Open',
       onClick: handleUploadClick,
-      title: 'Add PDF files'
+      title: 'Open PDF files'
     },
     {
       icon: <Printer size={16} />,

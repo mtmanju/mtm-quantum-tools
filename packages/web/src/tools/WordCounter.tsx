@@ -1,6 +1,7 @@
 import { Check, Copy, FileText, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
+import { EmptyState } from '../components/ui/EmptyState'
 import { EditorPanel } from '../components/ui/EditorPanel'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
@@ -80,10 +81,10 @@ ${text}`
     },
     {
       icon: <FileText size={16} />,
-      label: 'Export',
+      label: 'Download',
       onClick: handleDownload,
       disabled: !text.trim(),
-      title: 'Export report',
+      title: 'Download report',
     },
     {
       icon: <X size={16} />,
@@ -121,6 +122,14 @@ ${text}`
             dropzoneActiveText="Drop file here"
           />
         </EditorPanel>
+
+        {!text.trim() && (
+          <EmptyState
+            icon={<FileText size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your text statistics will appear here"
+            hint="Paste or type anything to count words, characters, sentences, and paragraphs."
+          />
+        )}
 
         {text.trim() && (
           <div className="word-counter-stats">

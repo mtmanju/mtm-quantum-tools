@@ -107,7 +107,7 @@ const JavaScriptFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(jsContent, (err) => setError(err)),
       disabled: !jsContent.trim(),
       title: 'Copy input',
@@ -115,7 +115,7 @@ const JavaScriptFormatter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(formattedJs, (err) => setError(err)),
       disabled: !formattedJs.trim(),
       title: 'Copy output',

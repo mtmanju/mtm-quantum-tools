@@ -16,7 +16,7 @@
   padding: 3rem;
   background: var(--bg-secondary);
   border: 2px dashed var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   text-align: center;
   transition: all 0.3s var(--ease-out);
   cursor: pointer;
@@ -40,14 +40,14 @@
 }
 
 .pdf-dropzone-text {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .pdf-dropzone-hint {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
   margin: 0 0 1.5rem 0;
 }
@@ -55,14 +55,11 @@
 .pdf-dropzone-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+
   background: var(--accent);
   color: #FFFFFF;
   border: none;
-  border-radius: 6px;
-  font-size: 0.9375rem;
-  font-weight: 500;
+
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
 }
@@ -84,7 +81,7 @@
   gap: 1.5rem;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
@@ -104,8 +101,8 @@
 }
 
 .pdf-files-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   margin: 0;
 }
@@ -114,7 +111,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
 }
 
@@ -136,7 +133,7 @@
   padding: 2rem 1rem;
   background: var(--bg-secondary);
   border: 2px dashed var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
   text-align: center;
@@ -173,13 +170,13 @@
 }
 
 .pdf-add-more-text {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
 
 .pdf-add-more-hint {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -188,7 +185,7 @@
   flex-direction: column;
   background: rgba(255, 255, 255, 0.7);
   border: 2px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: grab;
   transition: all 0.2s var(--ease-out);
@@ -240,7 +237,7 @@
   color: var(--text-tertiary);
   cursor: grab;
   padding: 0.25rem;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: all 0.2s var(--ease-out);
 }
 
@@ -257,15 +254,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+
   background: transparent;
   color: var(--text-secondary);
   border: none;
-  border-radius: 4px;
+  
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
-  padding: 0;
+  
 }
 
 .pdf-file-remove-btn:hover {
@@ -308,7 +304,7 @@
 }
 
 .pdf-thumbnail-loading {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
 }
 
@@ -322,19 +318,19 @@
 }
 
 .pdf-file-card-name {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 .pdf-file-card-meta {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 .pdf-merge-info {
@@ -344,10 +340,10 @@
   padding: 1rem 1.25rem;
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: #22C55E;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
 }
 
 .pdf-validating-bar {
@@ -358,7 +354,7 @@
   background: rgba(59, 130, 246, 0.1);
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
   color: var(--status-info);
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   flex-shrink: 0;
 }
 
@@ -384,7 +380,7 @@
   }
 
   .pdf-file-card {
-    border-radius: 8px;
+    border-radius: var(--radius-md);
   }
 }
 

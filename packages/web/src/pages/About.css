@@ -15,14 +15,10 @@
 
 .hero-badge {
   display: inline-block;
-  padding: 0.5rem 1.25rem;
+  
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 100px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
   animation: fadeInUp 1s var(--ease-out) 0.2s backwards;
@@ -30,21 +26,21 @@
 
 .hero-title {
   font-size: clamp(2.5rem, 6vw, 4rem);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   margin-bottom: 1.5rem;
   color: var(--text-primary);
-  letter-spacing: -0.04em;
-  line-height: 1.1;
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-tight);
   animation: fadeInUp 1s var(--ease-out) 0.3s backwards;
 }
 
 .hero-subtitle {
   font-size: clamp(1rem, 2vw, 1.25rem);
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
   max-width: 700px;
   margin: 0 auto 2.5rem;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-normal);
   animation: fadeInUp 1s var(--ease-out) 0.4s backwards;
 }
 
@@ -55,7 +51,7 @@
   padding: 1.5rem 2.5rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 100px;
+  border-radius: var(--radius-full);
   animation: fadeInUp 1s var(--ease-out) 0.6s backwards;
   box-shadow: var(--shadow-sm);
 }
@@ -65,7 +61,7 @@
     flex-direction: column;
     gap: 1.5rem;
     padding: 2rem;
-    border-radius: 24px;
+    border-radius: var(--radius-2xl);
   }
 }
 
@@ -77,19 +73,19 @@
 }
 
 .metric-value {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-bold);
   color: var(--text-primary);
-  letter-spacing: -0.03em;
-  line-height: 1;
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-none);
 }
 
 .metric-label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-widest);
   color: var(--text-tertiary);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .metric-divider {
@@ -105,14 +101,19 @@
   }
 }
 
-/* About Sections */
+/* About Sections
+   These used to paint an opaque --bg-primary, which covered the page's
+   gradient mesh and left a hard white slab starting below the hero. Alternate
+   with the same glass surface the rest of the app uses instead, so the
+   background reads continuously through the page. */
 .about-section {
   padding: 3rem 2rem;
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 .about-section:nth-child(even) {
   background: var(--bg-secondary);
+  border-block: 1px solid var(--border-subtle);
 }
 
 .section-content {
@@ -128,17 +129,17 @@
 
 .section-title {
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   margin-bottom: 1rem;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tighter);
 }
 
 .section-description {
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   color: var(--text-secondary);
-  line-height: 1.6;
-  letter-spacing: -0.01em;
+  line-height: var(--leading-relaxed);
+  letter-spacing: var(--tracking-normal);
 }
 
 /* Features Grid */
@@ -153,7 +154,7 @@
   padding: 2rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   transition: all 0.4s var(--ease-out);
   box-shadow: var(--shadow-xs);
 }
@@ -171,7 +172,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   color: var(--text-primary);
   margin-bottom: 1.25rem;
   transition: all 0.3s var(--ease-out);
@@ -189,18 +190,18 @@
 }
 
 .feature-card h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
   margin-bottom: 0.625rem;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 
 .feature-card p {
   color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 0.875rem;
-  letter-spacing: -0.01em;
+  line-height: var(--leading-relaxed);
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-normal);
 }
 
 /* Technology Stack */
@@ -215,7 +216,7 @@
   padding: 2rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   text-align: center;
   transition: all 0.3s var(--ease-out);
 }
@@ -227,17 +228,17 @@
 }
 
 .tech-name {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
   color: var(--text-primary);
   margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 
 .tech-desc {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-normal);
 }
 
 /* Three Pillars Section - LGM Aviation Inspired */
@@ -259,7 +260,7 @@
 .pillar-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 3rem 2.5rem;
   transition: all 0.4s var(--ease-out);
   position: relative;
@@ -301,41 +302,37 @@
 }
 
 .pillar-number {
-  font-size: 3rem;
-  font-weight: 700;
+  font-size: var(--text-7xl);
+  font-weight: var(--weight-bold);
   color: var(--accent);
   opacity: 0.15;
-  line-height: 1;
+  line-height: var(--leading-none);
   margin-bottom: 1.5rem;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tighter);
 }
 
 .pillar-card h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   margin-bottom: 1rem;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 
 .pillar-card p {
-  font-size: 0.9375rem;
+  font-size: var(--text-md);
   color: var(--text-secondary);
-  line-height: 1.7;
+  line-height: var(--leading-relaxed);
   margin-bottom: 1.5rem;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-normal);
 }
 
 .pillar-tag {
   display: inline-flex;
-  padding: 0.5rem 1rem;
+  
   background: var(--accent-light);
   color: var(--accent);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 6px;
+
   transition: all 0.3s var(--ease-out);
 }
 
@@ -366,11 +363,11 @@
 }
 
 .vision-text {
-  font-size: 1.125rem;
+  font-size: var(--text-xl);
   color: var(--text-secondary);
-  line-height: 1.8;
+  line-height: var(--leading-relaxed);
   margin-bottom: 1.5rem;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-normal);
 }
 
 .vision-text:last-child {
@@ -411,7 +408,7 @@
   }
 
   .pillar-number {
-    font-size: 2.5rem;
+    font-size: var(--text-6xl);
   }
 }
 

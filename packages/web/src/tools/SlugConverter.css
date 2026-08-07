@@ -8,11 +8,6 @@
   gap: 1rem;
 }
 
-.slug-mode-selector {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .slug-separator-control {
   display: flex;
   align-items: center;
@@ -20,8 +15,8 @@
 }
 
 .slug-separator-control label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
 }
 
@@ -29,9 +24,9 @@
   padding: 0.5rem 0.75rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
 }
@@ -43,23 +38,6 @@
 .slug-separator-select:focus {
   outline: none;
   border-color: var(--accent);
-}
-
-.slug-mode-btn {
-  padding: 0.75rem 1.25rem;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s var(--ease-out);
-}
-
-.slug-mode-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-elevated);
 }
 
 .slug-mode-btn.active {
@@ -84,10 +62,10 @@
   padding: 0.875rem 1rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-size: 0.9375rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--text-md);
+  font-family: var(--font-mono);
   transition: all 0.2s var(--ease-out);
 }
 
@@ -107,10 +85,10 @@
   padding: 0.875rem 1rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-size: 0.9375rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--text-md);
+  font-family: var(--font-mono);
   word-break: break-all;
 }
 

@@ -119,7 +119,7 @@ const CssFormatter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(cssContent, (err) => setError(err)),
       disabled: !cssContent.trim(),
       title: 'Copy input',
@@ -127,7 +127,7 @@ const CssFormatter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(formattedCss, (err) => setError(err)),
       disabled: !formattedCss.trim(),
       title: 'Copy output',

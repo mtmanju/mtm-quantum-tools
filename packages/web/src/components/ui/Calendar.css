@@ -5,7 +5,7 @@
   z-index: 60;
   width: 264px;
   padding: 0.625rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(24px) saturate(180%);
@@ -44,12 +44,12 @@
 .cal-select {
   padding: 0.25rem 0.375rem;
   font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   appearance: none;
   text-align: center;
@@ -67,7 +67,7 @@
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
@@ -89,9 +89,9 @@
 
 .cal-weekdays span {
   text-align: center;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
   color: var(--text-tertiary);
   padding: 0.25rem 0;
 }
@@ -103,12 +103,12 @@
   justify-content: center;
   padding: 0;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .cal-cell.is-today {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--accent);
 }
 
@@ -133,7 +133,7 @@
   background: var(--accent);
   border-color: var(--accent);
   color: var(--text-on-accent-dark);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .cal-cell.is-selected:hover {
@@ -152,14 +152,13 @@
 }
 
 .cal-footer button {
-  padding: 0.25rem 0.5rem;
+  
   font: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
+
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: 5px;
+  
   cursor: pointer;
 }
 

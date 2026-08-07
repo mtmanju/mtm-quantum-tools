@@ -1,5 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react'
+import { TrendingUp } from 'lucide-react'
 import { ErrorBar } from '../components/ui/ErrorBar'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { downloadTextFile } from '../utils/file'
 import { calculateInvestmentReturn, formatCurrency, formatPercentage } from '../utils/finance'
@@ -131,6 +133,14 @@ Generated on: ${new Date().toLocaleString()}
 
         {error && <ErrorBar message={error} />}
 
+        {!results && !error && (
+          <EmptyState
+            icon={<TrendingUp size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your returns will appear here"
+            hint="Enter the amount invested, its current value, and how long you held it."
+          />
+        )}
+
         {results && (
           <div className="calculator-results">
             <div className="result-card">
@@ -177,7 +187,7 @@ Generated on: ${new Date().toLocaleString()}
             </div>
 
             <button className="download-btn" onClick={handleDownload}>
-              Download Report
+              Download report
             </button>
           </div>
         )}

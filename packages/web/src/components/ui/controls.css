@@ -1,0 +1,246 @@
+/* ============================================================
+   Control shapes — buttons, icon buttons, chips, badges.
+
+   Every tool used to draw its own button. The audit counted 43
+   distinct button shapes and 26 chip shapes: seven different icon-button
+   sizes (20/22/24/28/30/32/36px), four different corner radii on things
+   sitting side by side, and font sizes that shifted per tool.
+
+   So shape is defined once here and each tool's class is listed as a
+   variant of the canonical rule. Markup stays as it is; the per-tool
+   stylesheets keep only their colour, which is the part that legitimately
+   differs.
+
+   The scale is deliberately short — three text sizes, three icon sizes,
+   one chip, two badges. Anything that needs a shape outside it (the
+   rotator's 80px dial, the watermark position grid) is genuinely a
+   different control and keeps its own rule.
+   ============================================================ */
+
+/* Form controls do not inherit the page font — the UA gives them 13.33px of
+   its own system stack at weight 400. Every control that forgot `font: inherit`
+   was quietly rendering in the browser's font rather than the app's, which is
+   most of why some buttons looked unrelated to everything around them. */
+button, select, input, textarea {
+  font: inherit;
+}
+
+/* ── Select ───────────────────────────────────────────────────── */
+/* Nine tools were shipping the raw OS dropdown — grey system chevron, its own
+   height, its own font — sitting right next to a custom-styled text input.
+   This gives every <select> the same box as an input plus one drawn chevron.
+   The arrow is an inline data URI: no request, and it recolours with the text. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: var(--control-h-lg);
+  padding: 0 var(--space-8) 0 var(--space-3);
+  font-size: var(--text-md);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236B7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+select:hover {
+  border-color: var(--border-interactive);
+}
+
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239CA3AF' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* ── Shared control base ──────────────────────────────────────── */
+.btn-sm, .btn-md, .btn-lg,
+.icon-btn-sm, .icon-btn-md, .icon-btn-lg,
+/* small text buttons */
+.converter-panel-download-btn, .api-headers-auth-btn, .jwt-gen-claim-btn,
+.converter-view-btn, .ip-binary-toggle,
+/* Bare <button> descendants — these had no class of their own and so drifted
+   into four more shapes. */
+.base64-file-prompt button, .base64-file-actions button,
+.smartpaste-output-actions button, .cal-footer button,
+/* standard text buttons */
+.toolbar-btn, .json-toolbar-btn, .jwt-toolbar-btn, .converter-toolbar-btn,
+.sql-action-btn, .html-action-btn, .yaml-action-btn, .number-base-btn,
+.color-format-btn, .lorem-type-btn, .lorem-text-type-btn, .text-case-btn,
+.jwt-gen-generate-btn, .api-send-btn, .uuid-generate-btn, .back-button,
+.pdf-to-image-format-btn, .header-nav-btn,
+/* prominent text buttons */
+.download-btn, .base64-download-btn, .pdf-dropzone-button, .calculate-btn,
+.load-all-btn, .load-more-btn, .toggle-schedule-btn, .error-retry-button,
+.pdf-extractor-upload-btn, .pdf-rotator-upload-btn, .pdf-splitter-upload-btn,
+.pdf-to-image-upload-btn, .pdf-watermark-upload-btn,
+/* icon-only buttons */
+.json-panel-copy-btn, .json-indent-btn, .yaml-indent-btn, .pdf-file-remove-btn,
+.converter-panel-icon-btn, .converter-dismiss-btn,
+.editor-panel-copy-btn, .jwt-panel-copy-btn, .jwt-section-copy-btn,
+.hash-copy-btn, .chmod-copy-btn, .uuid-copy-btn, .regex-flag-btn, .theme-toggle,
+.datefield-picker-btn, .number-base-copy-btn, .color-copy-btn,
+.pdf-extractor-remove-btn, .pdf-rotator-remove-btn, .pdf-splitter-remove-btn,
+.pdf-to-image-remove-btn, .pdf-watermark-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* `font: inherit` first, so the button escapes the UA's font stack before
+     the size and weight below are applied. */
+  font: inherit;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+              color var(--transition-fast);
+}
+
+/* Disabled reads the same everywhere rather than each tool picking an opacity. */
+.btn-sm:disabled, .btn-md:disabled, .btn-lg:disabled,
+.icon-btn-sm:disabled, .icon-btn-md:disabled, .icon-btn-lg:disabled,
+.converter-panel-download-btn:disabled, .api-headers-auth-btn:disabled,
+.jwt-gen-claim-btn:disabled, .converter-view-btn:disabled,
+.toolbar-btn:disabled, .json-toolbar-btn:disabled, .jwt-toolbar-btn:disabled,
+.converter-toolbar-btn:disabled, .sql-action-btn:disabled, .html-action-btn:disabled,
+.yaml-action-btn:disabled, .number-base-btn:disabled, .color-format-btn:disabled,
+.lorem-type-btn:disabled, .lorem-text-type-btn:disabled, .text-case-btn:disabled,
+.jwt-gen-generate-btn:disabled, .api-send-btn:disabled, .uuid-generate-btn:disabled,
+.pdf-to-image-format-btn:disabled,
+.download-btn:disabled, .base64-download-btn:disabled, .pdf-dropzone-button:disabled,
+.calculate-btn:disabled, .load-all-btn:disabled, .load-more-btn:disabled,
+.toggle-schedule-btn:disabled,
+.pdf-extractor-upload-btn:disabled, .pdf-rotator-upload-btn:disabled,
+.pdf-splitter-upload-btn:disabled, .pdf-to-image-upload-btn:disabled,
+.pdf-watermark-upload-btn:disabled,
+.json-panel-copy-btn:disabled, .json-indent-btn:disabled, .yaml-indent-btn:disabled,
+.pdf-file-remove-btn:disabled, .converter-panel-icon-btn:disabled,
+.converter-dismiss-btn:disabled, .editor-panel-copy-btn:disabled,
+.jwt-panel-copy-btn:disabled, .jwt-section-copy-btn:disabled, .hash-copy-btn:disabled,
+.chmod-copy-btn:disabled, .uuid-copy-btn:disabled, .regex-flag-btn:disabled,
+.number-base-copy-btn:disabled, .color-copy-btn:disabled,
+.pdf-extractor-remove-btn:disabled, .pdf-rotator-remove-btn:disabled,
+.pdf-splitter-remove-btn:disabled, .pdf-to-image-remove-btn:disabled,
+.pdf-watermark-remove-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Text buttons ─────────────────────────────────────────────── */
+
+/* Small — dense rows, inline affordances next to a field. */
+.btn-sm,
+.converter-panel-download-btn, .api-headers-auth-btn, .jwt-gen-claim-btn,
+.converter-view-btn, .ip-binary-toggle,
+/* Bare <button> descendants — these had no class of their own and so drifted
+   into four more shapes. */
+.base64-file-prompt button, .base64-file-actions button,
+.smartpaste-output-actions button, .cal-footer button {
+  height: var(--control-h-sm);
+  padding: 0 var(--space-2-5);
+  gap: var(--space-1-5);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+/* Standard — toolbars, mode toggles, most in-tool actions. */
+.btn-md,
+.toolbar-btn, .json-toolbar-btn, .jwt-toolbar-btn, .converter-toolbar-btn,
+.sql-action-btn, .html-action-btn, .yaml-action-btn, .number-base-btn,
+.color-format-btn, .lorem-type-btn, .lorem-text-type-btn, .text-case-btn,
+.jwt-gen-generate-btn, .api-send-btn, .uuid-generate-btn, .back-button,
+.pdf-to-image-format-btn, .header-nav-btn {
+  height: var(--control-h-md);
+  padding: 0 var(--space-3);
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Prominent — the one action a screen is built around. */
+.btn-lg,
+.download-btn, .base64-download-btn, .pdf-dropzone-button, .calculate-btn,
+.load-all-btn, .load-more-btn, .toggle-schedule-btn, .error-retry-button,
+.pdf-extractor-upload-btn, .pdf-rotator-upload-btn, .pdf-splitter-upload-btn,
+.pdf-to-image-upload-btn, .pdf-watermark-upload-btn {
+  height: var(--control-h-lg);
+  padding: 0 var(--space-6);
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+}
+
+/* ── Icon-only buttons ────────────────────────────────────────── */
+/* Square, so the icon sits on the same optical centre in every tool. */
+.icon-btn-sm, .icon-btn-md, .icon-btn-lg,
+.json-panel-copy-btn, .json-indent-btn, .yaml-indent-btn, .pdf-file-remove-btn,
+.converter-panel-icon-btn, .converter-dismiss-btn,
+.editor-panel-copy-btn, .jwt-panel-copy-btn, .jwt-section-copy-btn,
+.hash-copy-btn, .chmod-copy-btn, .uuid-copy-btn, .regex-flag-btn, .theme-toggle,
+.datefield-picker-btn, .number-base-copy-btn, .color-copy-btn,
+.pdf-extractor-remove-btn, .pdf-rotator-remove-btn, .pdf-splitter-remove-btn,
+.pdf-to-image-remove-btn, .pdf-watermark-remove-btn {
+  padding: 0;
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.icon-btn-sm,
+.json-panel-copy-btn, .json-indent-btn, .yaml-indent-btn, .pdf-file-remove-btn,
+.converter-panel-icon-btn, .converter-dismiss-btn {
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
+}
+
+.icon-btn-md,
+.editor-panel-copy-btn, .jwt-panel-copy-btn, .jwt-section-copy-btn,
+.hash-copy-btn, .chmod-copy-btn, .uuid-copy-btn, .regex-flag-btn, .theme-toggle,
+.datefield-picker-btn, .number-base-copy-btn, .color-copy-btn {
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+}
+
+.icon-btn-lg,
+.pdf-extractor-remove-btn, .pdf-rotator-remove-btn, .pdf-splitter-remove-btn,
+.pdf-to-image-remove-btn, .pdf-watermark-remove-btn {
+  width: var(--control-h-lg);
+  height: var(--control-h-lg);
+}
+
+/* ── Badges ───────────────────────────────────────────────────── */
+/* Static labels, never clickable — hence no height, so they wrap with text. */
+.badge,
+.tool-badge, .jwt-expired-badge, .jwt-countdown-badge, .smartpaste-badge,
+.pdf-extractor-pages-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+/* The display variant — hero, result headline, card tag. */
+.badge-lg,
+.hero-badge, .ip-class-badge, .pillar-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}

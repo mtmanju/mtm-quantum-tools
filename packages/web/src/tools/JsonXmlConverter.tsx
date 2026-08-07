@@ -82,7 +82,7 @@ const JsonXmlConverter = () => {
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyInputHook.copied ? 'Copied!' : 'Copy Input',
+      label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
@@ -90,7 +90,7 @@ const JsonXmlConverter = () => {
     },
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOutputHook.copied ? 'Copied!' : 'Copy Output',
+      label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
       onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',

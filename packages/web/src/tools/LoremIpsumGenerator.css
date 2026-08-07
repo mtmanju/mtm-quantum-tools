@@ -12,7 +12,7 @@
   padding: 1rem;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 [data-theme="dark"] .lorem-controls {
@@ -26,13 +26,12 @@
 }
 
 .lorem-text-type-btn {
-  padding: 0.5rem 1rem;
+  
   background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
 }
@@ -60,13 +59,12 @@
 }
 
 .lorem-type-btn {
-  padding: 0.5rem 1rem;
+  
   background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
 }
@@ -93,8 +91,8 @@
 }
 
 .lorem-count-input label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
@@ -103,10 +101,10 @@
   padding: 0.5rem 0.75rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 0.9375rem;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--text-md);
+  font-family: var(--font-mono);
 }
 
 .lorem-count-field:focus {
@@ -115,28 +113,8 @@
 }
 
 .lorem-count-hint {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
-}
-
-.lorem-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem;
-  text-align: center;
-  gap: 1rem;
-  min-height: 300px;
-}
-
-.lorem-empty-state svg {
-  color: var(--text-tertiary);
-}
-
-.lorem-empty-state p {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
 }
 
 .lorem-output {
@@ -146,8 +124,8 @@
 
 .lorem-paragraph {
   margin: 0 0 1rem 0;
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: var(--text-md);
+  line-height: var(--leading-relaxed);
   color: var(--text-primary);
 }
 
@@ -157,8 +135,8 @@
 
 .lorem-text {
   margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: var(--text-md);
+  line-height: var(--leading-relaxed);
   color: var(--text-primary);
 }
 

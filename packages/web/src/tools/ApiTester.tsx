@@ -238,7 +238,7 @@ const ApiTester = () => {
     },
     {
       icon: copyResponseHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyResponseHook.copied ? 'Copied!' : 'Copy Response',
+      label: copyResponseHook.copied ? 'Copied!' : 'Copy response',
       onClick: () => {
         if (response) {
           const responseText = JSON.stringify(response, null, 2)

@@ -14,9 +14,9 @@
   width: 100%;
   padding: 1rem;
   background: var(--bg-elevated);
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
   color: var(--text-primary);
   border: none;
   resize: none;
@@ -37,7 +37,7 @@
   justify-content: center;
   background: var(--bg-elevated);
   border: 2px dashed var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   margin: 1rem;
   text-align: center;
   cursor: pointer;
@@ -81,14 +81,14 @@
 }
 
 .dropzone-text {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .dropzone-hint {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
   margin: 0;
 }

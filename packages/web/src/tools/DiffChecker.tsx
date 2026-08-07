@@ -119,7 +119,7 @@ const DiffChecker = () => {
     },
     {
       icon: copyOldHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyOldHook.copied ? 'Copied!' : 'Copy Old',
+      label: copyOldHook.copied ? 'Copied!' : 'Copy old',
       onClick: () => copyOldHook.copy(oldText, (err) => setError(err)),
       disabled: !oldText.trim(),
       title: 'Copy old text',
@@ -127,14 +127,14 @@ const DiffChecker = () => {
     },
     {
       icon: copyNewHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyNewHook.copied ? 'Copied!' : 'Copy New',
+      label: copyNewHook.copied ? 'Copied!' : 'Copy new',
       onClick: () => copyNewHook.copy(newText, (err) => setError(err)),
       disabled: !newText.trim(),
       title: 'Copy new text',
     },
     {
       icon: copyDiffHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyDiffHook.copied ? 'Copied!' : 'Copy Diff',
+      label: copyDiffHook.copied ? 'Copied!' : 'Copy diff',
       onClick: () => copyDiffHook.copy(diffOutput, (err) => setError(err)),
       disabled: !diffOutput.trim(),
       title: 'Copy diff output',
@@ -142,7 +142,7 @@ const DiffChecker = () => {
     },
     {
       icon: <FileDown size={16} />,
-      label: 'Download .diff',
+      label: 'Download',
       onClick: () => downloadTextFile(diffOutput, 'document.diff', 'text/plain'),
       disabled: !diffOutput.trim(),
       title: 'Download diff as file',

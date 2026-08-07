@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Sparkles, Target, Zap, Shield, Heart, Code2 } from 'lucide-react'
+import { Shield, WifiOff, FileCode2 } from 'lucide-react'
 import './About.css'
 
 interface AboutProps {
@@ -8,188 +8,99 @@ interface AboutProps {
   totalCategories: number;
 }
 
-const About = memo(({ totalTools, activeTools, totalCategories }: AboutProps) => {
+/**
+ * This page used to run five sections — Mission, Tech Stack, Three Core
+ * Pillars, Vision, plus six feature cards — that between them made the same
+ * three claims (fast, private, simple) four times over, in copy that would fit
+ * any product at all ("empower developers", "boost productivity").
+ *
+ * What is actually distinctive here is the privacy claim, and unusually it is
+ * one a reader can check for themselves. So the page now leads with it and
+ * then explains the mechanism, which is far more persuasive than repeating the
+ * adjective.
+ */
+const About = memo(({ totalTools, totalCategories }: AboutProps) => {
   return (
     <div className="about-page">
-      {/* Hero Section */}
       <section className="about-hero">
-        <div className="hero-badge">About Us</div>
-        <h1 className="hero-title">
-          Build Faster.<br />
-          Work Smarter.
-        </h1>
+        <h1 className="hero-title">Nothing you paste leaves your browser</h1>
         <p className="hero-subtitle">
-          Professional-grade utilities for modern developers. Document conversion, 
-          data formatting, and workflow automation—all in one place.
+          Quantum Tools is {totalTools} developer utilities across {totalCategories} categories —
+          formatters, encoders, converters, and calculators. All of them run as
+          JavaScript on your own machine.
         </p>
-
-        <div className="about-metrics">
-          <div className="metric-item">
-            <div className="metric-value">{totalTools}</div>
-            <div className="metric-label">Tools</div>
-          </div>
-          <div className="metric-divider"></div>
-          <div className="metric-item">
-            <div className="metric-value">{activeTools}</div>
-            <div className="metric-label">Active</div>
-          </div>
-          <div className="metric-divider"></div>
-          <div className="metric-item">
-            <div className="metric-value">{totalCategories}</div>
-            <div className="metric-label">Categories</div>
-          </div>
-        </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="about-section mission-section">
+      <section className="about-section">
         <div className="section-content">
           <div className="section-header-centered">
-            <h2 className="section-title">Our Mission</h2>
+            <h2 className="section-title">How that actually works</h2>
             <p className="section-description">
-              To empower developers with elegant, efficient tools that streamline workflows 
-              and boost productivity.
+              Most online formatters POST your input to a server to do the work.
+              That is fine for sample data and a problem for anything else.
             </p>
           </div>
 
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">
-                <Sparkles size={24} />
+                <Shield size={24} aria-hidden="true" />
               </div>
-              <h3>Intuitive Design</h3>
-              <p>Clean, modern interfaces that feel natural to use. No learning curve, just results.</p>
+              <h3>There is no backend</h3>
+              <p>
+                No server receives your input, because there is no server to
+                receive it. Every tool is a pure function running in the page.
+              </p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon">
-                <Zap size={24} />
+                <WifiOff size={24} aria-hidden="true" />
               </div>
-              <h3>Lightning Fast</h3>
-              <p>Optimized performance for instant results. Process files and data at incredible speeds.</p>
+              <h3>You can verify it</h3>
+              <p>
+                Open your browser&rsquo;s Network tab and use any tool. You will see no
+                requests. Turn off your Wi-Fi — everything still works.
+              </p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon">
-                <Shield size={24} />
+                <FileCode2 size={24} aria-hidden="true" />
               </div>
-              <h3>Privacy First</h3>
-              <p>All processing happens locally in your browser. Your data never leaves your device.</p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Target size={24} />
-              </div>
-              <h3>Purpose-Built</h3>
-              <p>Each tool is crafted for a specific task, ensuring precision and reliability.</p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Code2 size={24} />
-              </div>
-              <h3>Developer-Focused</h3>
-              <p>Built by developers, for developers. We understand your workflow and needs.</p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Heart size={24} />
-              </div>
-              <h3>Always Free</h3>
-              <p>No subscriptions, no hidden fees. Quality tools accessible to everyone.</p>
+              <h3>Nothing is stored</h3>
+              <p>
+                No accounts, no analytics on your input, no history. Reload the
+                page and what you pasted is gone.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Technology Stack */}
-      <section className="about-section tech-section">
+      <section className="about-section">
         <div className="section-content">
           <div className="section-header-centered">
-            <h2 className="section-title">Built with Modern Technology</h2>
-            <p className="section-description">
-              Leveraging cutting-edge web technologies to deliver exceptional performance 
-              and user experience.
-            </p>
+            <h2 className="section-title">What it is built with</h2>
           </div>
 
           <div className="tech-stack">
             <div className="tech-item">
               <div className="tech-name">React 19</div>
-              <div className="tech-desc">Modern UI framework</div>
+              <div className="tech-desc">UI</div>
             </div>
             <div className="tech-item">
               <div className="tech-name">TypeScript</div>
-              <div className="tech-desc">Type-safe development</div>
+              <div className="tech-desc">Every tool is typed end to end</div>
             </div>
             <div className="tech-item">
               <div className="tech-name">Vite</div>
-              <div className="tech-desc">Lightning-fast builds</div>
+              <div className="tech-desc">Build and dev server</div>
             </div>
             <div className="tech-item">
-              <div className="tech-name">Aptos Font</div>
-              <div className="tech-desc">Modern typography</div>
+              <div className="tech-name">No dependencies at runtime</div>
+              <div className="tech-desc">Beyond the framework itself</div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Three Core Pillars - LGM Style */}
-      <section className="about-section pillars-section">
-        <div className="section-content">
-          <div className="section-header-centered">
-            <h2 className="section-title">Three Core Pillars</h2>
-            <p className="section-description">
-              Our approach to building developer tools
-            </p>
-          </div>
-
-          <div className="pillars-grid">
-            <div className="pillar-card">
-              <div className="pillar-number">01</div>
-              <h3>Simplicity</h3>
-              <p>
-                Clean, intuitive interfaces that get out of your way. No clutter, 
-                no confusion—just tools that work exactly as you expect them to.
-              </p>
-              <div className="pillar-tag">User-First Design</div>
-            </div>
-
-            <div className="pillar-card">
-              <div className="pillar-number">02</div>
-              <h3>Performance</h3>
-              <p>
-                Lightning-fast processing with optimized algorithms. Built for speed 
-                without compromising quality or accuracy.
-              </p>
-              <div className="pillar-tag">Blazing Fast</div>
-            </div>
-
-            <div className="pillar-card">
-              <div className="pillar-number">03</div>
-              <h3>Privacy</h3>
-              <p>
-                Everything runs locally in your browser. Your files and data never 
-                touch our servers—complete control and peace of mind.
-              </p>
-              <div className="pillar-tag">Zero Tracking</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Vision Section */}
-      <section className="about-section vision-section">
-        <div className="section-content">
-          <div className="vision-content">
-            <h2 className="section-title">Our Vision</h2>
-            <p className="vision-text">
-              We envision a world where developers have instant access to the tools they need, 
-              without complexity or compromise. Quantum Tools is our commitment to that future—
-              a growing collection of utilities that respect your time, data, and workflow.
-            </p>
           </div>
         </div>
       </section>
@@ -200,4 +111,3 @@ const About = memo(({ totalTools, activeTools, totalCategories }: AboutProps) =>
 About.displayName = 'About'
 
 export default About
-

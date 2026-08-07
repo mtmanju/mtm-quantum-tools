@@ -14,9 +14,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   flex-wrap: wrap;
 }
 .api-intro-headline svg {
@@ -25,63 +25,27 @@
 }
 .api-intro-headline strong {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 .api-intro-hint {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 .api-intro-hint svg {
   flex-shrink: 0;
   color: var(--text-tertiary);
 }
-
-/* Quick-example chips row */
-.api-examples-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.api-examples-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-}
-.api-example-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3125rem 0.625rem;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-.api-example-chip:hover {
-  border-color: var(--accent);
-  background: var(--bg-hover);
-}
 .api-example-method {
-  font-family: 'Courier New', 'Monaco', monospace;
-  font-weight: 700;
-  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-2xs);
   padding: 0.125rem 0.375rem;
-  border-radius: 3px;
-  letter-spacing: 0.02em;
+  border-radius: var(--radius-xs);
+  letter-spacing: var(--tracking-wide);
 }
 .api-example-method.method-get    { background: rgba(34,197,94,0.15);  color: #16A34A; }
 .api-example-method.method-post   { background: rgba(59,130,246,0.15); color: #2563EB; }
@@ -94,7 +58,7 @@
 [data-theme="dark"] .api-example-method.method-patch  { color: #C084FC; }
 [data-theme="dark"] .api-example-method.method-delete { color: #F87171; }
 .api-example-label {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
 .api-example-desc {
@@ -108,14 +72,11 @@
 .api-send-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
+
   background: var(--accent);
   color: var(--text-on-accent-dark);
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
+
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
   flex-shrink: 0;
@@ -140,28 +101,25 @@
   padding: 0.375rem 0.75rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
   flex-shrink: 0;
 }
 .api-headers-hint code {
   background: var(--bg-elevated);
   padding: 0.1rem 0.3125rem;
-  border-radius: 3px;
-  font-size: 0.6875rem;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-2xs);
   color: var(--text-secondary);
 }
 .api-headers-auth-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  font-size: 0.6875rem;
-  font-weight: 600;
+
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
@@ -172,7 +130,7 @@
 }
 
 .api-empty-state-sub {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-tertiary);
   margin-top: -0.25rem !important;
 }
@@ -195,9 +153,9 @@
   background: var(--bg-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
   min-width: 100px;
@@ -219,9 +177,9 @@
   background: var(--bg-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-family: var(--font-mono);
   transition: all 0.2s var(--ease-out);
 }
 
@@ -257,17 +215,19 @@
   min-height: 0;
 }
 
-.api-loading,
-.api-empty-state {
+/* The loading state mirrors the shared .empty-state, which now owns
+   .api-empty-state — listing both here would override it. */
+.api-loading {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
+  font-size: var(--text-base);
 }
 
 .api-response-status {
@@ -297,9 +257,9 @@
 }
 
 .api-status-code {
-  font-size: 1.25rem;
-  font-weight: 700;
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
 }
 
 .api-response-status.status-success .api-status-code {
@@ -317,15 +277,15 @@
 
 .api-status-text {
   flex: 1;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
 .api-response-time {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-family: var(--font-mono);
 }
 
 .api-response-headers,
@@ -342,12 +302,12 @@
 
 .api-response-headers h4,
 .api-response-body h4 {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
   color: var(--text-secondary);
   margin: 0 0 0.75rem 0;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .api-response-headers pre,
@@ -356,10 +316,10 @@
   padding: 0.75rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
   color: var(--text-primary);
   white-space: pre-wrap;
   word-wrap: break-word;

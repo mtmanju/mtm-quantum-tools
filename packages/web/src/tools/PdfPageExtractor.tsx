@@ -161,9 +161,9 @@ const PdfPageExtractor = () => {
   const toolbarButtons = [
     {
       icon: <Upload size={16} />,
-      label: 'Upload',
+      label: 'Open',
       onClick: handleUploadClick,
-      title: 'Upload PDF'
+      title: 'Open PDF'
     },
     {
       icon: <Scissors size={16} />,
@@ -196,7 +196,7 @@ const PdfPageExtractor = () => {
             <div className="pdf-extractor-dropzone-content">
               <Upload size={48} />
               <h3>{isDragActive ? 'Drop PDF here' : 'Upload PDF to Extract Pages'}</h3>
-              <p>Drag & drop a PDF file or click "Upload" to select</p>
+              <p>Drag & drop a PDF file or click "Open" to select</p>
               <button
                 type="button"
                 className="pdf-extractor-upload-btn"

@@ -87,20 +87,20 @@
 }
 
 .logo-title {
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
   margin: 0;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--leading-none);
 }
 
 .logo-subtitle {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   color: var(--text-tertiary);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
-  line-height: 1;
+  line-height: var(--leading-none);
   margin-top: 0.125rem;
 }
 
@@ -108,17 +108,15 @@
 .header-nav-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: 100px;
+  
   color: var(--text-primary);
-  font-size: 0.9375rem;
-  font-weight: 500;
+
   cursor: pointer;
   transition: all 0.3s var(--ease-out);
-  letter-spacing: -0.01em;
+  
   font-family: 'Aptos', system-ui, sans-serif;
 }
 
@@ -159,9 +157,8 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  /* size and radius come from .icon-btn-md in controls.css, so the toggle
+     matches the nav buttons sitting next to it */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -223,7 +220,7 @@
   }
 
   .header-nav-btn {
-    padding: 0.625rem;
-  }
+  /* shape comes from controls.css */
+}
 }
 

@@ -1,6 +1,7 @@
-import { Cake, Calendar, Check, Clock, Copy, FileDown, RotateCcw } from 'lucide-react'
+import { Cake, Calendar, CalendarDays, Check, Clock, Copy, FileDown, RotateCcw } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DateField } from '../components/ui/DateField'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
@@ -274,7 +275,7 @@ const AgeCalculator = () => {
   const toolbarButtons = [
     {
       icon: copyHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyHook.copied ? 'Copied!' : 'Copy Summary',
+      label: copyHook.copied ? 'Copied!' : 'Copy summary',
       onClick: () => copyHook.copy(buildSummary(), (err) => setActionError(err)),
       disabled: !result,
       title: 'Copy age summary',
@@ -289,9 +290,9 @@ const AgeCalculator = () => {
     },
     {
       icon: <RotateCcw size={16} />,
-      label: 'Reset',
+      label: 'Clear',
       onClick: handleReset,
-      title: 'Reset inputs',
+      title: 'Clear inputs',
       showDividerBefore: true,
     },
   ]
@@ -357,6 +358,14 @@ const AgeCalculator = () => {
             onChange={iso => { setAsOfDate(iso); setActionError('') }}
           />
         </div>
+
+        {!result && !error && (
+          <EmptyState
+            icon={<CalendarDays size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your age breakdown will appear here"
+            hint="Pick a date of birth to see years, months, and days."
+          />
+        )}
 
         {result && (
           <>

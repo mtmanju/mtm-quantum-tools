@@ -1,6 +1,7 @@
-import { AlignLeft, Check, Copy, FileText, Hash, Type, Upload, X } from 'lucide-react'
+import { AlignLeft, Check, Copy, FileText, Hash, ScanSearch, Type, Upload, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
+import { EmptyState } from '../components/ui/EmptyState'
 import { EditorPanel } from '../components/ui/EditorPanel'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
@@ -193,7 +194,7 @@ ${cpLines}
     },
     {
       icon: <FileText size={16} />,
-      label: 'Export',
+      label: 'Download',
       onClick: handleDownload,
       disabled: !input.trim(),
       title: 'Download analysis report',
@@ -239,6 +240,14 @@ ${cpLines}
         </EditorPanel>
 
         {/* Stats bar */}
+        {!input && (
+          <EmptyState
+            icon={<ScanSearch size={32} strokeWidth={1.5} aria-hidden="true" />}
+            title="Your string, taken apart"
+            hint="Paste any text to see its length, encoding, character frequency, and escapes."
+          />
+        )}
+
         {input && (
           <div className="string-stats-bar">
             <div className="string-stat-tile">

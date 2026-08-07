@@ -12,7 +12,7 @@
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.7),
     0 1px 2px rgba(0, 0, 0, 0.04),
@@ -21,7 +21,7 @@
 }
 
 [data-theme="dark"] .smartpaste-box {
-  background: rgba(40, 31, 26, 0.6);
+  background: var(--bg-secondary);
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
@@ -47,14 +47,14 @@
   resize: none;
   min-width: 0;
   font-family: inherit;
-  font-size: 0.9375rem;
-  line-height: 1.55;
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
   color: var(--text-primary);
 }
 
 .smartpaste-box.has-value .smartpaste-input {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
 }
 
 .smartpaste-input::placeholder { color: var(--text-muted); }
@@ -66,7 +66,7 @@
   padding: 0.25rem;
   background: var(--bg-hover);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
@@ -80,7 +80,7 @@
   padding: 0.625rem 0.875rem;
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   animation: smartpaste-in 0.15s var(--ease-out);
 }
 
@@ -96,18 +96,15 @@
 }
 
 .smartpaste-badge {
-  padding: 0.1875rem 0.5rem;
+  
   background: var(--accent);
   color: var(--text-on-accent-dark);
-  border-radius: 5px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+
   white-space: nowrap;
 }
 
 .smartpaste-summary {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
@@ -124,12 +121,12 @@
   gap: 0.25rem;
   padding: 0.3125rem 0.625rem;
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
   transition: border-color 0.15s, color 0.15s;
@@ -148,7 +145,7 @@
   margin-top: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-subtle);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
   flex-wrap: wrap;
 }
@@ -156,12 +153,12 @@
 .smartpaste-alt {
   padding: 0.1875rem 0.4375rem;
   font: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
 }
 
@@ -171,7 +168,7 @@
 .smartpaste-output {
   margin-top: 0.625rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--bg-secondary);
 }
@@ -182,10 +179,10 @@
   justify-content: space-between;
   padding: 0.375rem 0.625rem;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
   color: var(--text-tertiary);
 }
 
@@ -194,17 +191,13 @@
 .smartpaste-output-actions button {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.1875rem 0.4375rem;
+
   font: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
+
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
+  
   cursor: pointer;
 }
 
@@ -215,9 +208,9 @@
   padding: 0.75rem;
   max-height: 260px;
   overflow: auto;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.8125rem;
-  line-height: 1.6;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
   color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
@@ -225,7 +218,7 @@
 
 .smartpaste-hint {
   margin: 0.5rem 0 0;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   color: var(--text-tertiary);
   display: flex;
   align-items: center;
@@ -238,7 +231,7 @@
   padding: 0.125rem 0.25rem;
   background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 
 @keyframes smartpaste-in {
@@ -264,19 +257,19 @@
 }
 
 .smartpaste-samples-label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
 }
 
 .smartpaste-sample {
   padding: 0.25rem 0.625rem;
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid var(--border-subtle);
-  border-radius: 100px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }

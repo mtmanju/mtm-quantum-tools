@@ -184,15 +184,15 @@ const ChmodCalculator = () => {
   const toolbarButtons = [
     {
       icon: copyCommandHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyCommandHook.copied ? 'Copied!' : 'Copy Command',
+      label: copyCommandHook.copied ? 'Copied!' : 'Copy command',
       onClick: () => copyCommandHook.copy(chmodCommand, (err) => setError(err)),
       title: 'Copy chmod command',
     },
     {
       icon: <RotateCcw size={16} />,
-      label: 'Reset',
+      label: 'Clear',
       onClick: handleClear,
-      title: 'Reset to 644',
+      title: 'Clear',
       showDividerBefore: true,
     },
   ]

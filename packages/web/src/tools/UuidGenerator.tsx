@@ -52,7 +52,7 @@ const UuidGenerator = () => {
     },
     {
       icon: copyHook.copied ? <Check size={16} /> : <Copy size={16} />,
-      label: copyHook.copied ? 'Copied!' : 'Copy All',
+      label: copyHook.copied ? 'Copied!' : 'Copy',
       onClick: handleCopyAll,
       disabled: uuids.length === 0,
       title: 'Copy all UUIDs',
