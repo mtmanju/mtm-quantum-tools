@@ -129,10 +129,17 @@
   box-shadow: var(--shadow-xs);
 }
 
-.age-zodiac-emoji {
-  font-size: var(--text-5xl);
-  line-height: var(--leading-none);
+.age-zodiac-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
+  border-radius: var(--radius-md);
+  color: var(--accent-ink);
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-border);
 }
 
 .age-zodiac-info {

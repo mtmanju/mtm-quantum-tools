@@ -1,4 +1,4 @@
-import { Cake, Calendar, CalendarDays, Check, Clock, Copy, FileDown, RotateCcw } from 'lucide-react'
+import { Cake, Calendar, CalendarDays, Check, Clock, Copy, FileDown, Rabbit, RotateCcw, Sparkles } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { DateField } from '../components/ui/DateField'
 import { EmptyState } from '../components/ui/EmptyState'
