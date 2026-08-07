@@ -381,16 +381,27 @@ const AgeCalculator = () => {
               </div>
             </div>
 
+            {/* These two cards used to show the zodiac emoji at 32px: a
+                purple ♊ and a green 🐎, the only full-colour objects anywhere
+                in an otherwise monochrome interface, drawn by the OS so they
+                looked different on every machine. The sign's *name* is the
+                answer; the glyph was decoration fighting the design system.
+                They now use the same line icons as every other result tile.
+                (The emoji stay in the data for the exported summary.) */}
             <div className="age-zodiac-section">
               <div className="age-zodiac-card">
-                <div className="age-zodiac-emoji">{result.zodiac.emoji}</div>
+                <span className="age-zodiac-icon" aria-hidden="true">
+                  <Sparkles size={18} strokeWidth={1.75} />
+                </span>
                 <div className="age-zodiac-info">
                   <div className="age-result-label">Zodiac Sign</div>
                   <div className="age-zodiac-name">{result.zodiac.sign}</div>
                 </div>
               </div>
               <div className="age-zodiac-card">
-                <div className="age-zodiac-emoji">{result.chineseZodiac.emoji}</div>
+                <span className="age-zodiac-icon" aria-hidden="true">
+                  <Rabbit size={18} strokeWidth={1.75} />
+                </span>
                 <div className="age-zodiac-info">
                   <div className="age-result-label">Chinese Zodiac</div>
                   <div className="age-zodiac-name">{result.chineseZodiac.sign}</div>
