@@ -1,66 +1,64 @@
+/* Tool chrome is stacked — a tool can easily show four of these bars before
+   the first editor. Each row's own padding is therefore multiplied by four,
+   so they are sized tight: the control inside already carries the touch
+   target, and the bar only has to separate it from the next one. */
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.875rem;
+  gap: var(--space-4);
+  padding: var(--space-1-5) var(--space-3);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
-  gap: 1rem;
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-1);
   flex-wrap: wrap;
 }
 
+/* Shape (height, padding, radius, font) comes from .toolbar-btn in
+   controls.css. Only colour belongs here. */
 .toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   background: transparent;
-  color: var(--text-primary);
-  border: none;
-
-  cursor: pointer;
-  transition: all 0.2s var(--ease-out);
-  white-space: nowrap;
+  color: var(--text-secondary);
 }
 
-.toolbar-btn:hover:not(:disabled) {
-  background: var(--bg-elevated);
-  color: var(--accent);
-}
-
-.toolbar-btn span {
-  display: inline-block;
-}
-
+/* There were two competing :hover rules here — the first set the background
+   to --bg-elevated and the second immediately overrode it with --bg-hover,
+   so half the declarations never applied. */
 .toolbar-btn:hover:not(:disabled) {
   background: var(--bg-hover);
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.toolbar-btn:active:not(:disabled) {
+  background: var(--accent-surface);
+  border-color: var(--accent-border);
+  color: var(--accent-ink);
 }
 
 .toolbar-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .toolbar-divider {
   width: 1px;
-  height: 20px;
+  align-self: stretch;
+  min-height: 20px;
   background: var(--border-subtle);
-  margin: 0 0.25rem;
+  margin: 0 var(--space-2);
   flex-shrink: 0;
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  flex-shrink: 0;
 }
-

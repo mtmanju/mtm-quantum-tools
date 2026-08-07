@@ -6,9 +6,14 @@
 .jwt-decoder-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height) - var(--footer-height));
-  min-height: 600px;
-  background: var(--bg-primary);
+  /* `height: calc(100vh - header - footer)` ignored the tool header above it
+     and the workspace's own padding, so the panel overshot the viewport and
+     forced the page to scroll on every visit. The workspace is already a
+     flex column that fills the space — filling it is the parent's job. */
+  flex: 1;
+  min-height: 0;
+  /* Painting --bg-primary here put the page colour inside the panel; the
+     workspace surface is what should show. */
 }
 
 /* Toolbar */

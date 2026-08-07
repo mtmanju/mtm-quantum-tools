@@ -435,7 +435,7 @@ const Base64Converter = () => {
                         setInput(e.target.value)
                         setActionError('')
                       }}
-                      placeholder="Type or paste text to encode — or drop a file here…"
+                      placeholder="Type or paste text to encode, or drop a file here"
                       spellCheck={false}
                       aria-label="Text to encode"
                     />
@@ -446,7 +446,7 @@ const Base64Converter = () => {
                         Choose file
                       </label>
                       <span className="base64-file-prompt-hint">
-                        any type — PNG, JPG, PDF, ZIP, binary
+                        any type: PNG, JPG, PDF, ZIP, binary
                       </span>
                     </div>
                   </>

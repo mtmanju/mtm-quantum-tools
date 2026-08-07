@@ -25,7 +25,10 @@ export const Toolbar = memo(({ left, right, className = '' }: ToolbarProps) => {
         <div className="toolbar-left">
           {left.map((btn, index) => (
             <ReactFragment key={index}>
-              {btn.showDividerBefore && <div className="toolbar-divider" />}
+              {/* `index > 0`: a divider before the first button draws a rule
+                  with nothing on its left, which several tools were doing
+                  (Color Converter opened with a stray leading hairline). */}
+              {btn.showDividerBefore && index > 0 && <div className="toolbar-divider" />}
               <button
                 type="button"
                 className="toolbar-btn"

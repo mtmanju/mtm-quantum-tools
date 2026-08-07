@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
+import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
@@ -252,9 +253,25 @@ const JsonFormatter = () => {
             onCopy={() => copyRightHook.copy(formattedJson, (err) => setError(err))}
             copied={copyRightHook.copied}
           >
-            <pre className="json-formatted">
-              <code>{formattedJson || (jsonContent.trim() && !validation.isValid ? 'Invalid JSON' : '')}</code>
-            </pre>
+            {/* The output pane rendered an empty <pre> until there was input,
+                so the flagship tool opened as half a blank panel with no
+                indication it was working. Every other formatter already ships
+                an EmptyState here. */}
+            {formattedJson ? (
+              <pre className="json-formatted">
+                <code>{formattedJson}</code>
+              </pre>
+            ) : jsonContent.trim() && !validation.isValid ? (
+              <pre className="json-formatted">
+                <code>Invalid JSON</code>
+              </pre>
+            ) : (
+              <EmptyState
+                icon={<FileJson size={28} strokeWidth={1.5} />}
+                title="Your formatted JSON appears here"
+                hint="Paste or drop JSON on the left. It is parsed in this tab and never uploaded."
+              />
+            )}
           </EditorPanel>
         }
       />

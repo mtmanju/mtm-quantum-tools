@@ -31,7 +31,7 @@
   padding: 0.75rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: var(--bg-secondary);
+  background-color: var(--bg-secondary);
   color: var(--text-primary);
   font-size: var(--text-lg);
   transition: all 0.2s var(--ease-out);
@@ -84,15 +84,11 @@
   grid-column: 1 / -1;
   
   background: var(--accent);
-  color: var(--text-on-accent-light);
+  color: var(--text-on-accent-dark);
   border: none;
 
   cursor: pointer;
   transition: all 0.3s var(--ease-out);
-}
-
-[data-theme="dark"] .download-btn {
-  color: var(--text-on-accent-dark);
 }
 
 .download-btn:hover {

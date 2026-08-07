@@ -129,10 +129,10 @@ function detectJwt(v: string): Detection | null {
           toolId: 'jwt-decoder',
           run: () => {
             const exp = decoded?.payload?.exp
-            if (typeof exp !== 'number') return 'No `exp` claim — this token does not expire.'
+            if (typeof exp !== 'number') return 'No `exp` claim. This token does not expire.'
             const when = new Date(exp * 1000)
             const expired = when.getTime() < Date.now()
-            return `${expired ? 'EXPIRED' : 'Valid'} — exp ${exp} (${when.toISOString()})`
+            return `${expired ? 'EXPIRED' : 'Valid'}. exp ${exp} (${when.toISOString()})`
           },
         },
       ],
@@ -200,8 +200,8 @@ function detectBase64(v: string): Detection | null {
     // could be coincidence, so it ranks lower.
     confidence: looksBinary ? 0.55 : 0.8,
     summary: looksBinary
-      ? `Base64 of ${clean.length} chars — decodes to binary`
-      : `Base64 — decodes to text`,
+      ? `Base64 of ${clean.length} chars, decodes to binary`
+      : `Base64, decodes to text`,
     actions: [
       { id: 'b64-decode', label: 'Decode', toolId: 'base64-converter', run: s => decodeBase64(s) },
     ],
@@ -273,7 +273,7 @@ function detectTimestamp(v: string): Detection | null {
     kind: 'timestamp',
     label: 'Unix timestamp',
     confidence: 0.88,
-    summary: `Unix time in ${isMillis ? 'milliseconds' : 'seconds'} — ${d.toISOString()}`,
+    summary: `Unix time in ${isMillis ? 'milliseconds' : 'seconds'}: ${d.toISOString()}`,
     actions: [
       {
         id: 'ts-convert',
@@ -310,7 +310,7 @@ function detectIsoDate(v: string): Detection | null {
     kind: 'iso-date',
     label: 'ISO 8601 date',
     confidence: 0.94,
-    summary: `Date — ${relativeTime(d)}`,
+    summary: `Date, ${relativeTime(d)}`,
     actions: [
       {
         id: 'iso-to-ts',
@@ -346,7 +346,7 @@ function detectHash(v: string): Detection | null {
     kind: 'hash',
     label: `${algo} hash`,
     confidence: 0.9,
-    summary: `${t.length}-character hex digest — matches ${algo}`,
+    summary: `${t.length}-character hex digest, matches ${algo}`,
     actions: [{ id: 'hash-compare', label: 'Hash something', toolId: 'hash-generator' }],
   }
 }
@@ -453,7 +453,7 @@ function detectChmod(v: string): Detection | null {
     kind: 'chmod',
     label: 'File permissions',
     confidence: 0.62,
-    summary: `Octal mode — ${rwx}`,
+    summary: `Octal mode: ${rwx}`,
     actions: [{ id: 'chmod-explain', label: 'Explain', toolId: 'chmod-calculator', run: () => `${t}  →  ${rwx}` }],
   }
 }

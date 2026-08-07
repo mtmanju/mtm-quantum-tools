@@ -26,16 +26,10 @@
   accent-color: var(--accent);
 }
 
-.url-mode-btn.active {
-  background: var(--accent);
-  color: var(--text-on-accent-light);
-  border-color: var(--accent);
-}
-
-[data-theme="dark"] .url-mode-btn.active {
-  color: var(--text-on-accent-dark);
-}
-
+/* Removed: this restated `.segmented-option.active` from patterns.css with a
+   hardcoded #FFFFFF, which on the light theme's #C9A063 gold measures 2.1:1 —
+   below the 4.5:1 body text needs. The shared rule already sets black on the
+   accent (9.6:1 light, 11.4:1 dark) and needs no per-theme pair. */
 .url-output {
   flex: 1;
   display: flex;

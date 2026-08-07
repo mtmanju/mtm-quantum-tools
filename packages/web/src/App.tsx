@@ -3,6 +3,7 @@ import {
   Binary,
   Brackets,
   Cake,
+  Check,
   CalendarClock,
   Clock,
   Code,
@@ -31,6 +32,7 @@ import {
   RotateCw,
   Scissors,
   Shield,
+  ShieldCheck,
   Sparkle,
   Table2,
   TrendingUp,
@@ -111,6 +113,14 @@ const AgeCalculator = lazy(() => import('./tools/AgeCalculator'))
 
 const isMacPlatform =
   typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+
+/** Verifiable claims, not adjectives — each one is checkable from the page. */
+const HERO_TRUST = [
+  'Works offline',
+  'Nothing is stored',
+  'No sign-up',
+  'Free forever',
+] as const
 
 export interface Tool {
   id: string
@@ -334,7 +344,7 @@ const ToolCard = memo(({ tool, onClick, showDescription }: {
     className={`tool-card ${tool.status}`}
     onClick={() => onClick(tool)}
     disabled={tool.status !== 'active'}
-    aria-label={`${tool.name} — ${tool.description}`}
+    aria-label={`${tool.name}: ${tool.description}`}
   >
     <span className="tool-icon-wrapper" aria-hidden="true">
       {tool.icon}
@@ -388,11 +398,18 @@ function App() {
     return tools.find(t => t.id === toolId) || null
   }, [location.pathname])
 
-  // Memoize categories - tools is a constant, so empty deps is fine
-  const categories = useMemo(() => 
-    Array.from(new Set(tools.map(t => t.category))), 
-    []
-  )
+  /**
+   * Largest category first. The browse grid is a plain CSS grid, so its
+   * bottom edge is only as ragged as the ordering makes it: declaration order
+   * put a 4-tool card next to a 9-tool card in row one and stranded the two
+   * smallest categories on a row of their own. Sorted by size, row one is
+   * four cards of near-equal height and the only gap is the trailing slot.
+   */
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const tool of tools) counts.set(tool.category, (counts.get(tool.category) ?? 0) + 1)
+    return [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)!)
+  }, [])
 
   // Memoize active count
   const activeCount = useMemo(() => 
@@ -478,7 +495,7 @@ function App() {
   // Per-route title/description/canonical/OG.
   useDocumentMeta(
     currentView === 'tool' && selectedTool
-      ? { title: selectedTool.name, description: `${selectedTool.description}. Free, instant, and runs entirely in your browser — nothing is uploaded.` }
+      ? { title: selectedTool.name, description: `${selectedTool.description}. Free, instant, and runs entirely in your browser. Nothing is uploaded.` }
       : currentView === 'about'
         ? { title: 'About' }
         : {}
@@ -500,9 +517,9 @@ function App() {
 
       {currentView === 'about' ? (
         <main id="main-content" className="main-content">
-          <div className="page-header">
-            <h1 className="page-title">About</h1>
-          </div>
+          {/* No "About" page-header here: the About hero already carries the
+              page's <h1>, and two <h1>s on one page is both a heading-order
+              defect and a redundant title stacked on a headline. */}
           <About
             totalTools={tools.length}
             activeTools={activeCount}
@@ -515,20 +532,37 @@ function App() {
               icons makes the visitor do the classification work; this states
               what the product is for and lets them use it immediately. */}
           <section className="home-hero">
+            <p className="home-hero-eyebrow">
+              <ShieldCheck aria-hidden="true" />
+              No upload · No account · No server
+            </p>
             <h1 className="home-hero-title">
               Developer tools that never see your data
             </h1>
             <p className="home-hero-sub">
-              {activeCount} utilities that run entirely in your browser. Nothing you paste
-              is uploaded, logged, or sent anywhere — so it is safe for the tokens and
-              payloads you are not allowed to put into a website.
+              {activeCount} utilities that run entirely in your browser. Safe for the
+              tokens and payloads you are not allowed to paste into a website.
             </p>
 
             <SmartPaste onOpenTool={openToolWithValue} />
+
+            {/* Four facts a sceptical reader can check in about ten seconds,
+                which persuades where a row of adjectives would not. */}
+            <ul className="home-hero-trust">
+              {HERO_TRUST.map(claim => (
+                <li key={claim}>
+                  <Check aria-hidden="true" />
+                  {claim}
+                </li>
+              ))}
+            </ul>
           </section>
 
           <div className="home-browse-header">
-            <h2 className="home-browse-title">All {activeCount} tools</h2>
+            <div className="home-browse-heading">
+              <span className="home-browse-eyebrow">{categories.length} categories</span>
+              <h2 className="home-browse-title">All {activeCount} tools</h2>
+            </div>
             <div className="tools-search-bar">
               <Search size={14} className="tools-search-icon" aria-hidden="true" />
               <input
@@ -587,17 +621,30 @@ function App() {
       ) : (
         <main id="main-content" className="main-content tool-view">
           <div className="tool-view-wrapper">
-            <div className="page-header-with-back">
-            <button
-              className="back-button"
+            {/* One row, not three. A tool page is a workspace: the title is
+                orientation, not the message, and the stacked back-row +
+                display-size title + description block was spending 124px of
+                a 900px viewport before the tool got a single pixel. */}
+            <div className="tool-header">
+              <button
+                className="back-button"
                 onClick={() => navigate(ROUTES.TOOLS)}
-                aria-label="Back to tools"
-            >
-                <ArrowLeft size={18} />
-                <span>Back</span>
-            </button>
+                aria-label="Back to all tools"
+              >
+                <ArrowLeft size={16} />
+                <span>All tools</span>
+              </button>
+
               {selectedTool && (
-                <h1 className="page-title">{selectedTool.name}</h1>
+                <>
+                  <span className="tool-header-divider" aria-hidden="true" />
+                  <span className="tool-header-icon" aria-hidden="true">
+                    {selectedTool.icon}
+                  </span>
+                  <h1 className="page-title">{selectedTool.name}</h1>
+                  <p className="tool-header-desc">{selectedTool.description}</p>
+                  <span className="tool-header-category">{selectedTool.category}</span>
+                </>
               )}
             </div>
 

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="45 free developer utilities that run entirely in your browser — formatters, converters, encoders, PDF tools and calculators. Nothing you paste is ever uploaded." />
+    <meta name="description" content="45 free developer utilities that run entirely in your browser: formatters, converters, encoders, PDF tools and calculators. Nothing you paste is ever uploaded." />
     <meta name="theme-color" content="#0B0D17" />
 
     <!-- CSP: no third-party origins. connect-src stays broad only because the
@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <title>Quantum Tools — Free Developer Utilities</title>
+    <title>Quantum Tools: Free Developer Utilities</title>
 
     <!--
       Runs before the body is painted, so the rules below apply on the very
@@ -46,7 +46,12 @@
       .prerender dd { margin-left: 0; color: #4b5361; }
       .prerender a { color: #8A6A2F; }
       @media (prefers-color-scheme: dark) {
-        body { background: #0B0D17; }
+        /* Scoped to the pre-boot document only. Unscoped, this rule sits
+           outside @layer and therefore beat `@layer base { body { ... } }`
+           in App.css — so on an OS in dark mode, choosing the light theme
+           left a black page behind light panels. ThemeContext stamps
+           data-theme on <html> before first paint, which retires this. */
+        html:not([data-theme]) body { background: #0B0D17; }
         .prerender { color: #E6E8EC; }
         .prerender dd { color: #A8B0BD; }
         .prerender a { color: #D4AF6A; }

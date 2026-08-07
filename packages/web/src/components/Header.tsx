@@ -32,9 +32,11 @@ const Header = memo(({
             type="button"
             className="logo"
             onClick={() => onNavigate('/')}
-            aria-label="Quantum Tools — go to all tools"
+            aria-label="Quantum Tools, go to all tools"
           >
-            <Layout size={28} strokeWidth={1.5} aria-hidden="true" />
+            <span className="logo-mark" aria-hidden="true">
+              <Layout size={17} strokeWidth={2} />
+            </span>
             <span className="logo-text">
               <span className="logo-title">Quantum</span>
               <span className="logo-subtitle">Tools</span>

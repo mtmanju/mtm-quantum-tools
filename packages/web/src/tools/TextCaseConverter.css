@@ -68,7 +68,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 1rem;
-  background: var(--bg-secondary);
+  background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }

@@ -148,7 +148,7 @@
 
 .uuid-version-select {
   padding: 0.5rem 0.75rem;
-  background: var(--bg-elevated);
+  background-color: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-primary);

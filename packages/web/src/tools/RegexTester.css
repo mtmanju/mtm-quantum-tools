@@ -1,15 +1,17 @@
 
 
-.regex-mode-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
+/* The active state of the mode switch is owned by `.segmented-option.active`
+   in components/ui/patterns.css, which fills the button with --accent and sets
+   black text on it. The override that used to live here dated from an earlier
+   underline-tab design (it paired `color: var(--accent)` with a
+   `border-bottom-color`) and, once the shared control started filling the
+   background, it painted gold text on a gold fill — a 1:1 contrast ratio that
+   made the selected mode literally invisible. */
 .regex-replacement-input {
   width: 100%;
   min-height: 80px;
   padding: 0.875rem 1rem;
-  background: var(--bg-elevated);
+  background-color: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-primary);
@@ -56,14 +58,33 @@
   word-wrap: break-word;
 }
 
+/* The row that now holds both: mode on the left, flags on the right. It owns
+   the padding and the rule; its two children own neither. */
+.regex-settings-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-1-5) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+/* .regex-mode-selector is styled as a `.segmented` bar in patterns.css, which
+   gives it a rule and padding of its own — correct when it was a bar, wrong
+   now that it is one item inside one. */
+.regex-settings-bar .regex-mode-selector,
+.regex-settings-bar .regex-flags-bar {
+  padding: 0;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
 .regex-flags-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
+  gap: var(--space-2-5);
 }
 
 .regex-flags-label {

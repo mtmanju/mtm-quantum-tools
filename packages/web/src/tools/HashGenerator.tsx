@@ -235,7 +235,7 @@ SHA-512: ${hashes.sha512}`
                       <div className="hash-label">
                         <span className="hash-algorithm">{algo.toUpperCase()}</span>
                         {(algo === 'md5' || algo === 'sha1') && (
-                          <span className="hash-weak-warning" title="Cryptographically broken — not suitable for security">
+                          <span className="hash-weak-warning" title="Cryptographically broken. Not suitable for security.">
                             <AlertTriangle size={12} /> Weak
                           </span>
                         )}

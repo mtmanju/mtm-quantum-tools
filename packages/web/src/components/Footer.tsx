@@ -1,5 +1,6 @@
 import { memo } from 'react'
-import { Layout } from 'lucide-react'
+import { Layout, ShieldCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import './Footer.css'
 
 interface FooterProps {
@@ -12,29 +13,31 @@ const Footer = memo(({ toolsCount, categoriesCount }: FooterProps) => {
   return (
     <footer className="footer">
       <div className="footer-content">
-        <div className="footer-left">
-          <div className="footer-logo">
-            <Layout size={24} strokeWidth={1.5} />
-            <div>
-              <div className="footer-brand">Quantum Tools</div>
-              <div className="footer-tagline">Professional developer utilities</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="footer-center">
-          <p className="footer-note">
-            {toolsCount} tools across {categoriesCount} categories. Everything runs
-            in your browser — nothing you paste is uploaded.
-          </p>
+        <div className="footer-brand-block">
+          <span className="footer-mark" aria-hidden="true">
+            <Layout size={15} strokeWidth={2} />
+          </span>
+          <span className="footer-brand-text">
+            <span className="footer-brand">Quantum Tools</span>
+            {/* The count and the privacy claim were two separate blocks on
+                two rows. They are one sentence. */}
+            <span className="footer-tagline">
+              <ShieldCheck size={12} strokeWidth={2} aria-hidden="true" />
+              {toolsCount} tools across {categoriesCount} categories. Nothing you paste is uploaded.
+            </span>
+          </span>
         </div>
 
-        <div className="footer-right">
-          <div className="footer-meta">
-            <span>v1.0.0</span>
-            <span className="footer-separator">•</span>
-            <span>© 2025</span>
-          </div>
+        <div className="footer-end">
+          {/* Real anchors, not buttons: this is navigation, so it should be
+              copyable, openable in a new tab, and crawlable. */}
+          <nav className="footer-nav" aria-label="Footer">
+            <Link to="/">All tools</Link>
+            <Link to="/about">About</Link>
+            <Link to="/about">Privacy</Link>
+          </nav>
+          <span className="footer-divider" aria-hidden="true" />
+          <p className="footer-meta">v1.0.0 &middot; &copy; 2025</p>
         </div>
       </div>
     </footer>
@@ -44,4 +47,3 @@ const Footer = memo(({ toolsCount, categoriesCount }: FooterProps) => {
 Footer.displayName = 'Footer'
 
 export default Footer
-

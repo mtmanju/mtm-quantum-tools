@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 const SITE_NAME = 'Quantum Tools'
 const DEFAULT_DESCRIPTION =
-  '45 free developer utilities that run entirely in your browser — formatters, converters, encoders, PDF tools and calculators. Nothing you paste is ever uploaded.'
+  '45 free developer utilities that run entirely in your browser: formatters, converters, encoders, PDF tools and calculators. Nothing you paste is ever uploaded.'
 
 function upsertMeta(selector: string, attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(selector)
@@ -41,7 +41,7 @@ export interface DocumentMeta {
  */
 export function useDocumentMeta({ title, description }: DocumentMeta) {
   useEffect(() => {
-    const fullTitle = title ? `${title} · ${SITE_NAME}` : `${SITE_NAME} — Free Developer Utilities`
+    const fullTitle = title ? `${title} · ${SITE_NAME}` : `${SITE_NAME}: Free Developer Utilities`
     const desc = description || DEFAULT_DESCRIPTION
     const url = window.location.origin + window.location.pathname
 

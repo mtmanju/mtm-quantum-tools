@@ -619,7 +619,7 @@ const MarkdownConverter = () => {
 
   const loadFile = useCallback(async (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
-      setError(`File too large — max ${MAX_FILE_SIZE / 1024 / 1024}MB, got ${(file.size / 1024 / 1024).toFixed(1)}MB`)
+      setError(`File too large. Max ${MAX_FILE_SIZE / 1024 / 1024}MB, got ${(file.size / 1024 / 1024).toFixed(1)}MB.`)
       return
     }
     try {
@@ -714,7 +714,7 @@ const MarkdownConverter = () => {
     // window.open() called synchronously from a click handler — not blocked by pop-up blockers
     const win = window.open('', '_blank')
     if (!win) {
-      setError('PDF blocked — please allow pop-ups for this site and try again.')
+      setError('PDF blocked. Allow pop-ups for this site and try again.')
       return
     }
 

@@ -74,9 +74,16 @@
     --leading-normal: 1.5;
     --leading-relaxed: 1.6;
 
-    /* Text colors on colored backgrounds */
-    --text-on-accent-light: #FFFFFF;
+    /* Text on the accent fill.
+
+       There is only one safe value. The gold is light in both themes
+       (#C9A063 / #D4AF6A), so black clears 9.6:1 and 11.4:1 while white
+       manages 2.1:1 and 1.8:1. The "-light" name read like one half of a
+       per-theme pair, and six buttons picked it on that assumption and
+       shipped white-on-gold labels; it is now unused and kept only so a
+       stray reference does not resolve to nothing. */
     --text-on-accent-dark: #000000;
+    --text-on-accent-light: var(--text-on-accent-dark);
 
     /* Focus shadows */
     --focus-shadow-light: 0 0 0 3px rgba(0, 0, 0, 0.1);
@@ -91,11 +98,22 @@
     --shadow-xl: 0 20px 48px -12px rgba(0, 0, 0, 0.15);
 
     /* Page layout — single source of truth for max-width + gutter.
-       Change these two variables to retune every page (header, footer, content). */
-    --container-width: 100%;
-    --page-padding-x: clamp(0.75rem, 2vw, 1.5rem);
+       Change these to retune every page (header, footer, content).
 
-    --header-height: 72px;
+       One width, every page. This was 100% (the logo sat hard against the
+       left bezel while the hero was centred 400px away), and then briefly a
+       narrow measure for browsing plus a wide one for tool pages — which
+       moved the logo 192px sideways every time you opened a tool. A measure
+       is only worth having if it is the same one you return to, so the split
+       is gone.
+
+       1440 is the compromise the two layouts both want: the browse grid still
+       resolves to four ~320px category columns, and a split editor still gets
+       ~680px a side. */
+    --container-width: 1440px;
+    --page-padding-x: clamp(1.25rem, 4vw, 2.5rem);
+
+    --header-height: 64px;
     --footer-height: 80px;
     --section-spacing: clamp(4rem, 8vw, 8rem);
     --card-padding: clamp(1rem, 2vw, 1.5rem);
@@ -159,6 +177,32 @@
     --tracking-normal: -0.01em;   /* body */
     --tracking-wide:    0.04em;   /* uppercase labels */
     --tracking-widest:  0.08em;   /* badges */
+
+    /* ── Accent surfaces ────────────────────────────────────────────
+       The gold is a 2.2:1 tone. It can carry a *fill* (with dark text on
+       it) and it can carry a *border*, but it cannot carry text on a light
+       background — so text that wants to look accented uses --accent-ink,
+       which is the same hue darkened to 4.9:1. Keeping these separate is
+       what stops "make it gold" from quietly failing contrast. */
+    --accent-ink:     #8A6A2F;
+    --accent-surface: rgba(201, 160, 99, 0.10);
+    --accent-border:  rgba(201, 160, 99, 0.42);
+    /* One soft radial behind the hero headline. Deliberately a single light
+       source rather than the four-colour mesh this replaced — depth without
+       tinting every surface that lands on top of it. */
+    --hero-glow: radial-gradient(
+      62% 78% at 50% 0%,
+      rgba(201, 160, 99, 0.16) 0%,
+      rgba(201, 160, 99, 0.05) 42%,
+      transparent 72%
+    );
+
+    /* Display type — the marketing scale. The UI scale above tops out at
+       48px because it is sized for controls; a hero headline is a different
+       instrument and needs its own two steps. */
+    --display-sm: clamp(1.75rem, 1.1rem + 2.4vw, 2.5rem);    /* section leads */
+    --display-md: clamp(2.25rem, 1.2rem + 4vw, 3.5rem);      /* page titles */
+    --display-lg: clamp(2.75rem, 1.2rem + 5.6vw, 4.5rem);    /* home hero */
 
     /* Control heights. One scale for text and icon buttons alike, so an icon
        button sitting next to a text button is exactly as tall. Tools used to
@@ -225,6 +269,17 @@
     --focus-color: #D4AF6A;
     --focus-ring: 0 0 0 3px rgba(212, 175, 106, 0.45);
 
+    /* On dark the accent clears 8.5:1, so accent-ink is simply the accent. */
+    --accent-ink:     #D4AF6A;
+    --accent-surface: rgba(212, 175, 106, 0.12);
+    --accent-border:  rgba(212, 175, 106, 0.38);
+    --hero-glow: radial-gradient(
+      62% 78% at 50% 0%,
+      rgba(212, 175, 106, 0.13) 0%,
+      rgba(212, 175, 106, 0.04) 42%,
+      transparent 72%
+    );
+
     --border-subtle: #1F2937;
     --border-medium: #374151;
     --border-focus: #D4AF6A;
@@ -237,9 +292,9 @@
     --status-info: #3B82F6;
     --status-success-light: #22C55E;
 
-    /* Text colors on colored backgrounds */
-    --text-on-accent-light: #FFFFFF;
+    /* Same in dark: the accent is a light gold in both themes. */
     --text-on-accent-dark: #000000;
+    --text-on-accent-light: var(--text-on-accent-dark);
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -346,195 +401,41 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 
 /* Header and Footer styles moved to component files */
 
-/* Main Content — width & gutter driven by --container-width and --page-padding-x */
+/* Main Content — width & gutter driven by --container-width and --page-padding-x.
+
+   Every page uses this one box. The three views used to disagree about their
+   own vertical padding too (32 / 24 / 20px top, and three different bottoms),
+   which is small enough to look accidental rather than intentional and made
+   the header sit at a different distance from the first line of content on
+   each page. */
 .main-content {
   flex: 1;
   max-width: var(--container-width);
   margin: 0 auto;
-  padding: 2rem var(--page-padding-x);
+  padding: var(--space-6) var(--page-padding-x) var(--space-8);
   width: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* Tools page (no hero) - cleaner spacing */
-.main-content.tools-page {
-  padding-top: 1.5rem;
-}
-
-/* Tool view inherits the same gutter; just trims vertical padding */
+/* The workspace has to be able to fill the viewport, so this view alone gets
+   a flex context that can shrink. Its padding is the same as everyone's. */
 .main-content.tool-view {
-  padding-top: 0.5rem;
-  padding-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
   min-height: 0;
 }
 
 @media (max-width: 768px) {
   .main-content {
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-  }
-
-  .main-content.tools-page {
-    padding-top: 1rem;
-  }
-
-  .main-content.tool-view {
-    padding-top: 0.5rem;
-    padding-bottom: 0.75rem;
-    height: 100%;
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-6);
   }
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-
-  color: var(--text-secondary);
-  margin-bottom: 2rem;
-
-}
-
-[data-theme="dark"] .hero-badge {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.hero-title {
-  font-size: clamp(3rem, 7vw, 5rem);
-  line-height: var(--leading-tight);
-  font-weight: var(--weight-bold);
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
-  letter-spacing: var(--tracking-tighter);
-}
-
-.hero-subtitle {
-  font-size: clamp(1.0625rem, 2.5vw, 1.25rem);
-  color: var(--text-secondary);
-  margin-bottom: 3rem;
-  font-weight: var(--weight-regular);
-  line-height: var(--leading-relaxed);
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  letter-spacing: var(--tracking-normal);
-}
-
-.landing-features .feature-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  padding: 2rem 1.5rem;
-  transition: all 0.4s var(--ease-out);
-  position: relative;
-  overflow: hidden;
-}
-
-[data-theme="dark"] .landing-features .feature-card {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Top accent bar */
-.landing-features .feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s var(--ease-out);
-}
-
-.landing-features .feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 32px rgba(201, 160, 99, 0.12), 0 12px 32px rgba(0, 0, 0, 0.08);
-  border-color: var(--accent);
-}
-
-[data-theme="dark"] .landing-features .feature-card:hover {
-  background: rgba(212, 175, 106, 0.03);
-  border-color: var(--accent);
-  box-shadow: 0 12px 32px rgba(212, 175, 106, 0.15), 0 12px 32px rgba(0, 0, 0, 0.6);
-}
-
-.landing-features .feature-card:hover::before {
-  transform: scaleX(1);
-}
-
-.landing-features .feature-icon {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent);
-  color: var(--text-on-accent-dark);
-  border-radius: 50%;
-  transition: all 0.4s var(--ease-spring);
-}
-
-[data-theme="dark"] .landing-features .feature-icon {
-  color: var(--text-on-accent-dark);
-}
-
-.landing-features .feature-card:hover .feature-icon {
-  transform: scale(1.05) rotate(5deg);
-}
-
-.landing-features .feature-card h3 {
-  font-size: var(--text-3xl);
-  font-weight: var(--weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  letter-spacing: var(--tracking-tight);
-}
-
-.landing-features .feature-card p {
-  font-size: var(--text-md);
-  color: var(--text-secondary);
-  line-height: var(--leading-relaxed);
-  margin: 0;
-  letter-spacing: var(--tracking-normal);
-}
-
-@media (max-width: 768px) {
-  .landing-hero {
-    padding: 3rem 0 2rem;
-  }
-  
-  .hero-cta {
-    flex-direction: column;
-}
-
-  .cta-primary,
-  .cta-secondary {
-  width: 100%;
-    max-width: 300px;
-    justify-content: center;
-  }
-  
-  .landing-features {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-    padding: 2rem 0;
-  }
-  
-  .landing-features .feature-card {
-    padding: 1.5rem 1.25rem;
-}
-}
+/* Dead marketing-page CSS removed here: .hero-badge/.hero-title/.hero-subtitle
+   and the .landing-* / .cta-* families described a landing page that no longer
+   exists in the markup (the home page uses .home-hero-*, About uses .about-*).
+   They were still being parsed on every load and, worse, were the first thing
+   a reader hit when looking for the hero styles that actually apply. */
 
 /* Metrics styles moved to About.css */
 
@@ -546,14 +447,84 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
    Each tool's local CSS can still override via higher specificity.
    ────────────────────────────────────────────────────────────────── */
 
-/* Padded body for tools that don't use the EditorLayout split */
+/* ── Calculators ───────────────────────────────────────────────────
+   The five finance tools are the only ones that don't use the two-pane
+   EditorLayout, and they were a single stacked column inside a workspace
+   that is now up to 1600px wide: three fields spread across the full width
+   on one row, the tenure row broke the auto-fit grid and left half the
+   line empty, and the results appeared a long way below the inputs that
+   produced them.
+
+   They share a structure — .calculator-inputs, then an EmptyState or
+   .calculator-results as siblings — so one rule gives all five the same
+   two-pane shape as every other tool: a form rail on the left, output on
+   the right, and the answer beside the question rather than under it. */
 .tool-workspace .loan-emi-calculator,
 .tool-workspace .sip-calculator,
 .tool-workspace .compound-interest-calculator,
 .tool-workspace .loan-repayment-calculator,
 .tool-workspace .investment-return-calculator {
-  padding: 1.5rem;
-  gap: 1.25rem !important;
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  align-content: start;
+  column-gap: 0;
+  row-gap: var(--space-6);
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.tool-workspace .calculator-inputs {
+  /* One field per row inside the rail — the auto-fit grid was there to fill
+     the old full-width layout and now has a column to fill instead. */
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-content: start;
+  padding-right: clamp(1.5rem, 3vw, 2.5rem);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.tool-workspace .calculator-results,
+.tool-workspace .loan-emi-calculator > .empty-state,
+.tool-workspace .sip-calculator > .empty-state,
+.tool-workspace .compound-interest-calculator > .empty-state,
+.tool-workspace .loan-repayment-calculator > .empty-state,
+.tool-workspace .investment-return-calculator > .empty-state {
+  grid-column: 2;
+  padding-left: clamp(1.5rem, 3vw, 2.5rem);
+  margin-top: 0;
+}
+
+/* The amortisation table is a wide artefact; it gets the whole width. */
+.tool-workspace .repayment-schedule {
+  grid-column: 1 / -1;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 900px) {
+  .tool-workspace .loan-emi-calculator,
+  .tool-workspace .sip-calculator,
+  .tool-workspace .compound-interest-calculator,
+  .tool-workspace .loan-repayment-calculator,
+  .tool-workspace .investment-return-calculator {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tool-workspace .calculator-inputs {
+    padding-right: 0;
+    padding-bottom: var(--space-6);
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .tool-workspace .calculator-results,
+  .tool-workspace .loan-emi-calculator > .empty-state,
+  .tool-workspace .sip-calculator > .empty-state,
+  .tool-workspace .compound-interest-calculator > .empty-state,
+  .tool-workspace .loan-repayment-calculator > .empty-state,
+  .tool-workspace .investment-return-calculator > .empty-state {
+    grid-column: 1;
+    padding-left: 0;
+  }
 }
 
 /* Form labels — consistent typography */
@@ -614,9 +585,18 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 .tool-workspace .calculator-results,
 .tool-workspace .result-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.25rem;
+  /* 13rem, not 180px: a formatted currency figure like "₹ 1,04,13,878.4" needs
+     about 200px at this size, and a 180px track broke it after the symbol so
+     one tile in the row stood two lines tall. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  /* Auto rows in a grid that is taller than its content stretch to fill it.
+     Sitting beside a taller input rail, that inflated every result tile to
+     153px for ~90px of content — a figure and its label marooned at the top
+     of a box. Both axes now size to content. */
+  align-content: start;
+  align-self: start;
 }
 
 .tool-workspace .result-card {
@@ -700,70 +680,67 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
    Liquid Glass — categories shown side-by-side (no-scroll layout)
    ────────────────────────────────────────────────────────────────── */
 
+/* Seven cards of very unequal length used to leave a ~700px hole in the
+   bottom-right of the page: at five columns, row two held two cards and three
+   empty slots.
+
+   The fix is ordering, not layout mode. CSS multi-column looked like the
+   answer but its balancer is a greedy fill, not a bin-packer — with blocks
+   this uneven it packed seven cards into three tracks and left the fourth
+   empty. A plain grid fed the categories largest-first fills row one with the
+   four ~equal tall cards and leaves only the single trailing slot of row two
+   open, which reads as the end of a list rather than as a gap. */
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--gap-md);
   align-items: start;
 }
 
 .category-card {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: var(--radius-lg);
-  padding: 0.625rem;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
-  transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+  box-shadow: var(--elevation-1);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
 }
 
 [data-theme="dark"] .category-card {
   background: var(--bg-secondary);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 28px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.07);
 }
 
 .category-card:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03),
-    0 1px 2px rgba(0, 0, 0, 0.05),
-    0 16px 36px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  border-color: var(--border-medium);
+  box-shadow: var(--elevation-2);
 }
 
 .category-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4375rem 0.625rem 0.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  margin-bottom: 0.25rem;
-}
-
-[data-theme="dark"] .category-card-header {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  gap: var(--space-3);
+  padding: var(--space-2-5) var(--space-2-5) var(--space-3);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .category-card-title {
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  /* It's an <h2>; override the global heading scale. */
+  /* Was 11px uppercase at tracking-widest — legible, but so quiet that the
+     45 tool names below it all outranked their own heading. */
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-normal);
+  text-transform: none;
+  color: var(--text-primary);
+  /* It's an <h3>; override the global heading scale. */
   margin: 0;
   line-height: var(--leading-tight);
 }
@@ -804,20 +781,36 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 }
 
 .category-card-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-full);
+  background: var(--bg-hover);
   font-size: var(--text-2xs);
   color: var(--text-tertiary);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+.category-card:hover .category-card-count {
+  background: var(--accent-surface);
+  color: var(--accent-ink);
 }
 
 .tool-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.5rem;
+  gap: var(--space-2-5);
+  /* 44px so a tool name is a comfortable touch target; the rows were 30px. */
+  min-height: var(--control-h-lg);
+  padding: var(--space-1-5) var(--space-2-5);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.15s var(--ease-out);
+  transition: background var(--transition-fast), color var(--transition-fast);
   background: transparent;
   border: none;
   width: 100%;
@@ -827,65 +820,55 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 }
 
 .tool-row:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-[data-theme="dark"] .tool-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
 }
 
 .tool-row-icon {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, currentColor 14%, transparent);
+  /* Neutral at rest, accented on hover — so colour marks the row you are
+     pointing at instead of decorating all 45 at once. */
+  color: var(--text-tertiary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
   flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
-.tool-row-icon::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
-  pointer-events: none;
-}
-
-[data-theme="dark"] .tool-row-icon::before {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+.tool-row:hover .tool-row-icon {
+  color: var(--accent-ink);
+  background: var(--accent-surface);
+  border-color: var(--accent-border);
 }
 
 .tool-row-icon svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 2;
-  position: relative;
-  z-index: 1;
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.75;
 }
 
 .tool-row-name {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-normal);
+  transition: color var(--transition-fast);
 }
 
-@media (max-width: 768px) {
-  .categories-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.625rem;
-  }
-  .category-card {
-    padding: 0.5rem;
-  }
-  .tool-row-name {
-    font-size: var(--text-xs);
-  }
+.tool-row:hover .tool-row-name {
+  color: var(--text-primary);
+}
+
+@media (max-width: 560px) {
+  .categories-grid { grid-template-columns: 1fr; }
 }
 
 /* Tools Grid - Compact */
@@ -893,22 +876,18 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   margin-bottom: 1.5rem;
 }
 
+/* Hardcoded #6B7280 / #9CA3AF here duplicated --text-tertiary in both themes
+   and the literal rgba borders duplicated --border-subtle. */
 .category-section .section-title {
-  font-size: clamp(0.9375rem, 1.3vw, 1.0625rem) !important;
+  font-size: var(--text-md) !important;
   font-weight: var(--weight-medium) !important;
-  letter-spacing: 0;
-  color: #6B7280;
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  letter-spacing: var(--tracking-normal);
+  color: var(--text-tertiary);
+  margin: 0 0 var(--space-4) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
   line-height: var(--leading-normal);
   text-transform: none;
-}
-
-[data-theme="dark"] .category-section .section-title {
-  color: #9CA3AF;
-  font-weight: var(--weight-medium) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .section-description {
@@ -918,11 +897,13 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   letter-spacing: var(--tracking-normal);
 }
 
-/* macOS Launchpad-style tool grid */
+/* Search results. 130px tracks clipped the two-line description on most
+   cards ("Export Markdown to DOCX, PDF, or…" is the whole point of that
+   tool), so the grid was optimised for fitting rather than for reading. */
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2);
 }
 
 @media (max-width: 768px) {
@@ -1001,44 +982,29 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
     0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
+/* Nine literal greys across these two states re-derived --text-tertiary,
+   --bg-hover and --border-subtle by hand, once per theme. Tokens resolve per
+   theme already, so the light/dark pairs collapse to single rules. */
 .tool-badge {
   position: absolute;
-  top: 0.625rem;
-  right: 0.625rem;
-  
-  background: rgba(107, 114, 128, 0.1);
-  border: 1px solid rgba(107, 114, 128, 0.15);
-
-  color: #6B7280;
-
-}
-
-[data-theme="dark"] .tool-badge {
-  background: rgba(156, 163, 175, 0.15);
-  border-color: rgba(156, 163, 175, 0.25);
-  color: #9CA3AF;
+  top: var(--space-2-5);
+  right: var(--space-2-5);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
 }
 
 .tool-card.coming-soon {
   cursor: not-allowed;
   opacity: 0.6;
-  background: #F9FAFB;
-  border-color: rgba(0, 0, 0, 0.03);
+  background: var(--bg-hover);
+  border-color: var(--border-subtle);
 }
 
 .tool-card.coming-soon:hover {
   transform: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  border-color: rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="light"] .tool-card.coming-soon {
-  background: #F9FAFB;
-}
-
-[data-theme="dark"] .tool-card.coming-soon {
-  background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  border-color: var(--border-subtle);
 }
 
 .tool-card.coming-soon .tool-icon-wrapper svg {
@@ -1047,14 +1013,13 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 
 .tool-card.coming-soon:hover .tool-icon-wrapper {
   transform: none;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-color: var(--border-subtle);
 }
 
 .tool-card.coming-soon .tool-card-name {
-  color: #9CA3AF;
-}
-
-[data-theme="dark"] .tool-card.coming-soon .tool-card-name {
-  color: #6B7280;
+  color: var(--text-tertiary);
 }
 
 /* Tool icon container */
@@ -1143,50 +1108,40 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   overflow: hidden;
 }
 
-[data-theme="dark"] .tool-card-name {
-  color: #E5E7EB;
-  font-weight: var(--weight-medium);
-}
-
+/* These were three literal greys (#E5E7EB / #1F2937) that re-stated
+   --text-primary per theme, and the hover value was darker than the resting
+   one in light mode and identical to it in dark — so "hover" meant two
+   different things depending on the theme. */
 .tool-card:hover .tool-card-name {
-  color: #1F2937;
-}
-
-[data-theme="dark"] .tool-card:hover .tool-card-name {
-  color: #E5E7EB;
+  color: var(--text-primary);
 }
 
 /* Status Badge - Removed, using tool-badge instead */
-
-/* ── Tools page header — title + search inline ──────────────────── */
-.tools-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
 
 /* ── Tools search bar ───────────────────────────────────────────── */
 .tools-search-bar {
   position: relative;
   display: flex;
   align-items: center;
+  height: var(--control-h-lg);
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 0 0.625rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  gap: 0.375rem;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  gap: var(--space-2);
   width: 240px;
   flex-shrink: 0;
 }
 
-/* standalone search bar outside header keeps its bottom margin */
-.tools-search-bar:not(.tools-page-header .tools-search-bar) {
-  margin-bottom: 1.5rem;
-  width: 100%;
+.tools-search-bar:hover {
+  border-color: var(--border-interactive);
 }
+
+/* The `.tools-page-header` wrapper this rule excepted no longer exists in the
+   markup, so its `width: 100%` applied to every search bar on the site — and
+   at (0,3,0) it outranked anything a section could say about its own search
+   field, which is why the home field ran the full 1136px of the container. */
 
 /* The inner <input> suppresses its own ring (below) and delegates the focus
    indicator to this container, so the container must carry a 3:1 one. */
@@ -1206,10 +1161,11 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 
 .tools-search-input {
   flex: 1;
+  align-self: stretch;
   border: none;
   background: transparent;
-  padding: 0.5rem 0;
-  font-size: var(--text-sm);
+  padding: 0;
+  font-size: var(--text-md);
   color: var(--text-primary);
   outline: none;
   min-width: 0;
@@ -1273,44 +1229,41 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   min-height: 0;
   width: 100%;
   max-width: 100%;
-  animation: fadeInUp 0.6s var(--ease-out);
+  /* Was a 600ms, 30px slide of the entire workspace on every tool open —
+     long enough that the toolbar was still moving when you reached for it.
+     Motion here should acknowledge the transition, not perform it. */
+  animation: tool-enter 0.24s var(--ease-out);
 }
 
-/* Back Button - Enhanced */
+@keyframes tool-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Back button — a way back, not a call to action. It was a bordered, filled
+   control sitting above the page title, which gave the least important thing
+   on the screen the most contrast. */
 .back-button {
   display: inline-flex;
   align-items: center;
-  
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-
+  margin-left: calc(var(--space-3) * -1);
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s var(--ease-out);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
   flex-shrink: 0;
 }
 
 .back-button:hover {
   background: var(--bg-hover);
-  border-color: var(--accent);
-  color: var(--accent);
-  transform: translateX(-2px);
-}
-
-[data-theme="dark"] .back-button {
-  background: var(--bg-elevated);
-  border-color: var(--border-subtle);
   color: var(--text-primary);
 }
 
-.back-button:hover {
-  background: var(--bg-secondary);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .back-button svg {
-  transition: transform 0.2s var(--ease-out);
+  transition: transform var(--transition-fast);
 }
 
 .back-button:hover svg {
@@ -1324,46 +1277,119 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.page-header-with-back {
+/* ── Tool view header ───────────────────────────────────────────────
+   Was: [Back] then a centred title over a 2px rule. Centring the title
+   between a left-aligned button and nothing put the page's only heading on
+   an axis no other element shared, and a 2px rule is a heavier line than
+   anything else on the site. Now it is a stacked, left-aligned lockup with
+   the tool's own icon and description, and no rule at all — the workspace
+   panel below already provides the edge. */
+/* A single 32px row: back · icon · name · description · category.
+   Everything is baseline-neutral and vertically centred, so the row is only
+   as tall as its tallest control. */
+.tool-header {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-subtle);
-  position: relative;
+  gap: var(--space-2-5);
+  min-width: 0;
+  margin-bottom: var(--space-4);
 }
 
-.page-header-with-back .page-title {
-  flex: 1;
-  text-align: center;
-  margin: 0;
+.tool-header-divider {
+  width: 1px;
+  height: 18px;
+  flex-shrink: 0;
+  background: var(--border-subtle);
+  margin: 0 var(--space-1);
 }
 
+.tool-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--accent-ink);
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-border);
+}
+
+/* The tool list declares these icons at size 48 for the card grid; here they
+   need to be a header glyph. */
+.tool-header-icon svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.75;
+}
+
+/* Still the page's <h1> — screen readers and search engines get the same
+   heading they did at 40px. It just is not the loudest thing on a screen
+   whose job is to hold two editors. */
 .page-title {
-  font-size: var(--text-3xl);
-  font-weight: var(--weight-bold);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   margin: 0;
+  flex-shrink: 0;
   letter-spacing: var(--tracking-tight);
-  line-height: var(--leading-snug);
-  display: flex;
-  align-items: center;
+  line-height: var(--leading-tight);
+  white-space: nowrap;
 }
 
-@media (max-width: 768px) {
-  .page-title {
-    font-size: var(--text-2xl);
-  }
+.tool-header-desc {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-base);
+  color: var(--text-tertiary);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-normal);
+  /* Truncates rather than wrapping: a second line here would put the row's
+     height back where it started. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .page-header-with-back {
-    flex-wrap: wrap;
-    gap: 0.75rem;
+.tool-header-category {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--space-2-5);
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+}
+
+@media (max-width: 900px) {
+  .tool-header-desc,
+  .tool-header-category {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .back-button span {
+    display: none;
   }
 }
 
 /* Liquid Glass tool workspace */
 .tool-workspace {
+  /* Retune the standard control height for everything inside the workspace.
+     36px is right for a control sitting on its own; here they sit in three
+     or four stacked bars, so the 4px is paid four times over before the
+     first editor. The touch-target size (--control-h-lg) is untouched, and
+     it is what the actual inputs use. */
+  --control-h-md: 32px;
+
   width: 100%;
   max-width: 100%;
   display: flex;
@@ -1377,11 +1403,10 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 12px 36px rgba(0, 0, 0, 0.06);
+  /* The literal shadow stack here hardcoded a 0.6-alpha white inset, which is
+     a light-mode highlight painted onto the dark theme too. --elevation-2
+     already re-tunes its highlight per theme. */
+  box-shadow: var(--elevation-2);
 }
 
 [data-theme="dark"] .tool-workspace {
@@ -1390,11 +1415,6 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
      inside it. */
   background: var(--bg-secondary);
   border-color: rgba(255, 255, 255, 0.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    0 16px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Flatten internal containers — single unified surface ──────── */
@@ -1618,187 +1638,20 @@ html {
 /* Converter Container */
 /* Converter container styles moved to MarkdownConverter.css */
 
-/* Error Box */
-.error-box {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  background: rgba(220, 38, 38, 0.05);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-  border-radius: var(--radius-lg);
-  color: #DC2626;
-  font-size: var(--text-md);
-  margin-top: 1.5rem;
-  animation: fadeInUp 0.4s var(--ease-out);
-}
+/* A legacy "Responsive Enhancements" block lived here and was doing real
+   damage rather than nothing:
 
-@media (max-width: 768px) {
-  .converter-features-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-}
+   - `@media (max-width: 1024px) { .main-content { padding: 5rem 1.5rem } }`
+     sat *after* the 768px rules, so on every phone and tablet it won: 80px of
+     vertical padding above the content and a hardcoded 24px gutter that
+     ignored --page-padding-x entirely.
+   - `.header-content { padding: 0 1.5rem }` at 640px did the same to the
+     header, so header and content had different gutters on small screens.
+   - The rest (.hero-section, .section-header, .logo h1, .hero-stats,
+     .search-input) targeted markup that no longer exists.
 
-/* Responsive Enhancements */
-@media (max-width: 1024px) {
-  .main-content {
-    padding: 5rem 1.5rem;
-  }
-  
-  .hero-section {
-    padding: 4rem 0 5rem;
-  }
-  
-  .section-header {
-    margin-bottom: 2.5rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .header-content {
-    padding: 0 1.5rem;
-  }
-  
-  .logo h1 {
-    font-size: var(--text-2xl);
-  }
-  
-  .hero-stats {
-    flex-direction: column;
-    gap: 2rem;
-  }
-  
-  .search-input {
-    padding: 1.125rem 1.75rem;
-    font-size: var(--text-lg);
-  }
-  
-  .tool-card {
-    padding: 2rem;
-  }
-  
-  /* tool-view-wrapper padding handled by main-content.tool-view */
-}
-
-/* ============================================
-   Modern CSS (2025) - Utility Classes
-   ============================================ */
-
-@layer utilities {
-  /* Color-mix utilities for dynamic color variations */
-  .bg-accent-soft {
-    background: color-mix(in srgb, var(--accent) 10%, transparent);
-  }
-  
-  .bg-accent-medium {
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-  }
-  
-  .text-accent-muted {
-    color: color-mix(in srgb, var(--accent) 70%, var(--text-secondary));
-  }
-  
-  /* Smooth gradient overlays using color-mix */
-  .gradient-overlay {
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--accent) 5%, transparent),
-      color-mix(in srgb, var(--accent) 15%, transparent)
-    );
-  }
-  
-  /* Modern spacing utilities with clamp */
-  .spacing-responsive-sm {
-    padding: clamp(0.5rem, 2vw, 1rem);
-  }
-  
-  .spacing-responsive-md {
-    padding: clamp(1rem, 3vw, 2rem);
-  }
-  
-  .spacing-responsive-lg {
-    padding: clamp(2rem, 5vw, 4rem);
-  }
-  
-  /* Text utilities with modern features */
-  .text-balance {
-    text-wrap: balance;
-  }
-  
-  .text-pretty {
-    text-wrap: pretty;
-  }
-}
-
-/* ============================================
-   Modern CSS (2025) - Scroll-Driven Animations
-   ============================================ */
-
-@supports (animation-timeline: scroll()) {
-  /* Fade in elements as they scroll into view */
-  .scroll-fade-in {
-    animation: scroll-fade-in linear;
-    animation-timeline: view();
-    animation-range: entry 0% cover 30%;
-  }
-  
-  @keyframes scroll-fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Scale up elements as they scroll */
-  .scroll-scale {
-    animation: scroll-scale linear;
-    animation-timeline: view();
-    animation-range: entry 0% cover 50%;
-  }
-  
-  @keyframes scroll-scale {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-  
-  /* Reveal with slide effect */
-  .scroll-reveal {
-    animation: scroll-reveal linear;
-    animation-timeline: view();
-    animation-range: entry 0% cover 40%;
-  }
-  
-  @keyframes scroll-reveal {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-}
-
-/* Fallback for browsers without scroll-driven animations */
-@supports not (animation-timeline: scroll()) {
-  .scroll-fade-in,
-  .scroll-scale,
-  .scroll-reveal {
-    animation: fadeInUp 0.6s var(--ease-out) backwards;
-  }
-}
+   Everything the app actually needs is already expressed in the breakpoints
+   next to the components themselves. */
 
 /* ============================================
    Modern CSS (2025) - Advanced Features
@@ -1896,29 +1749,78 @@ html {
 /* ──────────────────────────────────────────────────────────────────
    Home hero — the claim, then the thing that acts on it.
    ────────────────────────────────────────────────────────────────── */
+
+/* One soft light source behind the headline, bled past the container to the
+   full viewport so the hero reads as a lit area of the page rather than a
+   rectangle with a gradient in it. Decorative and non-interactive. */
+.main-content.tools-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.main-content.tools-page::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--header-height) * -1);
+  left: 50%;
+  width: 100vw;
+  max-width: 100%;
+  height: 760px;
+  transform: translateX(-50%);
+  background: var(--hero-glow);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .home-hero {
-  max-width: 760px;
+  max-width: 46rem;
   margin: 0 auto;
-  padding: 2.5rem 0 2rem;
+  padding: clamp(2.5rem, 7vw, 5.5rem) 0 clamp(2rem, 4vw, 3rem);
   text-align: center;
 }
 
+/* Eyebrow — states the one differentiating fact before the headline makes
+   the promise, so the headline does not have to carry the proof as well. */
+.home-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--accent-ink);
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-full);
+}
+
+.home-hero-eyebrow svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
 .home-hero-title {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-size: var(--display-lg);
   font-weight: var(--weight-bold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tighter);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
   color: var(--text-primary);
-  margin: 0 0 0.875rem;
+  margin: 0 0 var(--space-5);
   text-wrap: balance;
 }
 
 .home-hero-sub {
-  font-size: clamp(0.9375rem, 1.6vw, 1.0625rem);
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.1875rem);
   line-height: var(--leading-relaxed);
   color: var(--text-secondary);
-  margin: 0 auto 1.75rem;
-  max-width: 60ch;
+  margin: 0 auto clamp(1.75rem, 3vw, 2.5rem);
+  /* 52ch, not 60: at 19px a 60ch line runs past the comfortable-reading
+     width and the hero stops looking composed. */
+  max-width: 52ch;
   text-wrap: pretty;
 }
 
@@ -1928,28 +1830,82 @@ html {
 
 .home-hero .smartpaste-samples { justify-content: center; }
 
+/* Trust row — four checkable facts, not adjectives. */
+.home-hero-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding: 0;
+  list-style: none;
+}
+
+.home-hero-trust li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-normal);
+}
+
+.home-hero-trust svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--accent-ink);
+}
+
 /* ── "All tools" browse header ─────────────────────────────────── */
 .home-browse-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 1.25rem;
+  gap: var(--space-5);
   flex-wrap: wrap;
-  margin: 2.5rem 0 1.25rem;
-  padding-bottom: 0.75rem;
+  margin: clamp(2rem, 5vw, 3.5rem) 0 var(--space-6);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.home-browse-title {
-  font-size: var(--text-lg);
+.home-browse-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.home-browse-eyebrow {
+  font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-normal);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.home-browse-title {
+  /* Was 16px, one step below the hero's 44 and one step above an 11px
+     category label — the page had no mid-scale at all. */
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
   color: var(--text-primary);
   margin: 0;
-  line-height: var(--leading-snug);
+  line-height: var(--leading-tight);
+}
+
+/* Search belongs at a field's natural measure, not the container's. */
+.home-browse-header .tools-search-bar {
+  width: min(320px, 100%);
+  margin-bottom: 0;
+  height: var(--control-h-lg);
 }
 
 @media (max-width: 640px) {
-  .home-hero { padding: 1.5rem 0 1.25rem; }
-  .home-browse-header { margin-top: 1.75rem; }
+  .home-hero { padding-top: 2rem; }
+  .home-browse-header { align-items: stretch; }
+  .home-browse-header .tools-search-bar { width: 100%; }
 }

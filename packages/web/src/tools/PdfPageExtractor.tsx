@@ -20,7 +20,7 @@ function parsePageRanges(input: string, totalPages: number): number[] {
       const end = parseInt(endStr)
       if (isNaN(start) || isNaN(end)) throw new Error(`Invalid range: "${part}"`)
       if (start < 1 || end > totalPages) throw new Error(`Range "${part}" outside PDF bounds (1-${totalPages})`)
-      if (start > end) throw new Error(`Range "${part}" — start must be ≤ end`)
+      if (start > end) throw new Error(`Range "${part}" is backwards: the start page must not be after the end page`)
       for (let i = start; i <= end; i++) result.add(i)
     } else {
       const n = parseInt(part)

@@ -159,7 +159,7 @@ const ChmodCalculator = () => {
         setBits(parsed)
         setOctalError('')
       } else if (raw.replace(/[^0-7]/g, '').length > 0) {
-        setOctalError('Enter a valid 3- or 4-digit octal number (digits 0–7)')
+        setOctalError('Enter a valid 3- or 4-digit octal number (digits 0-7)')
       }
     },
     []

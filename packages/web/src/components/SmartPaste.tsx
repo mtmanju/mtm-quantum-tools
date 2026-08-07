@@ -98,7 +98,7 @@ export function SmartPaste({ onOpenTool }: SmartPasteProps) {
           value={value}
           onChange={e => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Paste anything — a JWT, JSON, Base64, a timestamp, a URL…"
+          placeholder="Paste a JWT, JSON, Base64, a timestamp, or a URL"
           rows={value ? 3 : 1}
           spellCheck={false}
           aria-label="Paste content to identify"

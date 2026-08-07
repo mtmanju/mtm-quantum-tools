@@ -130,7 +130,7 @@ const ApiTester = () => {
     try {
       parsedUrl = new URL(url.trim())
     } catch {
-      setError('Invalid URL — please enter a valid http:// or https:// URL')
+      setError('Invalid URL. Enter a valid http:// or https:// URL.')
       return
     }
     if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
@@ -276,11 +276,11 @@ const ApiTester = () => {
         <div className="api-intro-headline">
           <Send size={15} />
           <strong>HTTP request tester</strong>
-          <span>— send any GET/POST/PUT/DELETE request and inspect the live response (status, headers, body).</span>
+          <span>Send any GET, POST, PUT or DELETE request and inspect the live response: status, headers, body.</span>
         </div>
         <div className="api-intro-hint">
           <Info size={12} />
-          <span>Runs in your browser. The target API must allow CORS — most public APIs do. Click an example to try it.</span>
+          <span>Runs in your browser. The target API must allow CORS. Most public APIs do. Click an example to try it.</span>
         </div>
       </div>
 

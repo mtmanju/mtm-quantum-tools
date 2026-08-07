@@ -264,7 +264,7 @@ const JwtDecoder = () => {
                       </div>
                       <div className="jwt-unverified-warning">
                         <AlertTriangle size={14} />
-                        <span>Signature not verified — this tool decodes only, it does not validate the signature</span>
+                        <span>Signature not verified. This tool decodes only; it does not validate the signature.</span>
                       </div>
                     </>
                   )}

@@ -30,6 +30,28 @@ button, select, input, textarea {
    height, its own font — sitting right next to a custom-styled text input.
    This gives every <select> the same box as an input plus one drawn chevron.
    The arrow is an inline data URI: no request, and it recolours with the text. */
+/* The chevron lives in a variable rather than in a `[data-theme="dark"] select`
+   override, because that override was a specificity escalation with a nasty
+   failure mode.
+
+   `[data-theme="dark"] select` is (0,1,1) and beat every per-tool
+   `.api-method-select`-style rule at (0,1,0) — but only for the one property
+   it declared, `background-image`. Any tool that wrote the `background`
+   *shorthand* (a dozen of them do) therefore won `background-repeat` and
+   `background-position` while losing `background-image`, so the chevron came
+   back at 0,0 and tiled across the whole control. In dark mode only. The API
+   Tester's method select rendered as two full rows of repeating chevrons.
+
+   Declared as a variable, the image, repeat and position stay in one rule at
+   one specificity, so they can only ever be overridden together. */
+:root {
+  --select-chevron: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236B7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] {
+  --select-chevron: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239CA3AF' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -38,7 +60,7 @@ select {
   font-size: var(--text-md);
   color: var(--text-primary);
   background-color: var(--bg-secondary);
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236B7280' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right var(--space-3) center;
   border: 1px solid var(--border-subtle);
@@ -49,10 +71,6 @@ select {
 
 select:hover {
   border-color: var(--border-interactive);
-}
-
-[data-theme="dark"] select {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239CA3AF' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
 }
 
 /* ── Shared control base ──────────────────────────────────────── */

@@ -55,7 +55,13 @@
 
 /* Editable octal input */
 .chmod-octal-input {
-  width: 5ch;
+  /* `width: 5ch` under the global `box-sizing: border-box` reset meant 5ch
+     *including* 24px of padding and 2px of border, leaving ~19px of content
+     box — about two characters. The tool's primary output, "644", rendered
+     as "64". Sized as a content box it holds a four-digit mode (4755, with
+     the setuid bit) plus its tracking. */
+  box-sizing: content-box;
+  width: 4.5ch;
   text-align: center;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);

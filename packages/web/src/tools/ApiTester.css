@@ -142,15 +142,23 @@
   flex-shrink: 0;
 }
 
+/* method · URL · Send.
+
+   This was a flex row that switched to `flex-direction: column` under 1024px.
+   In a column, the URL input's `flex: 1` grows its *height* rather than its
+   width, so below that very common breakpoint the bar became a full-width
+   method dropdown above a URL field shrunk to its content width, both centred.
+   A grid keeps the URL field the elastic one on either axis. */
 .api-url-method {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-2);
   align-items: center;
 }
 
 .api-method-select {
   padding: 0.5rem 0.75rem;
-  background: var(--bg-elevated);
+  background-color: var(--bg-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -335,12 +343,19 @@
     min-height: 200px;
   }
 
+}
+
+/* Below ~640px the three controls genuinely do not fit on one line, so Send
+   drops to its own full-width row and the method keeps its natural width
+   beside the URL — the two that belong together stay together. */
+@media (max-width: 640px) {
   .api-url-method {
-    flex-direction: column;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .api-method-select {
-    width: 100%;
+  .api-url-method .api-send-btn {
+    grid-column: 1 / -1;
+    justify-content: center;
   }
 }
 

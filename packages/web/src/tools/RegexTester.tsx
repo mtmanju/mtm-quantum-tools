@@ -239,6 +239,11 @@ const RegexTester = () => {
 
       {error && <ErrorBar message={error} />}
 
+      {/* Mode and flags were two stacked full-width bars, ~100px of a 900px
+          viewport, for two controls that between them occupy about a third
+          of one line. They are also the same decision — how the pattern is
+          run — so they belong on the same row. */}
+      <div className="regex-settings-bar">
       <div className="regex-mode-selector">
         <button
           type="button"
@@ -313,6 +318,7 @@ const RegexTester = () => {
             y
           </button>
         </div>
+      </div>
       </div>
 
       <EditorLayout

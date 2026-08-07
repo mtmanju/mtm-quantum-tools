@@ -1,10 +1,12 @@
 
 
-.json-xml-mode-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
+/* The active state of the mode switch is owned by `.segmented-option.active`
+   in components/ui/patterns.css, which fills the button with --accent and sets
+   black text on it. The override that used to live here dated from an earlier
+   underline-tab design (it paired `color: var(--accent)` with a
+   `border-bottom-color`) and, once the shared control started filling the
+   background, it painted gold text on a gold fill — a 1:1 contrast ratio that
+   made the selected mode literally invisible. */
 .json-xml-output {
   margin: 0;
   padding: 0;

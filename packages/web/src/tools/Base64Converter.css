@@ -1,15 +1,9 @@
 
 
-.base64-mode-btn.active {
-  background: var(--accent);
-  color: #FFFFFF;
-  border-color: var(--accent);
-}
-
-[data-theme="dark"] .base64-mode-btn.active {
-  color: #000000;
-}
-
+/* Removed: this restated `.segmented-option.active` from patterns.css with a
+   hardcoded #FFFFFF, which on the light theme's #C9A063 gold measures 2.1:1 —
+   below the 4.5:1 body text needs. The shared rule already sets black on the
+   accent (9.6:1 light, 11.4:1 dark) and needs no per-theme pair. */
 .base64-upload-area {
   flex: 1;
   display: flex;
