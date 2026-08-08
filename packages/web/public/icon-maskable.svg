@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Quantum Tools">
+  <!--
+    Android/PWA maskable icon. Two differences from favicon.svg, both required
+    by the maskable contract:
+
+    1. Full bleed, no rounded corners. The OS applies its own mask — circle on
+       one launcher, squircle on another, rounded square on a third — so any
+       corner radius baked in here would either be cropped away or, worse,
+       show as a gold edge inside the platform's own shape.
+
+    2. The glyph is scaled to ~72% and centred. A maskable icon only
+       guarantees the central 80% circle survives the crop; the corners are
+       expendable. favicon.svg's glyph reaches a radius of ~25.1 against a
+       safe radius of 25.6 — inside, but by half a pixel, which is not a
+       margin. Scaled about the centre it clears comfortably on every mask.
+  -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4AF6A"/>
+      <stop offset="100%" stop-color="#B38E54"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" fill="url(#g)"/>
+
+  <g transform="translate(32 32) scale(0.72) translate(-32 -32)">
+    <g fill="none" stroke="#0B0D17" stroke-width="6.5" stroke-linecap="round">
+      <circle cx="31" cy="30" r="13"/>
+      <path d="M36 34.5 L44 43.5"/>
+    </g>
+  </g>
+</svg>

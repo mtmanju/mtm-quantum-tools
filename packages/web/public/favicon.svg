@@ -1,12 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Quantum Tools">
+  <!--
+    Gold tile, dark "Q" — the same treatment as the header mark (.logo-mark is
+    an accent-filled square with a dark glyph). The previous favicon inverted
+    that: a dark tile with a gold outline glyph, so the tab icon and the
+    wordmark were negatives of each other.
+
+    Drawn as geometry, never <text>. A favicon has no guarantee that any
+    given font is installed, and a missing family silently falls back to
+    something with different metrics — which for a single centred letterform
+    means it lands off-centre or at the wrong weight.
+
+    Sized for 16px first. The counter inside the Q is the only detail that
+    has to survive: at r=13 with a 6.5 stroke it is a ~19.5px hole on a 64px
+    canvas, which still reads as a hole at tab size. The old mark's three
+    interior compartments aliased into a smudge at the same size.
+
+    The tail is deliberately short. Drawn any longer it stops reading as a Q
+    and starts reading as a magnifying glass — the difference between the two
+    marks is almost entirely how far the diagonal projects past the ring, so
+    it starts inside the counter and stops just clear of the outer edge.
+  -->
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#D4AF6A"/>
       <stop offset="100%" stop-color="#B38E54"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="#0B0D17"/>
-  <rect x="12" y="12" width="40" height="40" rx="8" fill="none" stroke="url(#g)" stroke-width="3.5"/>
-  <path d="M12 26h40" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M26 26v26" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round"/>
+
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+
+  <g fill="none" stroke="#0B0D17" stroke-width="6.5" stroke-linecap="round">
+    <circle cx="31" cy="30" r="13"/>
+    <path d="M36 34.5 L44 43.5"/>
+  </g>
 </svg>

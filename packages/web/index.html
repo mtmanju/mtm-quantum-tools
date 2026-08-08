@@ -11,9 +11,14 @@
 
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';" />
 
-    <!-- Favicon -->
+    <!-- Icons.
+         apple-touch-icon must be a PNG: iOS Safari ignores SVG here, and the
+         home-screen tile falls back to a screenshot of the page when the only
+         icon offered is one it cannot read. It is also deliberately square and
+         full-bleed — iOS applies its own superellipse mask, so a pre-rounded
+         source gets rounded twice and loses its corners. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
     <title>Quantum Tools: Free Developer Utilities</title>
