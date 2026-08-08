@@ -35,7 +35,7 @@
 }
 
 .base64-upload-active {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .base64-upload-title {
@@ -175,7 +175,7 @@
 
 .base64-binary-note {
   font-size: var(--text-base);
-  color: var(--accent);
+  color: var(--accent-ink);
   margin-top: 0.5rem;
   font-weight: var(--weight-medium);
 }
@@ -186,7 +186,7 @@
 
   margin-top: 1rem;
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border: none;
 
   cursor: pointer;
@@ -250,12 +250,13 @@
 }
 
 .base64-file-prompt button:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
   background: var(--bg-hover);
 }
 
-.base64-file-prompt-hint { color: var(--text-muted); }
+/* Content, not decoration: --text-muted is a 3.2:1 placeholder tone. */
+.base64-file-prompt-hint { color: var(--text-tertiary); }
 
 /* Summary shown once a file has been encoded — a binary file has no useful
    text representation to display in the input pane. */
@@ -274,7 +275,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-.base64-file-card > svg { color: var(--accent); flex-shrink: 0; }
+.base64-file-card > svg { color: var(--accent-ink); flex-shrink: 0; }
 
 .base64-file-meta {
   display: flex;
@@ -308,7 +309,7 @@
 }
 
 .base64-file-actions button:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
 }
 
@@ -342,7 +343,7 @@
   background: var(--accent-light);
   border: 2px dashed var(--accent);
   border-radius: var(--radius-md);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   pointer-events: none;
@@ -367,7 +368,7 @@
 }
 
 .base64-file-label:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
   background: var(--bg-hover);
 }

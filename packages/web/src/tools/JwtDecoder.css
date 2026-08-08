@@ -48,7 +48,7 @@
 .jwt-toolbar-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .jwt-toolbar-btn:disabled {
@@ -133,7 +133,7 @@
 .jwt-panel-copy-btn:hover:not(:disabled),
 .jwt-section-copy-btn:hover:not(:disabled) {
   background: var(--bg-hover);
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
 }
 
@@ -221,7 +221,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   margin-bottom: 1rem;
 }
 

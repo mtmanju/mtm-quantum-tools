@@ -101,7 +101,7 @@
 
 .hash-copy-btn:hover:not(:disabled) {
   background: var(--bg-hover);
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
 }
 

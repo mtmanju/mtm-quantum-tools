@@ -275,12 +275,14 @@ const ChmodCalculator = () => {
         </div>
       </div>
 
-      {/* Presets */}
-      <div className="chmod-section-title">
-        <Shield size={14} />
-        Common presets
-      </div>
-      <div className="chmod-presets">
+      {/* The label sat on a 37px row of its own directly above the chips it
+          labels. Inline, it costs nothing. */}
+      <div className="tool-row-group chmod-presets-row">
+        <div className="chmod-section-title">
+          <Shield size={14} />
+          Common presets
+        </div>
+        <div className="chmod-presets">
         {PRESETS.map((preset) => (
           <button
             key={preset.octal}
@@ -293,6 +295,7 @@ const ChmodCalculator = () => {
             <span className="chmod-preset-chip-desc">{preset.desc}</span>
           </button>
         ))}
+        </div>
       </div>
 
       {/* Permission grid */}

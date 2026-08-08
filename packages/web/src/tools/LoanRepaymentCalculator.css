@@ -115,7 +115,7 @@
 .toggle-schedule-btn:hover {
   background: var(--bg-hover);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .repayment-schedule {
@@ -208,7 +208,7 @@
 .load-more-btn:hover {
   background: var(--bg-hover);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .load-all-btn {

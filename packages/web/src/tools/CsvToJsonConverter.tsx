@@ -123,57 +123,60 @@ const CsvToJsonConverter = () => {
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
 
-      <div className="csv-json-mode-selector">
-        <button
-          type="button"
-          className={`csv-json-mode-btn ${mode === 'csv-to-json' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('csv-to-json')
-            setActionError('')
-          }}
-        >
-          <FileSpreadsheet size={16} />
-          <span>CSV to JSON</span>
-        </button>
-        <button
-          type="button"
-          className={`csv-json-mode-btn ${mode === 'json-to-csv' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('json-to-csv')
-            setActionError('')
-          }}
-        >
-          <ArrowRightLeft size={16} />
-          <span>JSON to CSV</span>
-        </button>
-      </div>
-
-      <div className="csv-json-options">
-        <div className="csv-json-option">
-          <label htmlFor="csv-delimiter">Delimiter:</label>
-          <input
-            id="csv-delimiter"
-            type="text"
-            value={delimiter}
-            onChange={(e) => {
-              const val = e.target.value
-              if (val.length <= 1) {
-                setDelimiter(val || ',')
-              }
+      {/* One row: the examples/mode controls and the options beside them answer the same question, so they no longer cost two bars. */}
+      <div className="tool-row-group">
+        <div className="csv-json-mode-selector">
+          <button
+            type="button"
+            className={`csv-json-mode-btn ${mode === 'csv-to-json' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('csv-to-json')
+              setActionError('')
             }}
-            className="csv-delimiter-input"
-            maxLength={1}
-          />
+          >
+            <FileSpreadsheet size={16} />
+            <span>CSV to JSON</span>
+          </button>
+          <button
+            type="button"
+            className={`csv-json-mode-btn ${mode === 'json-to-csv' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('json-to-csv')
+              setActionError('')
+            }}
+          >
+            <ArrowRightLeft size={16} />
+            <span>JSON to CSV</span>
+          </button>
         </div>
-        <div className="csv-json-option">
-          <label>
+
+        <div className="csv-json-options">
+          <div className="csv-json-option">
+            <label htmlFor="csv-delimiter">Delimiter:</label>
             <input
-              type="checkbox"
-              checked={hasHeaders}
-              onChange={(e) => setHasHeaders(e.target.checked)}
+              id="csv-delimiter"
+              type="text"
+              value={delimiter}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val.length <= 1) {
+                  setDelimiter(val || ',')
+                }
+              }}
+              className="csv-delimiter-input"
+              maxLength={1}
             />
-            <span>Has Headers</span>
-          </label>
+          </div>
+          <div className="csv-json-option">
+            <label>
+              <input
+                type="checkbox"
+                checked={hasHeaders}
+                onChange={(e) => setHasHeaders(e.target.checked)}
+              />
+              <span>Has Headers</span>
+            </label>
+          </div>
         </div>
       </div>
 

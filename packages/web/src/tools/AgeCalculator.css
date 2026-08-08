@@ -92,7 +92,7 @@
 .age-hero-num {
   font-size: var(--text-6xl);
   font-weight: var(--weight-bold);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-variant-numeric: tabular-nums;
 }
 
@@ -199,7 +199,7 @@
 .age-result-value {
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
-  color: var(--accent);
+  color: var(--accent-ink);
   line-height: var(--leading-snug);
   font-variant-numeric: tabular-nums;
 }

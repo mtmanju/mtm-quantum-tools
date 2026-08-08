@@ -161,32 +161,38 @@ const DiffChecker = () => {
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
 
-      <div className="diff-examples-bar">
-        <span className="diff-examples-label">Try it</span>
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex.label}
-            type="button"
-            className="diff-example-chip"
-            onClick={() => handleLoadExample(ex)}
-          >
-            {ex.label}
-          </button>
-        ))}
+      {/* One row: loading an example and choosing how to compare are the same
+          decision, so they no longer cost two bars. The error bar moves below
+          them — it is transient, and sitting between two permanent rows it
+          shifted the controls down every time it appeared. */}
+      <div className="tool-row-group">
+        <div className="diff-examples-bar">
+          <span className="diff-examples-label">Try it</span>
+          {EXAMPLES.map((ex) => (
+            <button
+              key={ex.label}
+              type="button"
+              className="diff-example-chip"
+              onClick={() => handleLoadExample(ex)}
+            >
+              {ex.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="diff-controls">
+          <label className="diff-whitespace-toggle">
+            <input
+              type="checkbox"
+              checked={ignoreWhitespace}
+              onChange={(e) => setIgnoreWhitespace(e.target.checked)}
+            />
+            <span>Ignore whitespace differences</span>
+          </label>
+        </div>
       </div>
 
       {error && <ErrorBar message={error} />}
-
-      <div className="diff-controls">
-        <label className="diff-whitespace-toggle">
-          <input
-            type="checkbox"
-            checked={ignoreWhitespace}
-            onChange={(e) => setIgnoreWhitespace(e.target.checked)}
-          />
-          <span>Ignore whitespace differences</span>
-        </label>
-      </div>
 
       {diffResult && diffResult.changes > 0 && (
         <div className="diff-summary-bar">

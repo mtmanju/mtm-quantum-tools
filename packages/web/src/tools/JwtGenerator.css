@@ -168,7 +168,7 @@
 .jwt-gen-claim-btn:hover {
   background: var(--accent-light);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* Right panel */

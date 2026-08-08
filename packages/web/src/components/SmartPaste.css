@@ -34,7 +34,7 @@
 }
 
 .smartpaste-icon {
-  color: var(--accent);
+  color: var(--accent-ink);
   flex-shrink: 0;
   margin-top: 0.1875rem;
 }
@@ -133,7 +133,7 @@
 }
 
 .smartpaste-action:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
 }
 
@@ -162,7 +162,7 @@
   cursor: pointer;
 }
 
-.smartpaste-alt:hover { color: var(--accent); border-color: var(--accent); }
+.smartpaste-alt:hover { color: var(--accent-ink); border-color: var(--accent); }
 
 /* ── Inline output ─────────────────────────────────────────────── */
 .smartpaste-output {
@@ -201,7 +201,7 @@
   cursor: pointer;
 }
 
-.smartpaste-output-actions button:hover { color: var(--accent); border-color: var(--accent); }
+.smartpaste-output-actions button:hover { color: var(--accent-ink); border-color: var(--accent); }
 
 .smartpaste-output-body {
   margin: 0;
@@ -276,4 +276,4 @@
 
 [data-theme="dark"] .smartpaste-sample { background: rgba(255, 255, 255, 0.05); }
 
-.smartpaste-sample:hover { color: var(--accent); border-color: var(--accent); }
+.smartpaste-sample:hover { color: var(--accent-ink); border-color: var(--accent); }

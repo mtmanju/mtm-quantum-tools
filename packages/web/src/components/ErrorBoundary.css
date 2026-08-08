@@ -53,7 +53,7 @@
 
 .error-retry-button {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border: none;
 
   cursor: pointer;

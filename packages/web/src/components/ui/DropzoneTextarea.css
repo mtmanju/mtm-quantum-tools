@@ -66,7 +66,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   margin-bottom: 1rem;
 }
 

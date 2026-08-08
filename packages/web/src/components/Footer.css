@@ -114,7 +114,9 @@
 .footer-meta {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  /* --text-muted is the 3.2:1 decorative tone; this is small text, but it
+     is still text. */
+  color: var(--text-tertiary);
   letter-spacing: var(--tracking-normal);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

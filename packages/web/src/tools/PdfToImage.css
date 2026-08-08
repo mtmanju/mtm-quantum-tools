@@ -59,7 +59,7 @@
 
   margin-top: 0.5rem;
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border: none;
 
   cursor: pointer;
@@ -210,7 +210,7 @@
 .pdf-to-image-format-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
 }
 
 [data-theme="dark"] .pdf-to-image-format-btn.active {

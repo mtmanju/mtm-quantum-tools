@@ -38,7 +38,7 @@
 
 .json-toolbar-btn:hover:not(:disabled) {
   background: var(--bg-elevated);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .json-toolbar-btn:disabled {
@@ -83,7 +83,7 @@
 
 .json-indent-btn:hover:not(:disabled) {
   background: var(--bg-secondary);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .json-indent-btn:disabled {
@@ -187,7 +187,7 @@
 
 .json-panel-copy-btn:hover:not(:disabled) {
   background: var(--bg-elevated);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .json-panel-copy-btn:disabled {

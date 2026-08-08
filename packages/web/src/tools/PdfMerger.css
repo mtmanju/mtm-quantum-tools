@@ -57,7 +57,7 @@
   align-items: center;
 
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border: none;
 
   cursor: pointer;
@@ -161,7 +161,7 @@
 
 .pdf-add-more-card:hover .pdf-add-more-icon {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   transform: scale(1.1);
 }
 
@@ -242,7 +242,7 @@
 }
 
 .pdf-file-drag-handle:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--bg-hover);
 }
 

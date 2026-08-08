@@ -59,7 +59,7 @@
 
   margin-top: 0.5rem;
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border: none;
 
   cursor: pointer;
@@ -215,7 +215,7 @@
 .pdf-rotator-angle-btn.active {
   border-color: var(--accent);
   background: var(--accent-light);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .pdf-rotator-angle-label {

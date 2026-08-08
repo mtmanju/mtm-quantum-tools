@@ -36,7 +36,7 @@
 
 .color-format-btn.active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border-color: var(--accent);
 }
 

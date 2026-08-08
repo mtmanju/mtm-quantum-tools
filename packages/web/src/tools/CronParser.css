@@ -79,7 +79,7 @@
 }
 
 .cron-description-icon {
-  color: var(--accent);
+  color: var(--accent-ink);
   flex-shrink: 0;
 }
 
@@ -130,7 +130,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  color: var(--accent) !important;
+  color: var(--accent-ink) !important;
 }
 
 .cron-field-range {

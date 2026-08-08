@@ -30,7 +30,7 @@
 .word-counter-stat-value {
   font-size: var(--text-4xl);
   font-weight: var(--weight-bold);
-  color: var(--accent);
+  color: var(--accent-ink);
   line-height: var(--leading-tight);
   margin-bottom: 0.5rem;
 }

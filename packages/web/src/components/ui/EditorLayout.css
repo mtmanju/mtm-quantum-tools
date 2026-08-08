@@ -2,6 +2,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   flex: 1;
+  /* A flex item defaults to min-height:auto, which means it cannot shrink
+     below its own content. So `flex: 1` grew this box to fit its editors but
+     never let it shrink to fit the viewport, and any tool whose panes were
+     naturally tall pushed the whole page into a scroll. The workspace and
+     container above already set this; the chain broke here. */
+  min-height: 0;
+  min-width: 0;
   overflow: hidden;
   border-top: 1px solid var(--border-subtle);
 }

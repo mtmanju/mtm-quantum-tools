@@ -67,7 +67,7 @@
 .timestamp-info-value {
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  color: var(--accent);
+  color: var(--accent-ink);
   padding: 0.25rem 0.5rem;
   background: var(--bg-elevated);
   border-radius: var(--radius-xs);
@@ -150,7 +150,7 @@
 .timestamp-unix-value {
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-family: var(--font-mono);
 }
 

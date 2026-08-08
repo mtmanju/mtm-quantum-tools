@@ -118,67 +118,70 @@ const UrlEncoder = () => {
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
 
-      <div className="url-examples-bar">
-        <span className="url-examples-label">Try it</span>
-        {(mode === 'encode' ? ENCODE_EXAMPLES : DECODE_EXAMPLES).map((ex) => (
-          <button
-            key={ex.label}
-            type="button"
-            className="url-example-chip"
-            onClick={() => handleLoadExample(ex.text)}
-          >
-            {ex.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="url-mode-selector">
-        <div className="url-mode-group">
-          <button
-            type="button"
-            className={`url-mode-btn ${mode === 'encode' ? 'active' : ''}`}
-            onClick={() => {
-              setMode('encode')
-              setActionError('')
-            }}
-          >
-            Encode
-          </button>
-          <button
-            type="button"
-            className={`url-mode-btn ${mode === 'decode' ? 'active' : ''}`}
-            onClick={() => {
-              setMode('decode')
-              setActionError('')
-            }}
-          >
-            Decode
-          </button>
+      {/* One row: the examples/mode controls and the options beside them answer the same question, so they no longer cost two bars. */}
+      <div className="tool-row-group">
+        <div className="url-examples-bar">
+          <span className="url-examples-label">Try it</span>
+          {(mode === 'encode' ? ENCODE_EXAMPLES : DECODE_EXAMPLES).map((ex) => (
+            <button
+              key={ex.label}
+              type="button"
+              className="url-example-chip"
+              onClick={() => handleLoadExample(ex.text)}
+            >
+              {ex.label}
+            </button>
+          ))}
         </div>
-        {mode === 'encode' && (
-          <div className="url-encode-mode-group">
-            <label className="url-encode-mode-label">
-              <input
-                type="radio"
-                name="encodeMode"
-                value="component"
-                checked={encodeMode === 'component'}
-                onChange={() => setEncodeMode('component')}
-              />
-              <span>Component (encodeURIComponent)</span>
-            </label>
-            <label className="url-encode-mode-label">
-              <input
-                type="radio"
-                name="encodeMode"
-                value="full"
-                checked={encodeMode === 'full'}
-                onChange={() => setEncodeMode('full')}
-              />
-              <span>Full URL (encodeURI)</span>
-            </label>
+
+        <div className="url-mode-selector">
+          <div className="url-mode-group">
+            <button
+              type="button"
+              className={`url-mode-btn ${mode === 'encode' ? 'active' : ''}`}
+              onClick={() => {
+                setMode('encode')
+                setActionError('')
+              }}
+            >
+              Encode
+            </button>
+            <button
+              type="button"
+              className={`url-mode-btn ${mode === 'decode' ? 'active' : ''}`}
+              onClick={() => {
+                setMode('decode')
+                setActionError('')
+              }}
+            >
+              Decode
+            </button>
           </div>
-        )}
+          {mode === 'encode' && (
+            <div className="url-encode-mode-group">
+              <label className="url-encode-mode-label">
+                <input
+                  type="radio"
+                  name="encodeMode"
+                  value="component"
+                  checked={encodeMode === 'component'}
+                  onChange={() => setEncodeMode('component')}
+                />
+                <span>Component (encodeURIComponent)</span>
+              </label>
+              <label className="url-encode-mode-label">
+                <input
+                  type="radio"
+                  name="encodeMode"
+                  value="full"
+                  checked={encodeMode === 'full'}
+                  onChange={() => setEncodeMode('full')}
+                />
+                <span>Full URL (encodeURI)</span>
+              </label>
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <ErrorBar message={error} />}

@@ -424,6 +424,29 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   min-height: 0;
 }
 
+/* Tools built on the split-editor layout own the viewport.
+
+   `.app` is min-height:100vh with an auto height, so when a tool's editors
+   were naturally taller than the screen the whole column simply grew and the
+   page scrolled — `flex: 1` on the content never got to shrink, because a
+   flex item only shrinks against a *definite* container height. Giving the
+   shell a definite height lets the editors shrink into the space that is
+   actually there; they scroll internally, so nothing is lost.
+
+   Scoped by :has() to the split-editor tools deliberately. Free-flowing
+   tools (the calculators, the PDF tools) have no internal scroll container,
+   so pinning them would clip their results instead of scrolling them.
+
+   Guarded on min-height: below ~640px there is not enough room to be worth
+   pinning, and letting the page scroll is the kinder failure. */
+@media (min-height: 640px) {
+  .app:has(.tool-view .editor-layout) {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     padding-top: var(--space-4);
@@ -790,7 +813,8 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   border-radius: var(--radius-full);
   background: var(--bg-hover);
   font-size: var(--text-2xs);
-  color: var(--text-tertiary);
+  /* Same as the kbd hint above: tertiary on the hover fill is 4.35:1. */
+  color: var(--text-secondary);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
   transition: background var(--transition-base), color var(--transition-base);
@@ -1064,7 +1088,7 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 
 .tool-card:hover .tool-icon-wrapper {
   transform: scale(1.06);
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-light);
   border-color: var(--accent);
 }
@@ -1203,7 +1227,9 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   font-family: inherit;
   padding: 0.1875rem 0.375rem;
   border-radius: var(--radius-xs);
-  color: var(--text-tertiary);
+  /* --text-tertiary is tuned to 4.8:1 against the page background; on this
+     --bg-hover fill it lands at 4.35:1, under the 4.5 an 11px label needs. */
+  color: var(--text-secondary);
   background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   flex-shrink: 0;

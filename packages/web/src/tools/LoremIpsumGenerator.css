@@ -43,7 +43,7 @@
 
 .lorem-text-type-btn.active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border-color: var(--accent);
 }
 
@@ -76,7 +76,7 @@
 
 .lorem-type-btn.active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border-color: var(--accent);
 }
 

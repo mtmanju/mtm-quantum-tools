@@ -97,7 +97,7 @@
 
 .ip-prefix-chip:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-light);
 }
 
@@ -136,7 +136,7 @@
 
 .ip-class-badge.ip-class-c {
   background: rgba(201, 160, 99, 0.12);
-  color: var(--accent);
+  color: var(--accent-ink);
   border: 1px solid rgba(201, 160, 99, 0.25);
 }
 
@@ -171,7 +171,7 @@
 
 .ip-binary-toggle:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-light);
 }
 

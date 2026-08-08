@@ -272,16 +272,14 @@ const ApiTester = () => {
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
 
+      {/* The headline here read "HTTP request tester — send any GET/POST/PUT/
+          DELETE request and inspect the live response", which is the tool's
+          name and its description: both already sit in the page header two
+          rows above. Only the CORS caveat is information you cannot get
+          anywhere else, so only it survives. */}
       <div className="api-intro">
-        <div className="api-intro-headline">
-          <Send size={15} />
-          <strong>HTTP request tester</strong>
-          <span>Send any GET, POST, PUT or DELETE request and inspect the live response: status, headers, body.</span>
-        </div>
-        <div className="api-intro-hint">
-          <Info size={12} />
-          <span>Runs in your browser. The target API must allow CORS. Most public APIs do. Click an example to try it.</span>
-        </div>
+        <Info size={12} aria-hidden="true" />
+        <span>Runs in your browser, so the target API must allow CORS. Most public APIs do.</span>
       </div>
 
       <div className="api-examples-bar">

@@ -35,7 +35,7 @@
 .string-stat-value {
   font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
-  color: var(--accent);
+  color: var(--accent-ink);
   line-height: var(--leading-tight);
   font-variant-numeric: tabular-nums;
 }
@@ -91,7 +91,7 @@
 }
 
 .string-tab.active {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-bottom-color: var(--accent);
   background: var(--bg-elevated);
 }
@@ -183,7 +183,7 @@
 .char-escape {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-light);
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-xs);
@@ -241,7 +241,7 @@
 
 .char-category-extended-unicode {
   background: rgba(201, 160, 99, 0.1);
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent-glow);
 }
 

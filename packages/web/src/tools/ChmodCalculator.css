@@ -115,7 +115,7 @@
 
 .chmod-copy-btn:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-light);
 }
 
@@ -182,7 +182,7 @@
 }
 
 .chmod-preset-chip--active .chmod-preset-chip-label {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .chmod-preset-chip-desc {
@@ -274,7 +274,10 @@
 .chmod-row-sub {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  color: var(--text-tertiary);
+  /* --text-tertiary is tuned to 4.8:1 on the page background; this sits on
+     the slightly darker row fill, which drops it to 4.35:1. At 11px it is
+     normal-size text and needs 4.5:1, so it steps up one tone. */
+  color: var(--text-secondary);
   font-weight: var(--weight-semibold);
 }
 

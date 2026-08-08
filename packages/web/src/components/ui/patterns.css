@@ -69,7 +69,7 @@
 .diff-example-chip:hover, .hash-example-chip:hover, .json-example-chip:hover,
 .jwt-example-chip:hover, .regex-example-chip:hover, .sql-example-chip:hover,
 .url-example-chip:hover, .ip-prefix-chip:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
   background: var(--bg-hover);
 }
@@ -134,8 +134,47 @@
 /* The second line — how to get a result — sits below the statement. */
 .empty-state-hint {
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  /* Was --text-muted, which App.css reserves for placeholders and
+     decoration at 3.2:1. This is the line that tells you how to get a
+     result, so it is content and needs --text-tertiary at 4.8:1. */
+  color: var(--text-tertiary);
   max-width: 42ch;
+}
+
+/* ── Bar group ────────────────────────────────────────────────────
+   Tool chrome stacks, and each bar costs its own padding plus a rule. Where
+   two adjacent bars hold controls that answer the same question — pick a
+   mode and set its options, load an example and choose a direction — they
+   belong on one line rather than two.
+
+   Wrap the two bars in this and it takes over their padding and rule, so
+   the merge is a two-line markup change with no per-tool CSS. Children keep
+   their own internal layout. */
+.tool-row-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-1-5) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+/* The children were bars in their own right, so they arrive carrying the
+   padding and the bottom rule that the group now owns.
+
+   `> [class]` rather than `> *` on purpose. The children are things like
+   `.segmented` and `.examples-bar`, whose own rules are single-class and so
+   score (0,1,0) — exactly what `> *` scores. That tie is broken by source
+   order, and every one of those rules happens to be defined below this one,
+   so a plain `> *` silently lost and the merged rows came out *taller* than
+   the two bars they replaced. Matching on the class attribute scores
+   (0,2,0) and wins wherever the rule happens to sit. */
+.tool-row-group > [class] {
+  padding: 0;
+  border-bottom: none;
+  flex-shrink: 0;
 }
 
 /* ── Segmented control (mode switch) ──────────────────────────── */
@@ -180,7 +219,7 @@
 .base64-mode-btn:hover, .csv-json-mode-btn:hover, .html-entity-mode-btn:hover,
 .json-xml-mode-btn:hover, .password-mode-btn:hover, .regex-mode-btn:hover,
 .slug-mode-btn:hover, .url-mode-btn:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
   border-color: var(--accent);
 }
 

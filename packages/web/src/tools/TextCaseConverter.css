@@ -60,7 +60,7 @@
 .text-case-variation-copy:hover {
   background: var(--bg-primary);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .text-case-selector {
@@ -91,7 +91,7 @@
 
 .text-case-btn.active {
   background: var(--accent);
-  color: #FFFFFF;
+  color: var(--text-on-accent-dark);
   border-color: var(--accent);
 }
 

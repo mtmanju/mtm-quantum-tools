@@ -326,50 +326,53 @@ const Base64Converter = () => {
     <ToolContainer>
       <Toolbar left={toolbarButtons} />
 
-      <div className="b64-examples-bar">
-        <span className="b64-examples-label">Try:</span>
-        {(mode === 'encode' ? ENCODE_EXAMPLES : DECODE_EXAMPLES).map(ex => (
+      {/* One row: the examples/mode controls and the options beside them answer the same question, so they no longer cost two bars. */}
+      <div className="tool-row-group">
+        <div className="b64-examples-bar">
+          <span className="b64-examples-label">Try:</span>
+          {(mode === 'encode' ? ENCODE_EXAMPLES : DECODE_EXAMPLES).map(ex => (
+            <button
+              key={ex.label}
+              type="button"
+              className="b64-example-chip"
+              onClick={() => {
+                setActionError('')
+                setEncodedFile(null)
+                setInput(ex.text)
+              }}
+              title={ex.label}
+            >
+              {ex.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="base64-mode-selector">
           <button
-            key={ex.label}
             type="button"
-            className="b64-example-chip"
+            className={`base64-mode-btn ${mode === 'encode' ? 'active' : ''}`}
             onClick={() => {
+              setMode('encode')
               setActionError('')
               setEncodedFile(null)
-              setInput(ex.text)
+              setInput('')
             }}
-            title={ex.label}
           >
-            {ex.label}
+            To Base64
           </button>
-        ))}
-      </div>
-
-      <div className="base64-mode-selector">
-        <button
-          type="button"
-          className={`base64-mode-btn ${mode === 'encode' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('encode')
-            setActionError('')
-            setEncodedFile(null)
-            setInput('')
-          }}
-        >
-          To Base64
-        </button>
-        <button
-          type="button"
-          className={`base64-mode-btn ${mode === 'decode' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('decode')
-            setActionError('')
-            setEncodedFile(null)
-            setInput('')
-          }}
-        >
-          From Base64
-        </button>
+          <button
+            type="button"
+            className={`base64-mode-btn ${mode === 'decode' ? 'active' : ''}`}
+            onClick={() => {
+              setMode('decode')
+              setActionError('')
+              setEncodedFile(null)
+              setInput('')
+            }}
+          >
+            From Base64
+          </button>
+        </div>
       </div>
 
       {error && <ErrorBar message={error} />}

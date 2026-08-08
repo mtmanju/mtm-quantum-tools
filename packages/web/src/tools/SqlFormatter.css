@@ -54,7 +54,7 @@
 .sql-action-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .sql-action-btn:disabled {

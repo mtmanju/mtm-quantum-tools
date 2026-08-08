@@ -73,7 +73,7 @@
   flex-shrink: 0;
 }
 
-.cal-nav:hover { background: var(--bg-hover); color: var(--accent); }
+.cal-nav:hover { background: var(--bg-hover); color: var(--accent-ink); }
 
 /* ── Grid ──────────────────────────────────────────────────────── */
 .cal-weekdays,
@@ -126,7 +126,7 @@
 
 .cal-cell.is-today {
   font-weight: var(--weight-bold);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .cal-cell.is-selected {
@@ -162,7 +162,7 @@
   cursor: pointer;
 }
 
-.cal-footer button:hover { color: var(--accent); border-color: var(--accent); }
+.cal-footer button:hover { color: var(--accent-ink); border-color: var(--accent); }
 
 @keyframes cal-in {
   from { opacity: 0; transform: translateY(-4px) scale(0.98); }
