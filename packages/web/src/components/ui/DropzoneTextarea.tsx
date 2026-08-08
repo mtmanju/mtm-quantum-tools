@@ -7,9 +7,22 @@ interface DropzoneTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaEleme
   getRootProps: <T extends DropzoneRootProps>(props?: T) => T
   getInputProps: <T extends DropzoneInputProps>(props?: T) => T
   isDragActive: boolean
-  // Absorb react-dropzone and useFileUpload state so they don't land on <textarea>
+  /**
+   * Absorb react-dropzone and useFileUpload state so it doesn't land on the
+   * <textarea>.
+   *
+   * This list is not decoration — anything react-dropzone returns that is not
+   * named here gets spread onto a real DOM node, and React then warns for
+   * every unknown camelCase prop. react-dropzone 20 added isDragUnknown,
+   * isDragGlobal and isProcessing, which is exactly how that regressed: three
+   * new booleans started reaching the textarea as attributes. If a future
+   * upgrade adds more state, they belong here too.
+   */
   isDragAccept?: boolean
   isDragReject?: boolean
+  isDragUnknown?: boolean
+  isDragGlobal?: boolean
+  isProcessing?: boolean
   isFocused?: boolean
   isFileDialogActive?: boolean
   acceptedFiles?: readonly File[]
@@ -29,6 +42,8 @@ export const DropzoneTextarea = memo(({
   isDragActive,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isDragAccept: _da, isDragReject: _dr, isFocused: _if, isFileDialogActive: _fd,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isDragUnknown: _du, isDragGlobal: _dg, isProcessing: _ip,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   acceptedFiles: _af, fileRejections: _fr, rootRef: _rr, inputRef: _ir,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

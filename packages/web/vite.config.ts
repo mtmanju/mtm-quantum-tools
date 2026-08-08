@@ -1,9 +1,30 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 
 // https://vite.dev/config/
+/**
+ * Drop the <meta> CSP during `vite dev` only.
+ *
+ * The policy in index.html hashes exactly one inline script — the `js`-class
+ * one-liner. In dev, @vitejs/plugin-react also injects an inline React Refresh
+ * preamble, which that hash does not cover, so the browser blocks it and Fast
+ * Refresh silently stops working. Loosening the policy to accommodate a script
+ * that never ships would weaken the thing production actually relies on, so
+ * the meta tag is simply not served in dev.
+ *
+ * Production is unaffected: the built index.html keeps the meta tag, and the
+ * real headers in vercel.json / public/_headers are the primary enforcement
+ * either way.
+ */
+const stripCspInDev = (): Plugin => ({
+  name: 'strip-csp-in-dev',
+  apply: 'serve',
+  transformIndexHtml: html =>
+    html.replace(/<meta http-equiv="Content-Security-Policy"[\s\S]*?\/>\s*/i, ''),
+})
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), stripCspInDev()],
   server: {
     host: true,
     port: 5173,

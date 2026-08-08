@@ -85,10 +85,14 @@ export const hslToRgb = (h: number, s: number, l: number): { r: number; g: numbe
   s /= 100
   l /= 100
   
-  let r = 0
-  let g = 0
-  let b = 0
-  
+  // No initialisers: every branch below assigns all three, so seeding them
+  // with 0 only hid that fact from the reader (and from the compiler's own
+  // definite-assignment check).
+  let r: number
+  let g: number
+  let b: number
+
+
   if (s === 0) {
     r = g = b = l
   } else {

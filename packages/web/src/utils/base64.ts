@@ -23,7 +23,7 @@ export const encodeToBase64 = (text: string): string => {
     return btoa(unescape(encodeURIComponent(text)))
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    throw new Error(`Failed to encode to Base64: ${errorMsg}`)
+    throw new Error(`Failed to encode to Base64: ${errorMsg}`, { cause: error })
   }
 }
 

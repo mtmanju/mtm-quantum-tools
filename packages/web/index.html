@@ -9,7 +9,26 @@
     <!-- CSP: no third-party origins. connect-src stays broad only because the
          API Tester calls user-supplied endpoints. -->
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';" />
+    <!--
+      CSP, defence in depth. The same policy is also sent as a real header
+      (see vercel.json / public/_headers) — a <meta> CSP cannot express
+      frame-ancestors, so the header is the one that stops clickjacking, and
+      this is the fallback for any host that serves the file without headers.
+
+      script-src carries a hash rather than 'unsafe-inline'. The only inline
+      script on the page is the one-liner that sets the `js` class before
+      first paint; hashing it means an injected <script> still cannot run,
+      which is the entire point of having a CSP on a page whose job is to
+      render text the user pasted.
+
+      'unsafe-eval' is deliberately absent — nothing in the bundle needs it.
+
+      connect-src has to allow https: because the API Tester exists to send
+      requests to endpoints the user names. It is the one tool that talks to
+      the network at all, and narrowing this would remove the feature rather
+      than secure it.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-2fNHIFfsOvlOa5ZpKy3YAK7nvuLFrQZ0IqBCBh8I9/A=' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';" />
 
     <!-- Icons.
          apple-touch-icon must be a PNG: iOS Safari ignores SVG here, and the

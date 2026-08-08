@@ -1,0 +1,26 @@
+# Netlify / Cloudflare Pages security headers.
+#
+# The same policy vercel.json sends, for the other host this project deploys
+# to (public/_redirects is Netlify's SPA fallback). Both files have to be kept
+# in step; the CSP script-src hash is of the inline bootstrap script in
+# index.html, so it changes if that one-liner ever changes.
+#
+# frame-ancestors and Strict-Transport-Security are the two that can only be
+# delivered as real headers — the <meta> CSP in index.html cannot express
+# either, which is why these files exist rather than relying on the meta tag.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-2fNHIFfsOvlOa5ZpKy3YAK7nvuLFrQZ0IqBCBh8I9/A=' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-Frame-Options: DENY
+
+/assets/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/css/*
+  Cache-Control: public, max-age=31536000, immutable

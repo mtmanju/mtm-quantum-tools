@@ -39,7 +39,7 @@ export const mergePdfs = async (files: PdfFile[]): Promise<Uint8Array> => {
         mergedPdf.addPage(page)
       })
     } catch (error) {
-      throw new Error(`Failed to process ${pdfFile.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(`Failed to process ${pdfFile.name}: ${error instanceof Error ? error.message : "Unknown error"}`, { cause: error })
     }
   }
 
@@ -136,9 +136,15 @@ export const generatePdfThumbnail = async (file: File, width: number = 200): Pro
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png', 0.95)
     
-    // Clean up
-    pdf.destroy()
-    
+    // Clean up.
+    //
+    // pdf.js 6 removed PDFDocumentProxy.destroy(); teardown lives on the
+    // loading task, which is the stronger call anyway — it aborts any
+    // outstanding requests *and* terminates the worker, where the old method
+    // only released the document. Left undestroyed, each thumbnail leaks a
+    // worker, and the PDF tools generate one per file.
+    await loadingTask.destroy()
+
     return dataUrl
   } catch (error) {
     console.error('Error generating PDF thumbnail for', file.name, ':', error)

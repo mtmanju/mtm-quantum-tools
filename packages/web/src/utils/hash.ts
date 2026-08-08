@@ -188,7 +188,7 @@ export const generateMD5 = async (text: string): Promise<string> => {
   try {
     return md5(text)
   } catch (error) {
-    throw new Error(`MD5 generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    throw new Error(`MD5 generation failed: ${error instanceof Error ? error.message : "Unknown error"}`, { cause: error })
   }
 }
 

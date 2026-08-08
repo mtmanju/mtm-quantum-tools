@@ -21,19 +21,34 @@ const EXAMPLES = [
   { label: 'Empty string', text: '' },
 ]
 
+const EMPTY_HASHES: Record<HashAlgorithm, string> = {
+  md5: '', sha1: '', sha256: '', sha512: '',
+}
+
 const HashGenerator = () => {
   const [input, setInput] = useState('')
 
   // Accept a value handed over by the paste bar.
   useHandoff('hash-generator', setInput)
-  const [hashes, setHashes] = useState<Record<HashAlgorithm, string>>({
-    md5: '',
-    sha1: '',
-    sha256: '',
-    sha512: ''
-  })
-  const [isGenerating, setIsGenerating] = useState(false)
+  /**
+   * The hashes, tagged with the input they were computed from.
+   *
+   * Keeping the two together is what makes `hashes` and `isGenerating`
+   * derivable instead of separately-managed state, and it fixes a real race:
+   * hashing is async, so with a plain `setHashes` a slow digest of an earlier
+   * input could resolve after a newer one and leave the panel showing hashes
+   * that do not belong to the text on screen. A result whose `forInput` no
+   * longer matches is simply ignored.
+   */
+  const [result, setResult] = useState<{ forInput: string; hashes: Record<HashAlgorithm, string> }>(
+    { forInput: '', hashes: EMPTY_HASHES }
+  )
   const [error, setError] = useState('')
+
+  // Both derived — see the note above. Neither needs to be written by hand,
+  // and neither can now disagree with the input.
+  const hashes = result.forInput === input ? result.hashes : EMPTY_HASHES
+  const isGenerating = input.trim() !== '' && result.forInput !== input
 
   const copyInputHook = useCopy()
   const copyHashHooks = {
@@ -54,49 +69,45 @@ const HashGenerator = () => {
     }
   })
 
-  const generateAllHashes = useCallback(async () => {
-    if (!input.trim()) {
-      setError('Please enter text to hash')
-      return
-    }
-
-    setIsGenerating(true)
-    setError('')
-
-    try {
-      const algorithms: HashAlgorithm[] = ['md5', 'sha1', 'sha256', 'sha512']
-      const newHashes: Record<HashAlgorithm, string> = {
-        md5: '',
-        sha1: '',
-        sha256: '',
-        sha512: ''
-      }
-
-      for (const algo of algorithms) {
-        try {
-          const result = await generateHash(input, algo)
-          newHashes[algo] = result.hash
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Hash generation failed')
-        }
-      }
-
-      setHashes(newHashes)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Hash generation failed')
-    } finally {
-      setIsGenerating(false)
-    }
-  }, [input])
-
-  // Auto-generate on input change
+  /**
+   * Hash whatever is in the box, whenever it changes.
+   *
+   * Every setState here happens *after* an await. That is what the new
+   * react-hooks/set-state-in-effect rule is asking for, and the reason it
+   * asks: a synchronous setState in an effect body is a second render pass
+   * for something that could have been computed during the first. The two
+   * values that genuinely could be — `hashes` and `isGenerating` — are now
+   * derived above, so all that is left in the effect is the async work.
+   *
+   * `cancelled` is not ceremony. Digests of a long input take long enough
+   * that typing another character before the previous run finishes is
+   * routine, and without the guard the older run still calls setResult.
+   */
   useEffect(() => {
-    if (input.trim()) {
-      generateAllHashes()
-    } else {
-      setHashes({ md5: '', sha1: '', sha256: '', sha512: '' })
-    }
-  }, [input, generateAllHashes])
+    if (!input.trim()) return
+
+    let cancelled = false
+
+    void (async () => {
+      const algorithms: HashAlgorithm[] = ['md5', 'sha1', 'sha256', 'sha512']
+      const next: Record<HashAlgorithm, string> = { ...EMPTY_HASHES }
+
+      try {
+        for (const algo of algorithms) {
+          const { hash } = await generateHash(input, algo)
+          if (cancelled) return
+          next[algo] = hash
+        }
+        setResult({ forInput: input, hashes: next })
+        setError('')
+      } catch (err) {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : 'Hash generation failed')
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [input])
 
   const handleDownload = useCallback(() => {
     if (!input.trim() || Object.values(hashes).every(h => !h)) return
@@ -117,14 +128,19 @@ SHA-512: ${hashes.sha512}`
   }, [input, hashes])
 
   const handleClear = useCallback(() => {
+    // `hashes` is derived from the input, so clearing the input clears them.
     setInput('')
-    setHashes({
-      md5: '',
-      sha1: '',
-      sha256: '',
-      sha512: ''
-    })
     setError('')
+  }, [])
+
+  /**
+   * "Regenerate" now discards the tagged result rather than re-running the
+   * hash directly. The effect above owns the computation; this just makes it
+   * out of date, which is the one thing that makes it run again. Keeping a
+   * second path into the same work is how the two got to disagree.
+   */
+  const handleRegenerate = useCallback(() => {
+    setResult({ forInput: '', hashes: EMPTY_HASHES })
   }, [])
 
   const toolbarButtons = [
@@ -137,7 +153,7 @@ SHA-512: ${hashes.sha512}`
     {
       icon: <RefreshCw size={16} />,
       label: 'Regenerate',
-      onClick: generateAllHashes,
+      onClick: handleRegenerate,
       disabled: !input.trim() || isGenerating,
       title: 'Regenerate hashes',
       showDividerBefore: true

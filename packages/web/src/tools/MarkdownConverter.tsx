@@ -38,6 +38,25 @@ import './MarkdownConverter.css'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 const AUTO_SAVE_KEY = 'mtm-md-converter-draft'
+
+/**
+ * The autosaved draft, or empties. Never throws: the value is user-editable
+ * storage, so a malformed or half-written entry is an expected input, not an
+ * exceptional one, and it must not take the tool down on load.
+ */
+function readDraft(): { content: string; name: string } {
+  try {
+    const saved = localStorage.getItem(AUTO_SAVE_KEY)
+    if (!saved) return { content: '', name: '' }
+    const { content, name } = JSON.parse(saved) as { content?: unknown; name?: unknown }
+    return {
+      content: typeof content === 'string' ? content : '',
+      name: typeof name === 'string' ? name : '',
+    }
+  } catch {
+    return { content: '', name: '' }
+  }
+}
 const AUTO_SAVE_DELAY_MS = 2000
 const CONVERSION_TIMEOUT_MS = 120_000
 
@@ -486,11 +505,21 @@ async function renderDiagramsToCache(codes: string[]): Promise<void> {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const MarkdownConverter = () => {
-  const [markdownContent, setMarkdownContent] = useState('')
+  /**
+   * Restore the autosaved draft during the first render rather than in a
+   * mount effect.
+   *
+   * As an effect this painted once empty and once with the draft, which on a
+   * long document is a visible flash of an empty editor. localStorage is
+   * synchronous, so there was never a reason to wait a render for it. The
+   * handoff still wins: useHandoff only applies a value when sessionStorage
+   * actually held one, and its effect runs after this initialiser.
+   */
+  const [markdownContent, setMarkdownContent] = useState(() => readDraft().content)
 
   // Accept a value handed over by the paste bar.
   useHandoff('md-converter', setMarkdownContent)
-  const [fileName, setFileName] = useState('')
+  const [fileName, setFileName] = useState(() => readDraft().name)
   const [isConverting, setIsConverting] = useState(false)
   const [conversionProgress, setConversionProgress] = useState('')
   const [error, setError] = useState('')
@@ -573,18 +602,6 @@ const MarkdownConverter = () => {
   const leftPanelStyle = useMemo((): React.CSSProperties =>
     viewMode === 'split' ? { flexBasis: `${splitRatio}%`, flexGrow: 0, flexShrink: 0 } : {}
     , [viewMode, splitRatio])
-
-  // ── Load draft on mount ──────────────────────────────────────────────────────
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(AUTO_SAVE_KEY)
-      if (saved) {
-        const { content, name } = JSON.parse(saved)
-        if (content) { setMarkdownContent(content); if (name) setFileName(name) }
-      }
-    } catch { /* ignore malformed draft */ }
-  }, [])
 
   // ── Auto-save ────────────────────────────────────────────────────────────────
 

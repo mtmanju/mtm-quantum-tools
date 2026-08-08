@@ -126,7 +126,9 @@ const PdfToImage = () => {
 
     try {
       const arrayBuffer = await pdfFile.file.arrayBuffer()
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, verbosity: 0 }).promise
+      // Keep the loading task: pdf.js 6 moved teardown onto it (see utils/pdf.ts).
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, verbosity: 0 })
+      const pdf = await loadingTask.promise
       const totalPages = pdf.numPages
       const baseName = pdfFile.name.replace(/\.pdf$/i, '')
       const ext = format === 'png' ? 'png' : 'jpg'
@@ -139,7 +141,7 @@ const PdfToImage = () => {
         downloadBinaryFile(blob, `${baseName}-page-${padded}.${ext}`, mime)
       }
 
-      pdf.destroy()
+      await loadingTask.destroy()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to convert PDF')
     } finally {

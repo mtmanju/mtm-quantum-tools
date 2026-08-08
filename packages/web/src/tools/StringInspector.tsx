@@ -112,7 +112,7 @@ const StringInspector = () => {
   // ── Encodings ────────────────────────────────────────────────────────────
   const encodings = useMemo(() => {
     if (!input) return { base64: '', urlEncoded: '', htmlEncoded: '' }
-    let base64 = ''
+    let base64: string
     try {
       base64 = btoa(unescape(encodeURIComponent(input)))
     } catch {

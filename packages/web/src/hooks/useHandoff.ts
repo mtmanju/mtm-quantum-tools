@@ -11,7 +11,7 @@ import { useEffect } from 'react'
 export function useHandoff(toolId: string, apply: (value: string) => void) {
   useEffect(() => {
     const key = `qt-handoff:${toolId}`
-    let value: string | null = null
+    let value: string | null
     try {
       value = sessionStorage.getItem(key)
       if (value !== null) sessionStorage.removeItem(key)

@@ -1,5 +1,5 @@
 import { Check, Copy, Upload, X, Clock, RefreshCw } from 'lucide-react'
-import { useCallback, useMemo, useState, useEffect } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -13,22 +13,35 @@ import { useHandoff } from '../hooks/useHandoff'
 import './TimestampConverter.css'
 
 const TimestampConverter = () => {
-  const [input, setInput] = useState('')
+  /**
+   * Seeded with the current timestamp, lazily, so the tool is useful the
+   * instant it opens.
+   *
+   * This used to be a mount effect that called setInput, which meant the
+   * first paint showed an empty field and the second showed the seed — and
+   * because it raced the handoff effect it needed `setInput(prev => prev || now)`
+   * to avoid clobbering a pasted value. As an initialiser it runs during the
+   * first render instead, and the ordering falls out for free: useHandoff
+   * only calls apply() when sessionStorage actually held something, so a
+   * handoff still wins and nothing else has to know about it.
+   */
+  const [input, setInput] = useState(() => {
+    const current = getCurrentTimestamp()
+    return current.isValid && current.formatted ? current.formatted.unix.toString() : ''
+  })
 
   // Accept a value handed over by the paste bar.
   useHandoff('timestamp-converter', setInput)
   const [timezone, setTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone)
-  const [error, setError] = useState('')
-
-  // Seed with the current time on mount — but only if nothing arrived from the
-  // paste bar. Both are mount effects, and this one runs second, so writing
-  // unconditionally would clobber a handed-over value.
-  useEffect(() => {
-    const current = getCurrentTimestamp()
-    if (!current.isValid || !current.formatted) return
-    const now = current.formatted.unix.toString()
-    setInput(prev => prev || now)
-  }, [])
+  /**
+   * Only failures the user *did* something to cause — a failed copy, an
+   * unreadable file. The parse error is derived below rather than stored:
+   * it is a pure function of (input, timezone), and writing it into state
+   * from inside the useMemo that computed it was a setState during render.
+   * React 19's lint rules now reject that, and rightly — it is the shape
+   * that produces an infinite render loop as soon as the value is unstable.
+   */
+  const [actionError, setActionError] = useState('')
 
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
@@ -37,14 +50,15 @@ const TimestampConverter = () => {
     if (!input.trim()) {
       return null
     }
-    const result = timestampToDate(input, timezone)
-    if (!result.isValid) {
-      setError(result.error || 'Invalid input')
-    } else {
-      setError('')
-    }
-    return result
+    return timestampToDate(input, timezone)
   }, [input, timezone])
+
+  // A bad parse outranks a stale action error, and clears itself when the
+  // input becomes valid — which is what the old setActionError('') branch did.
+  const error =
+    conversionResult && !conversionResult.isValid
+      ? conversionResult.error || 'Invalid input'
+      : actionError
 
   const output = useMemo(() => {
     if (!conversionResult || !conversionResult.isValid) {
@@ -56,9 +70,9 @@ const TimestampConverter = () => {
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
       setInput(text.trim())
-      setError('')
+      setActionError('')
     },
-    onError: (err) => setError(err),
+    onError: (err) => setActionError(err),
     accept: {
       'text/plain': ['.txt']
     }
@@ -68,13 +82,13 @@ const TimestampConverter = () => {
     const current = getCurrentTimestamp()
     if (current.isValid && current.formatted) {
       setInput(current.formatted.unix.toString())
-      setError('')
+      setActionError('')
     }
   }, [])
 
   const handleClear = useCallback(() => {
     setInput('')
-    setError('')
+    setActionError('')
   }, [])
 
   const toolbarButtons = [
@@ -94,7 +108,7 @@ const TimestampConverter = () => {
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy input',
-      onClick: () => copyInputHook.copy(input, (err) => setError(err)),
+      onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
       disabled: !input.trim(),
       title: 'Copy input',
       showDividerBefore: true
@@ -102,7 +116,7 @@ const TimestampConverter = () => {
     {
       icon: copyOutputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyOutputHook.copied ? 'Copied!' : 'Copy output',
-      onClick: () => copyOutputHook.copy(output, (err) => setError(err)),
+      onClick: () => copyOutputHook.copy(output, (err) => setActionError(err)),
       disabled: !output.trim(),
       title: 'Copy output',
     },
@@ -170,7 +184,7 @@ const TimestampConverter = () => {
         left={
           <EditorPanel
             title="Timestamp or Date"
-            onCopy={() => copyInputHook.copy(input, (err) => setError(err))}
+            onCopy={() => copyInputHook.copy(input, (err) => setActionError(err))}
             copied={copyInputHook.copied}
           >
             <DropzoneTextarea
@@ -178,7 +192,7 @@ const TimestampConverter = () => {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value)
-                setError('')
+                setActionError('')
               }}
               placeholder="Enter Unix timestamp (seconds or milliseconds) or date string (e.g., 2024-01-01, Jan 1, 2024)"
               spellCheck={false}
@@ -191,7 +205,7 @@ const TimestampConverter = () => {
         right={
           <EditorPanel
             title="Converted Date & Timestamp"
-            onCopy={() => copyOutputHook.copy(output, (err) => setError(err))}
+            onCopy={() => copyOutputHook.copy(output, (err) => setActionError(err))}
             copied={copyOutputHook.copied}
           >
             <div className="timestamp-results">
