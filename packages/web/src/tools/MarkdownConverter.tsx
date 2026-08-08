@@ -818,7 +818,7 @@ hr{border:none;border-top:1px solid #e5e7eb;margin:1.5em 0}
       onKeyDown={dzOnKeyDown}
       tabIndex={dzTabIndex}
     >
-      <input {...getInputProps()} />
+      <input aria-label="Upload a file" {...getInputProps()} />
       <input
         ref={fileInputRef}
         type="file"

@@ -133,7 +133,7 @@ const PdfSplitter = () => {
       {error && <ErrorBar message={error} />}
 
       <div className="pdf-splitter-container" {...getRootProps()}>
-        <input {...getInputProps()} />
+        <input aria-label="Upload a file" {...getInputProps()} />
 
         {!pdfFile ? (
           <div className={`pdf-splitter-dropzone ${isDragActive ? 'active' : ''}`}>

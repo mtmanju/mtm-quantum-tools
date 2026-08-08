@@ -88,7 +88,7 @@ select:hover {
 .sql-action-btn, .html-action-btn, .yaml-action-btn, .number-base-btn,
 .color-format-btn, .lorem-type-btn, .lorem-text-type-btn, .text-case-btn,
 .jwt-gen-generate-btn, .api-send-btn, .uuid-generate-btn, .back-button,
-.pdf-to-image-format-btn, .header-nav-btn,
+.pdf-to-image-format-btn, .header-nav-btn, .header-search,
 /* prominent text buttons */
 .download-btn, .base64-download-btn, .pdf-dropzone-button, .calculate-btn,
 .load-all-btn, .load-more-btn, .toggle-schedule-btn, .error-retry-button,
@@ -170,7 +170,7 @@ select:hover {
 .sql-action-btn, .html-action-btn, .yaml-action-btn, .number-base-btn,
 .color-format-btn, .lorem-type-btn, .lorem-text-type-btn, .text-case-btn,
 .jwt-gen-generate-btn, .api-send-btn, .uuid-generate-btn, .back-button,
-.pdf-to-image-format-btn, .header-nav-btn {
+.pdf-to-image-format-btn, .header-nav-btn, .header-search {
   height: var(--control-h-md);
   padding: 0 var(--space-3);
   gap: var(--space-2);
@@ -227,6 +227,23 @@ select:hover {
 .pdf-to-image-remove-btn, .pdf-watermark-remove-btn {
   width: var(--control-h-lg);
   height: var(--control-h-lg);
+}
+
+/* ── Checkbox / radio targets ─────────────────────────────────── */
+/* WCAG 2.5.8 asks for a 24×24 CSS-pixel target. Every checkbox in the tools
+   is already wrapped in a clickable <label>, and those labels are wide
+   enough — 102px to 1276px — but they were all exactly 22px tall, so every
+   one of them failed on the vertical axis by two pixels. Consistently two,
+   across every tool, because they are all a 13–18px box next to one line of
+   13px text and nothing was setting a floor.
+
+   The labels are already `display: flex; align-items: center`, so a floor is
+   the whole fix: the text stays centred and nothing moves except the two
+   pixels of extra hit area above and below. Applied to the <label>, not the
+   <input>, because the label is what the pointer actually has to hit. */
+.tool-workspace label:has(input[type="checkbox"]),
+.tool-workspace label:has(input[type="radio"]) {
+  min-height: 24px;
 }
 
 /* ── Badges ───────────────────────────────────────────────────── */

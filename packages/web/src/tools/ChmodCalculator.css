@@ -200,6 +200,26 @@
   gap: 1rem;
 }
 
+/* The permission matrix is capped at 480px, so stacking it above the special
+   bits left a 480px column of controls in a 1360px panel and ~800px of empty
+   surface beside it — the tool looked like it had failed to finish drawing.
+   Side by side, the two halves of the same decision (who gets r/w/x, and the
+   setuid/setgid/sticky bits) are also read together rather than one under the
+   other. Above 860px only: below it the matrix alone needs the full width. */
+@media (min-width: 860px) {
+  .chmod-grid-wrapper {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .chmod-grid-wrapper .chmod-special-row {
+    /* Stops the bits column from stretching to fill whatever is left; it
+       wants to be as wide as its three chips, not as wide as the panel. */
+    flex: 0 1 auto;
+  }
+}
+
 /* Permission grid: 4 columns — label + r + w + x */
 .chmod-grid {
   display: grid;

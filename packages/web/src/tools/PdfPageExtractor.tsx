@@ -189,7 +189,7 @@ const PdfPageExtractor = () => {
       {error && <ErrorBar message={error} />}
 
       <div className="pdf-extractor-container" {...getRootProps()}>
-        <input {...getInputProps()} />
+        <input aria-label="Upload a file" {...getInputProps()} />
 
         {!pdfFile ? (
           <div className={`pdf-extractor-dropzone ${isDragActive ? 'active' : ''}`}>

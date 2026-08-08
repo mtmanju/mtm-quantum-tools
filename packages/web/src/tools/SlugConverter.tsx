@@ -136,6 +136,7 @@ const SlugConverter = () => {
             <input
               type="text"
               className="slug-input"
+              aria-label="Text to convert"
               placeholder={mode === 'text-to-slug' ? 'Enter text to convert to slug...' : 'Enter slug to convert to text...'}
               value={input}
               onChange={(e) => {

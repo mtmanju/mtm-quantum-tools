@@ -185,7 +185,7 @@ const PdfToImage = () => {
       {error && <ErrorBar message={error} />}
 
       <div className="pdf-to-image-container" {...getRootProps()}>
-        <input {...getInputProps()} />
+        <input aria-label="Upload a file" {...getInputProps()} />
 
         {!pdfFile ? (
           <div className={`pdf-to-image-dropzone ${isDragActive ? 'active' : ''}`}>

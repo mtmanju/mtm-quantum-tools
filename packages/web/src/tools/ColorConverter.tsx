@@ -191,6 +191,7 @@ const ColorConverter = () => {
             <input
               type={format === 'hex' ? 'color' : 'text'}
               className={`color-input ${format === 'hex' ? 'color-input-picker' : ''}`}
+              aria-label="Colour value"
               placeholder={
                 format === 'hex'
                   ? '#FF5733 or FF5733'
@@ -211,6 +212,7 @@ const ColorConverter = () => {
               <input
                 type="text"
                 className="color-input-text"
+                aria-label="Colour value"
                 placeholder="#FF5733 or FF5733"
                 value={input}
                 onChange={(e) => {

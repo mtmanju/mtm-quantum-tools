@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Clock,
   Code,
+  Command,
   CodeXml,
   CreditCard,
   Database as DatabaseIcon,
@@ -21,6 +22,7 @@ import {
   FileX,
   GitBranch,
   Hash,
+  History,
   Image as ImageIcon,
   KeyRound,
   Link2,
@@ -59,9 +61,11 @@ import { Toaster } from './components/ui/Toaster'
 import { getToolId, getViewType, ROUTES } from './constants/routes'
 import { useTheme } from './context/useTheme'
 import { useDocumentMeta } from './hooks/useDocumentMeta'
+import { useHashScroll } from './hooks/useHashScroll'
 import { useScrollPosition } from './hooks/useScrollPosition'
-import { recordRecentTool } from './utils/recentTools'
+import { readRecentTools, recordRecentTool } from './utils/recentTools'
 import { searchTools } from './utils/search'
+import { MOD_KEY, openCommandPalette } from './utils/commandPalette'
 import About from './pages/About'
 
 // Lazy-load all tool components — each tool loads only when first navigated to
@@ -111,8 +115,7 @@ const ChmodCalculator = lazy(() => import('./tools/ChmodCalculator'))
 const StringInspector = lazy(() => import('./tools/StringInspector'))
 const AgeCalculator = lazy(() => import('./tools/AgeCalculator'))
 
-const isMacPlatform =
-  typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+const isMacPlatform = MOD_KEY === '⌘'
 
 /** Verifiable claims, not adjectives — each one is checkable from the page. */
 const HERO_TRUST = [
@@ -332,6 +335,19 @@ const tools: Tool[] = [
     category: 'Finance', status: 'active', component: InvestmentReturnCalculator },
 ]
 
+/**
+ * A tool in the search results.
+ *
+ * This was a 60px icon centred over a centred name and a centred, two-line
+ * clamped description — a completely different object from the dense
+ * left-aligned rows the browse grid is built from. The same 45 tools were
+ * therefore drawn two incompatible ways depending only on whether the visitor
+ * had typed, and typing swapped the page's whole visual language mid-task.
+ *
+ * It is the same row now: same 28px icon chip, same left alignment, same
+ * hover. Search adds the description and the category, because a result list
+ * torn out of its section has lost the context the section heading gave it.
+ */
 const ToolCard = memo(({ tool, onClick, showDescription }: {
   tool: Tool
   onClick: (tool: Tool) => void
@@ -346,17 +362,19 @@ const ToolCard = memo(({ tool, onClick, showDescription }: {
     disabled={tool.status !== 'active'}
     aria-label={`${tool.name}: ${tool.description}`}
   >
-    <span className="tool-icon-wrapper" aria-hidden="true">
+    <span className="tool-row-icon" aria-hidden="true">
       {tool.icon}
     </span>
     <span className="tool-info">
       <span className="tool-card-name">{tool.name}</span>
       {showDescription && <span className="tool-description">{tool.description}</span>}
     </span>
-    {tool.status === 'coming-soon' && (
+    {tool.status === 'coming-soon' ? (
       <span className="tool-badge">
         <span>Soon</span>
       </span>
+    ) : (
+      <span className="tool-card-category" aria-hidden="true">{tool.category}</span>
     )}
   </button>
 ))
@@ -387,6 +405,7 @@ function App() {
   const navigate = useNavigate()
   const { isDarkMode, toggleTheme } = useTheme()
   const scrolled = useScrollPosition()
+  useHashScroll()
 
   // Determine current view from pathname
   const currentView = useMemo(() => getViewType(location.pathname), [location.pathname])
@@ -419,6 +438,27 @@ function App() {
 
   const [searchQuery, setSearchQuery] = useState('')
 
+  /**
+   * Recently opened tools, read once on mount.
+   *
+   * The data was already being written on every tool open and read only by the
+   * command palette — so a returning visitor who does not know about ⌘K landed
+   * on the same 45-item grid as a first-time visitor and re-found their tool by
+   * scanning. This is the same list, on the page, for the people who did not
+   * discover the shortcut.
+   *
+   * useState-with-initialiser rather than useEffect: localStorage is
+   * synchronous, so there is no reason to render an empty rail and then swap
+   * it in a second pass. It intentionally does not track later writes — the
+   * rail should not reshuffle underneath someone mid-visit.
+   */
+  const recentTools = useMemo(() => {
+    const byId = new Map(tools.map(t => [t.id, t]))
+    return readRecentTools()
+      .map(id => byId.get(id))
+      .filter((t): t is Tool => !!t && t.status === 'active')
+  }, [])
+
   const filteredTools = useMemo(() => {
     if (!searchQuery.trim()) return null
     return searchTools(tools, searchQuery)
@@ -449,13 +489,77 @@ function App() {
     openTool(toolId)
   }, [openTool])
 
-  // All categories rendered side-by-side as glass cards with compact tool rows
-  const categoryCards = useMemo(() => {
-    const cards: ReactNode[] = []
+  /**
+   * The shortcuts card, sized like a category so it can be sorted with them.
+   *
+   * Seven categories in a four-column grid left an empty slot on row two, and
+   * a hole in a grid does not read as "the list ended" — it reads as something
+   * that failed to load. This fills it with the one thing a 45-tool index
+   * ought to teach and previously only told people who already knew: that
+   * there is a search shortcut. Eight cards also divide evenly into the four-
+   * and two-column layouts, so the trailing gap is gone at both.
+   */
+  const shortcutsCard = useMemo(
+    () => (
+      <div key="__shortcuts" className="category-card category-card--tip">
+        <div className="category-card-header">
+          <h3 className="category-card-title">Faster</h3>
+          <span className="category-card-count" aria-hidden="true">
+            <Command size={11} strokeWidth={2.25} />
+          </span>
+        </div>
+        <div className="category-card-tools">
+          <button type="button" className="tool-row shortcut-row" onClick={openCommandPalette}>
+            <span className="tool-row-icon"><Search /></span>
+            <span className="tool-row-name">Search every tool</span>
+            <kbd className="shortcut-keys">{isMacPlatform ? '⌘' : 'Ctrl'} K</kbd>
+          </button>
+          <div className="tool-row shortcut-row is-static">
+            <span className="tool-row-icon"><Sparkle /></span>
+            <span className="tool-row-name">Paste, we detect it</span>
+            <kbd className="shortcut-keys">↵</kbd>
+          </div>
+          <div className="tool-row shortcut-row is-static">
+            <span className="tool-row-icon"><ShieldCheck /></span>
+            <span className="tool-row-name">Nothing leaves this tab</span>
+          </div>
+        </div>
+      </div>
+    ),
+    []
+  )
 
-    for (const category of categories) {
+  // All categories rendered side-by-side as cards with compact tool rows.
+  const categoryCards = useMemo(() => {
+    /**
+     * Every card in one list, ordered by row count, tallest first.
+     *
+     * Card height is a direct function of how many rows it holds, and grid
+     * items in a row are top-aligned — so the ordering *is* the shape of the
+     * bottom edge. Appending the shortcuts card after the sort put the 3-row
+     * card after the 1-row "Everyday", which left a notch mid-row: the one
+     * arrangement that reads as a mistake rather than as a decision. Sorting
+     * it in by its own row count makes the whole grid step down evenly from
+     * left to right, at every column count.
+     */
+    const SHORTCUT_ROWS = 3
+    const entries = categories
+      .map(category => ({
+        rows: tools.filter(t => t.category === category).length,
+        category,
+      }))
+      .filter(e => e.rows > 0)
+
+    const cards: ReactNode[] = []
+    let shortcutsPlaced = false
+
+    for (const { category, rows } of entries) {
+      if (!shortcutsPlaced && rows < SHORTCUT_ROWS) {
+        cards.push(shortcutsCard)
+        shortcutsPlaced = true
+      }
+
       const categoryTools = tools.filter(t => t.category === category)
-      if (categoryTools.length === 0) continue
 
       cards.push(
         <div key={category} className="category-card">
@@ -489,8 +593,11 @@ function App() {
       )
     }
 
+    // Every category was larger than the shortcuts card, so it never got placed.
+    if (!shortcutsPlaced) cards.push(shortcutsCard)
+
     return <div className="categories-grid">{cards}</div>
-  }, [categories, handleToolClick])
+  }, [categories, handleToolClick, shortcutsCard])
 
   // Per-route title/description/canonical/OG.
   useDocumentMeta(
@@ -558,10 +665,48 @@ function App() {
             </ul>
           </section>
 
+          {/* Returning visitors, who are most of the traffic a utility site
+              gets, land above 45 tools they have already chosen between. This
+              is their tool, one click in, and it costs a first-time visitor
+              nothing because it does not render for them. */}
+          {recentTools.length > 0 && (
+            <section className="home-recents" aria-labelledby="home-recents-title">
+              <h2 className="home-recents-title" id="home-recents-title">
+                <History aria-hidden="true" />
+                Jump back in
+              </h2>
+              <ul className="home-recents-list">
+                {recentTools.map(tool => (
+                  <li key={tool.id}>
+                    <button
+                      type="button"
+                      className="home-recent"
+                      onClick={() => handleToolClick(tool)}
+                    >
+                      <span className="home-recent-icon" aria-hidden="true">{tool.icon}</span>
+                      <span className="home-recent-name">{tool.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <div className="home-browse-header">
+            {/* The heading follows the search rather than ignoring it. It read
+                "7 CATEGORIES / All 45 tools" while five results sat directly
+                underneath, and the real count was restated a second time in a
+                separate line below — so the section had two headers, and the
+                louder of the two was the one that was wrong. */}
             <div className="home-browse-heading">
-              <span className="home-browse-eyebrow">{categories.length} categories</span>
-              <h2 className="home-browse-title">All {activeCount} tools</h2>
+              <span className="home-browse-eyebrow">
+                {filteredTools !== null ? 'Search' : `${categories.length} categories`}
+              </span>
+              <h2 className="home-browse-title">
+                {filteredTools !== null
+                  ? `${filteredTools.length} ${filteredTools.length === 1 ? 'result' : 'results'}`
+                  : `All ${activeCount} tools`}
+              </h2>
             </div>
             <div className="tools-search-bar">
               <Search size={14} className="tools-search-icon" aria-hidden="true" />
@@ -601,19 +746,35 @@ function App() {
 
           {filteredTools !== null ? (
             filteredTools.length > 0 ? (
-              <section className="category-section">
-                <h3 className="section-title">
-                  {filteredTools.length} tool{filteredTools.length !== 1 ? 's' : ''} found
-                </h3>
-                <div className="tools-grid">
-                  {filteredTools.map(tool => (
-                    <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} showDescription />
-                  ))}
-                </div>
-              </section>
+              /* No section heading: the browse header above is now the
+                 heading, and it counts the results. */
+              <div className="tools-grid">
+                {filteredTools.map(tool => (
+                  <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} showDescription />
+                ))}
+              </div>
             ) : (
+              /* A dead end should offer the way out. The old empty state
+                 stated the problem and stopped, leaving the visitor to work
+                 out for themselves that the fix was to clear the box. */
               <div className="tools-search-empty">
-                <p>No tools match <strong>"{searchQuery}"</strong></p>
+                <span className="tools-search-empty-icon" aria-hidden="true">
+                  <Search size={20} strokeWidth={1.75} />
+                </span>
+                <p className="tools-search-empty-title">
+                  No tools match “{searchQuery}”
+                </p>
+                <p className="tools-search-empty-hint">
+                  Try a format or a job — <em>jwt</em>, <em>minify</em>, <em>subnet</em> —
+                  or browse all {activeCount} tools.
+                </p>
+                <button
+                  type="button"
+                  className="btn-md tools-search-empty-action"
+                  onClick={() => setSearchQuery('')}
+                >
+                  Clear search
+                </button>
               </div>
             )
           ) : categoryCards}

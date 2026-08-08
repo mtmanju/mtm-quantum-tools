@@ -63,6 +63,7 @@ const EmailValidator = () => {
               <input
                 type="text"
                 className="email-input"
+                aria-label="Email address"
                 placeholder="Enter email address..."
                 value={email}
                 onChange={(e) => {

@@ -204,6 +204,7 @@ const JwtGenerator = () => {
                 <input
                   type="text"
                   className="jwt-gen-secret"
+                  aria-label="HMAC secret"
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
                   placeholder="Enter secret key..."

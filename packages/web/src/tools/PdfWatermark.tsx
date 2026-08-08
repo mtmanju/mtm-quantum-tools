@@ -231,7 +231,7 @@ const PdfWatermark = () => {
       {error && <ErrorBar message={error} />}
 
       <div className="pdf-watermark-container" {...getRootProps()}>
-        <input {...getInputProps()} />
+        <input aria-label="Upload a file" {...getInputProps()} />
 
         {!pdfFile ? (
           <div className={`pdf-watermark-dropzone ${isDragActive ? 'active' : ''}`}>

@@ -270,17 +270,36 @@ export const calculateInvestmentReturn = (
  * @returns Formatted currency string
  */
 export const formatCurrency = (amount: number, currency: string = '₹'): string => {
-  if (isNaN(amount) || !isFinite(amount)) return `${currency} 0`
-  
+  if (isNaN(amount) || !isFinite(amount)) return `${currency} 0.00`
+
   const absAmount = Math.abs(amount)
   const sign = amount < 0 ? '-' : ''
-  
-  // Indian numbering: 1,00,000 format
+
+  /**
+   * Always two decimal places.
+   *
+   * This was `minimumFractionDigits: 0`, so the precision of a figure was
+   * decided by whatever its own value happened to round to — and a row of
+   * result tiles showed three different ones at once:
+   *
+   *     ₹ 43,391.16    ₹ 54,13,878.4    ₹ 50,00,000
+   *
+   * That is wrong in three places rather than one. On screen the result
+   * values are styled `font-variant-numeric: tabular-nums`, which exists to
+   * line figures up in a column and cannot while the decimal point moves.
+   * In the downloadable amortisation schedule the columns are aligned with
+   * `padStart`, which has the same problem. And a money figure printed to one
+   * decimal place ("₹ 54,13,878.4") reads as a truncation bug regardless of
+   * where it appears.
+   *
+   * Two is the number of decimals the smallest unit of the currency has, so
+   * it is the one that is right for all three.
+   */
   const formatted = absAmount.toLocaleString('en-IN', {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })
-  
+
   return `${sign}${currency} ${formatted}`
 }
 

@@ -112,6 +112,7 @@ const NumberBaseConverter = () => {
             <input
               type="text"
               className="number-base-input"
+              aria-label="Number to convert"
               placeholder={`Enter ${getBaseName(fromBase).toLowerCase()} number...`}
               value={input}
               onChange={(e) => {

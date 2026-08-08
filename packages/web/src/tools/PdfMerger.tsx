@@ -222,7 +222,7 @@ const PdfMerger = () => {
       <div className="pdf-merger-content">
         {pdfFiles.length === 0 ? (
           <div className={`pdf-dropzone-area ${isDragActive ? 'active' : ''}`} {...getRootProps()}>
-            <input {...getInputProps()} />
+            <input aria-label="Upload a file" {...getInputProps()} />
             <div className="pdf-dropzone-icon">
               <FileText size={48} strokeWidth={1.5} />
             </div>

@@ -123,6 +123,76 @@
   .logo-subtitle { display: none; }
 }
 
+/* ── Header search ──────────────────────────────────────────────────
+   Shaped like the field it stands in for, not like the ghost buttons beside
+   it. It opens a search dialog, and a control that opens a search dialog
+   should look like somewhere you can type — a bordered box with a leading
+   magnifier and placeholder-weight text reads as "search" at a glance,
+   where a third ghost icon would just read as a third icon.
+
+   The shortcut is printed on the control rather than hidden in a tooltip,
+   which is how anyone learns the shortcut exists in the first place. */
+.header-search {
+  gap: var(--space-2);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  background: var(--bg-secondary);
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+  font-weight: var(--weight-regular);
+  min-width: 200px;
+  justify-content: flex-start;
+}
+
+.header-search:hover {
+  border-color: var(--border-interactive);
+  color: var(--text-secondary);
+}
+
+.header-search svg {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color var(--transition-base);
+}
+
+.header-search:hover svg {
+  color: var(--text-secondary);
+}
+
+.header-search-label {
+  flex: 1;
+  text-align: left;
+  font-size: var(--text-md);
+}
+
+.header-search-kbd {
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 0.1875rem 0.375rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Below ~700px the label and shortcut cost more than they explain, and the
+   control collapses to the square icon button its neighbours already are. */
+@media (max-width: 700px) {
+  .header-search {
+    min-width: 0;
+    width: var(--control-h-md);
+    padding: 0;
+    justify-content: center;
+  }
+
+  .header-search-label,
+  .header-search-kbd {
+    display: none;
+  }
+}
+
 /* Nav button + theme toggle are ghost controls.
 
    Both were bordered, filled boxes sitting on a translucent header, which

@@ -15,7 +15,10 @@ export const ToolContainer = memo(({ children, className = '', dropzoneProps }: 
 
   return (
     <div className={`tool-container ${className}`} {...containerProps}>
-      {dropzoneProps && <input {...dropzoneProps.getInputProps()} />}
+      {/* react-dropzone's hidden file input. Out of the tab order (tabIndex
+          -1) but still in the accessibility tree, so it needs a name — see
+          the same note in DropzoneTextarea. */}
+      {dropzoneProps && <input aria-label="Upload a file" {...dropzoneProps.getInputProps()} />}
       {children}
     </div>
   )

@@ -1,5 +1,6 @@
-import { Info, Layout, Moon, Sun } from 'lucide-react'
+import { Info, Layout, Moon, Search, Sun } from 'lucide-react'
 import { memo } from 'react'
+import { MOD_KEY, openCommandPalette } from '../utils/commandPalette'
 import './Header.css'
 
 const prefetchAbout = () => {
@@ -45,6 +46,25 @@ const Header = memo(({
         </div>
 
         <div className="header-right">
+          {/* The palette was ⌘K-only. On a tool page that shortcut was the
+              single way to reach another one of the 45 tools, which makes a
+              hidden keybinding load-bearing. This is the same palette with a
+              visible door. Suppressed on the tools index, where the page's own
+              search field is already on screen and two search affordances a
+              few hundred pixels apart just raise the question of which one
+              searches what. */}
+          {currentView !== 'tools' && (
+            <button
+              type="button"
+              className="header-search"
+              onClick={openCommandPalette}
+              aria-label="Search tools"
+            >
+              <Search size={15} strokeWidth={2} aria-hidden="true" />
+              <span className="header-search-label">Search tools</span>
+              <kbd className="header-search-kbd" aria-hidden="true">{MOD_KEY} K</kbd>
+            </button>
+          )}
           <button
             className={`header-nav-btn ${currentView === 'about' ? 'active' : ''}`}
             onClick={() => onNavigate('/about')}

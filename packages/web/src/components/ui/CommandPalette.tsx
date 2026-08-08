@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, CornerDownLeft, ArrowUp, ArrowDown } from 'lucide-react'
 import { searchTools } from '../../utils/search'
 import { readRecentTools } from '../../utils/recentTools'
+import { MOD_KEY, onOpenCommandPalette } from '../../utils/commandPalette'
 import './CommandPalette.css'
 
 export interface PaletteTool {
@@ -19,9 +20,24 @@ interface CommandPaletteProps {
   onSelect: (id: string) => void
 }
 
-const MAX_RESULTS = 8
+/**
+ * The idle list is capped; a search is not.
+ *
+ * Both used to be cut to eight. The results pane is `overflow-y: auto` inside
+ * a 70vh panel, so it was always *able* to scroll — but eight items never
+ * filled it, which made scrollHeight equal clientHeight and the scroll a
+ * no-op. Searching "convert" matched a dozen tools, showed eight, said
+ * nothing about the rest, and ignored the scroll that would have reached
+ * them. Silent truncation that looks exactly like a broken scrollbar.
+ *
+ * A search should return everything it matched — with 45 tools the worst case
+ * is 45 rows, which is nothing to render and genuinely scrolls. The idle list
+ * keeps a cap because it is a starting point rather than an answer: it exists
+ * to show your recents and a few suggestions, not to be the full index.
+ */
+const MAX_IDLE_RESULTS = 8
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+const isMac = MOD_KEY === '⌘'
 
 /**
  * ⌘K / Ctrl-K launcher, available on every route.
@@ -45,19 +61,27 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
     setActiveIndex(0)
   }
 
-  const results = useMemo(() => {
-    if (!query.trim()) {
-      const recents = readRecentTools()
-      const byId = new Map(tools.map(t => [t.id, t]))
-      const recentTools = recents.map(id => byId.get(id)).filter((t): t is PaletteTool => !!t)
-      // Recents first, then fill with featured tools.
-      const rest = tools.filter(t => !recents.includes(t.id))
-      return [...recentTools, ...rest].slice(0, MAX_RESULTS)
+  /**
+   * The idle list is two groups, and it has to say where one ends.
+   *
+   * A single "Recent" heading sat above the whole list, but the list is
+   * recents *topped up* to eight with everything else — so on a first visit
+   * with two recents, six tools the user had never opened were filed under
+   * "Recent". `recentCount` is where the real ones stop.
+   */
+  const { results, recentCount } = useMemo(() => {
+    if (query.trim()) {
+      return { results: searchTools(tools, query), recentCount: 0 }
     }
-    return searchTools(tools, query).slice(0, MAX_RESULTS)
+    const recents = readRecentTools()
+    const byId = new Map(tools.map(t => [t.id, t]))
+    const recentTools = recents.map(id => byId.get(id)).filter((t): t is PaletteTool => !!t)
+    const rest = tools.filter(t => !recents.includes(t.id))
+    return {
+      results: [...recentTools, ...rest].slice(0, MAX_IDLE_RESULTS),
+      recentCount: Math.min(recentTools.length, MAX_IDLE_RESULTS),
+    }
   }, [query, tools])
-
-  const hasRecents = !query.trim() && readRecentTools().length > 0
 
   const close = useCallback(() => {
     setOpen(false)
@@ -89,6 +113,9 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open])
+
+  // Same palette, opened by the header's search control.
+  useEffect(() => onOpenCommandPalette(() => setOpen(true)), [])
 
   useEffect(() => {
     if (open) {
@@ -159,13 +186,18 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
         </div>
 
         <div className="cmdk-results" id="cmdk-results" role="listbox" ref={listRef}>
-          {hasRecents && <div className="cmdk-section">Recent</div>}
           {results.length === 0 && (
             <div className="cmdk-empty">No tools match “{query}”</div>
           )}
           {results.map((tool, i) => (
+            <Fragment key={tool.id}>
+              {/* Group headings, emitted at the boundaries rather than once
+                  at the top — see recentCount. */}
+              {recentCount > 0 && i === 0 && <div className="cmdk-section">Recent</div>}
+              {recentCount > 0 && i === recentCount && (
+                <div className="cmdk-section">All tools</div>
+              )}
             <button
-              key={tool.id}
               id={`cmdk-opt-${tool.id}`}
               type="button"
               role="option"
@@ -184,6 +216,7 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
               </span>
               <span className="cmdk-item-category">{tool.category}</span>
             </button>
+            </Fragment>
           ))}
         </div>
 

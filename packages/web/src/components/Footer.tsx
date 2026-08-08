@@ -31,10 +31,14 @@ const Footer = memo(({ toolsCount, categoriesCount }: FooterProps) => {
         <div className="footer-end">
           {/* Real anchors, not buttons: this is navigation, so it should be
               copyable, openable in a new tab, and crawlable. */}
+          {/* "About" and "Privacy" both pointed at /about, so the Privacy
+              link promised a privacy page and delivered the About page from
+              the top. It now lands on the section that actually answers the
+              question — see useHashScroll for the scrolling. */}
           <nav className="footer-nav" aria-label="Footer">
             <Link to="/">All tools</Link>
             <Link to="/about">About</Link>
-            <Link to="/about">Privacy</Link>
+            <Link to="/about#privacy">Privacy</Link>
           </nav>
           <span className="footer-divider" aria-hidden="true" />
           <p className="footer-meta">v1.0.0 &middot; &copy; 2025</p>

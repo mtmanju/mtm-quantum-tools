@@ -439,12 +439,36 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 
    Guarded on min-height: below ~640px there is not enough room to be worth
    pinning, and letting the page scroll is the kinder failure. */
+/* The split-editor layout goes by two class names.
+   Twenty tools render the shared <EditorLayout> (`.editor-layout`); the
+   Markdown converter predates it and has its own `.converter-editor-layout`,
+   which is structurally the same thing — `flex: 1; min-height: 0; overflow:
+   hidden` over panels that scroll internally. Both selectors below have to
+   match both names, and they are the only two places that care. */
 @media (min-height: 640px) {
-  .app:has(.tool-view .editor-layout) {
+  .app:has(.tool-view :is(.editor-layout, .converter-editor-layout)) {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
   }
+}
+
+/* ...and every other tool sizes to its content.
+
+   The rule above gives the split-editor tools a definite height so their
+   panes can fill the screen. But `flex: 1` was on the whole chain —
+   .main-content → .tool-view-wrapper → .tool-workspace — unconditionally, so
+   the tools that are *not* built on that layout inflated to fill the viewport
+   too. The Loan EMI calculator drew a 730px panel around 320px of fields;
+   PDF Merger put 190px of blank surface under its dropzone. In both cases the
+   emptiness read as content that had failed to render.
+
+   Filling the viewport is a property of the split editor, so it is scoped to
+   the split editor. Tools taller than the screen (the amortisation schedule,
+   a long PDF page list) still grow and scroll the page as before — this only
+   removes the growth, never the ability to grow. */
+.tool-view-wrapper:not(:has(:is(.editor-layout, .converter-editor-layout))) .tool-workspace {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 768px) {
@@ -891,27 +915,75 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   color: var(--text-primary);
 }
 
+/* ── The shortcuts card ─────────────────────────────────────────────
+   Same shell as a category card, so it sits in the grid rather than on it,
+   but tinted and non-hovering: it is a legend, not an eighth category, and
+   lifting it on hover would promise a drill-down that does not exist. */
+.category-card--tip {
+  background: var(--accent-surface);
+  border-color: var(--accent-border);
+}
+
+[data-theme="dark"] .category-card--tip {
+  background: var(--accent-surface);
+  border-color: var(--accent-border);
+}
+
+.category-card--tip:hover {
+  transform: none;
+  box-shadow: var(--elevation-1);
+  border-color: var(--accent-border);
+}
+
+.category-card--tip .category-card-header {
+  border-bottom-color: var(--accent-border);
+}
+
+.category-card--tip .category-card-count {
+  background: transparent;
+  color: var(--accent-ink);
+}
+
+.shortcut-row {
+  gap: var(--space-2-5);
+}
+
+/* Two of the three rows state a fact rather than doing something, so they
+   are <div>s and must not claim the pointer or the hover treatment. */
+.shortcut-row.is-static {
+  cursor: default;
+}
+
+.shortcut-row.is-static:hover {
+  background: transparent;
+}
+
+.shortcut-row.is-static:hover .tool-row-icon {
+  color: var(--text-tertiary);
+  background: var(--bg-hover);
+  border-color: var(--border-subtle);
+}
+
+.shortcut-row.is-static:hover .tool-row-name {
+  color: var(--text-secondary);
+}
+
+.shortcut-keys {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 0.1875rem 0.375rem;
+  white-space: nowrap;
+}
+
 @media (max-width: 560px) {
   .categories-grid { grid-template-columns: 1fr; }
-}
-
-/* Tools Grid - Compact */
-.category-section {
-  margin-bottom: 1.5rem;
-}
-
-/* Hardcoded #6B7280 / #9CA3AF here duplicated --text-tertiary in both themes
-   and the literal rgba borders duplicated --border-subtle. */
-.category-section .section-title {
-  font-size: var(--text-md) !important;
-  font-weight: var(--weight-medium) !important;
-  letter-spacing: var(--tracking-normal);
-  color: var(--text-tertiary);
-  margin: 0 0 var(--space-4) 0;
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--border-subtle);
-  line-height: var(--leading-normal);
-  text-transform: none;
 }
 
 .section-description {
@@ -921,98 +993,78 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   letter-spacing: var(--tracking-normal);
 }
 
-/* Search results. 130px tracks clipped the two-line description on most
-   cards ("Export Markdown to DOCX, PDF, or…" is the whole point of that
-   tool), so the grid was optimised for fitting rather than for reading. */
+/* Search results.
+   Multi-column so five results do not stretch into a five-across band with a
+   void beside them, and 22rem tracks because these rows carry a description
+   as well as a name. */
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-1);
 }
 
-@media (max-width: 768px) {
-  .tools-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 0.25rem;
-  }
-
-  .category-section {
-    margin-bottom: 1.25rem;
-  }
-
-  .tool-card {
-    padding: 1rem 0.5rem 0.875rem !important;
-  }
-
-  .tool-icon-wrapper {
-    width: 52px !important;
-    height: 52px !important;
-    margin-bottom: 0.625rem !important;
-    border-radius: var(--radius-lg) !important;
-  }
-
-  .tool-icon-wrapper svg {
-    width: 26px !important;
-    height: 26px !important;
-  }
-
-  .tool-card-name {
-    font-size: var(--text-xs);
-  }
+@media (max-width: 560px) {
+  .tools-grid { grid-template-columns: 1fr; }
 }
 
-/* Tool Cards — squircle icon, soft colored bg, spring hover.
-   This is a <button>, so it needs the usual UA-style reset. */
+/* A search result is the same object as a browse row — see the note on
+   <ToolCard>. It was a centred 60px-icon tile, which made typing swap the
+   page's entire visual language. Same chip, same alignment, same hover; the
+   description and category are the only additions, and they are what a
+   result torn out of its section needs to stay legible. */
 .tool-card {
   appearance: none;
   font: inherit;
   color: inherit;
-  text-align: center;
+  text-align: left;
   width: 100%;
   background: transparent;
   border: 1px solid transparent;
-  padding: 1.25rem 0.75rem 1rem;
+  padding: var(--space-2) var(--space-2-5);
   cursor: pointer;
   position: relative;
-  overflow: visible;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  border-radius: var(--radius-lg);
-  box-shadow: none;
-  min-height: 0;
+  gap: var(--space-3);
+  border-radius: var(--radius-md);
+  min-height: var(--control-h-lg);
   transition:
-    background 0.2s var(--ease-out),
-    border-color 0.2s var(--ease-out),
-    transform 0.35s var(--ease-spring),
-    box-shadow 0.3s var(--ease-out);
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .tool-card:hover {
-  background: var(--bg-secondary);
-  border-color: var(--border-subtle);
-  transform: translateY(-2px);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 10px 24px rgba(0, 0, 0, 0.06);
+  background: var(--bg-hover);
 }
 
-[data-theme="dark"] .tool-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    0 10px 28px rgba(0, 0, 0, 0.4);
+.tool-card:hover .tool-row-icon {
+  color: var(--accent-ink);
+  background: var(--accent-surface);
+  border-color: var(--accent-border);
 }
 
-/* Nine literal greys across these two states re-derived --text-tertiary,
-   --bg-hover and --border-subtle by hand, once per theme. Tokens resolve per
-   theme already, so the light/dark pairs collapse to single rules. */
+/* Category, as quiet context. Hidden below the width where the name and
+   description already fill the row. */
+.tool-card-category {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .tool-card-category { display: none; }
+}
+
+/* The "Soon" badge sits inline at the end of the row now. It was absolutely
+   positioned into the top-right corner of a tall centred tile; in a 44px row
+   that corner is on top of the tool's own name. */
 .tool-badge {
-  position: absolute;
-  top: var(--space-2-5);
-  right: var(--space-2-5);
+  margin-left: auto;
+  flex-shrink: 0;
   background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   color: var(--text-tertiary);
@@ -1021,23 +1073,14 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 .tool-card.coming-soon {
   cursor: not-allowed;
   opacity: 0.6;
-  background: var(--bg-hover);
-  border-color: var(--border-subtle);
 }
 
 .tool-card.coming-soon:hover {
-  transform: none;
-  box-shadow: none;
-  border-color: var(--border-subtle);
+  background: transparent;
 }
 
-.tool-card.coming-soon .tool-icon-wrapper svg {
-  opacity: 0.4;
-}
-
-.tool-card.coming-soon:hover .tool-icon-wrapper {
-  transform: none;
-  color: var(--text-secondary);
+.tool-card.coming-soon:hover .tool-row-icon {
+  color: var(--text-tertiary);
   background: var(--bg-hover);
   border-color: var(--border-subtle);
 }
@@ -1046,101 +1089,40 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   color: var(--text-tertiary);
 }
 
-/* Tool icon container */
-.tool-icon-wrapper {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Icons were 28 different hues, one per tool, encoding nothing. They now
-     rest neutral and pick up the accent on hover, so colour marks the thing
-     you are pointing at rather than decorating all 45 at once. */
-  color: var(--text-secondary);
-  background: var(--bg-hover);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  transition:
-    transform 0.4s var(--ease-spring),
-    background 0.25s var(--ease-out),
-    box-shadow 0.3s var(--ease-out);
-  flex-shrink: 0;
-  margin-bottom: 0.875rem;
-  position: relative;
-  overflow: hidden;
-}
-
-[data-theme="dark"] .tool-icon-wrapper {
-  background: color-mix(in srgb, currentColor 22%, transparent);
-}
-
-/* Subtle glossy highlight — top-left to bottom-right */
-
-.tool-icon-wrapper svg {
-  width: 30px;
-  height: 30px;
-  transition: transform 0.4s var(--ease-spring);
-  color: inherit;
-  stroke-width: 1.75;
-  position: relative;
-  z-index: 1;
-}
-
-.tool-card:hover .tool-icon-wrapper {
-  transform: scale(1.06);
-  color: var(--accent-ink);
-  background: var(--accent-light);
-  border-color: var(--accent);
-}
-
-.tool-card:hover .tool-icon-wrapper svg {
-  transform: scale(1.05);
-}
+/* The 60px `.tool-icon-wrapper` tile and the `.category-section` /
+   `.section-title` pair were removed with the centred card and its section
+   heading — nothing renders either class any more. */
 
 .tool-info {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: center;
-  width: 100%;
-  min-height: 0;
+  gap: var(--space-0-5);
+  min-width: 0;
+  text-align: left;
 }
 
 .tool-card-name {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   margin: 0;
   font-weight: var(--weight-medium);
   letter-spacing: var(--tracking-normal);
   color: var(--text-primary);
-  line-height: var(--leading-snug);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  transition: color 0.2s var(--ease-out);
+  line-height: var(--leading-tight);
 }
 
+/* One line, ellipsised. These sit in a fixed-height row beside a name and a
+   category, so a wrapping description would push a single result taller than
+   the ones next to it and break the row rhythm — which is exactly what the
+   two-line clamp used to do. */
 .tool-description {
-  font-size: var(--text-2xs);
-  color: var(--text-secondary);
-  line-height: var(--leading-snug);
-  margin: 0.25rem 0 0;
-  text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  line-height: var(--leading-tight);
+  margin: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-/* These were three literal greys (#E5E7EB / #1F2937) that re-stated
-   --text-primary per theme, and the hover value was darker than the resting
-   one in light mode and identical to it in dark — so "hover" meant two
-   different things depending on the theme. */
-.tool-card:hover .tool-card-name {
-  color: var(--text-primary);
-}
-
-/* Status Badge - Removed, using tool-badge instead */
 
 /* ── Tools search bar ───────────────────────────────────────────── */
 .tools-search-bar {
@@ -1236,15 +1218,64 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   white-space: nowrap;
 }
 
+/* Empty state. Was a single grey sentence floating in 3rem of padding —
+   it named the problem and offered nothing to do about it. */
 .tools-search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  padding: 3rem 1rem;
-  color: var(--text-secondary);
-  font-size: var(--text-md);
+  padding: clamp(2.5rem, 6vw, 4rem) var(--space-4);
 }
 
-.tools-search-empty strong {
+.tools-search-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-lg);
+  color: var(--text-tertiary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+}
+
+.tools-search-empty-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+.tools-search-empty-hint {
+  margin: 0 0 var(--space-5);
+  max-width: 42ch;
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--text-tertiary);
+}
+
+/* The example queries are terms to type, so they are set in the font the
+   search field will echo them back in. */
+.tools-search-empty-hint em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  color: var(--text-secondary);
+}
+
+.tools-search-empty-action {
+  background: var(--bg-secondary);
+  border-color: var(--border-interactive);
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.tools-search-empty-action:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-border);
 }
 
 /* Tool View */
@@ -1530,15 +1561,15 @@ html {
   }
 }
 
-/* Performance optimizations */
-.tool-card,
-.tool-icon-wrapper,
-.theme-toggle,
-.back-button,
-.convert-button,
-.clear-button {
-  will-change: transform;
-}
+/* `will-change: transform` was declared on six selectors here, permanently.
+   It is a hint to promote an element to its own compositing layer and hold it
+   there for the life of the page — worth paying for something that is about
+   to animate, and pure cost for anything that is not. Of the six, two classes
+   no longer exist (.tool-icon-wrapper, .convert-button/.clear-button were
+   removed with the layouts that used them) and .tool-card and .back-button no
+   longer transform at all. Nothing here needs the hint, so it is gone rather
+   than trimmed: these are hover transitions on at most a couple of elements
+   at a time, which the compositor handles without being told in advance. */
 
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
@@ -1683,6 +1714,14 @@ html {
    Modern CSS (2025) - Advanced Features
    ============================================ */
 
+/* Anything a hash can point at has to clear the sticky header, or the
+   heading it names ends up underneath the bar that is covering it. Declared
+   once, against the same token that sets the header's height, rather than as
+   a hand-tuned offset inside the scrolling code. */
+:target {
+  scroll-margin-top: calc(var(--header-height) + var(--space-6));
+}
+
 /* Modern focus-visible for better accessibility */
 :focus-visible {
   /* --focus-color, not --accent: the gold accent only reaches ~2.2:1 against
@@ -1782,6 +1821,9 @@ html {
 .main-content.tools-page {
   position: relative;
   isolation: isolate;
+  /* The two intervals the home page is built from — see .home-hero. */
+  --hero-gap: clamp(1.75rem, 3.5vw, 2.5rem);
+  --section-gap: clamp(3rem, 6vw, 4.5rem);
 }
 
 .main-content.tools-page::before {
@@ -1798,10 +1840,18 @@ html {
   z-index: -1;
 }
 
+/* Vertical rhythm, deliberately two-speed.
+   The hero, its trust row and the recents rail are one group and sit at one
+   (tight) interval; the step down to the index is roughly double it. They
+   used to be within ~15% of each other — 48/44/56px — which is close enough
+   that the eye reads five loose bands rather than two groups, and the page
+   looked spread out rather than composed. */
 .home-hero {
   max-width: 46rem;
   margin: 0 auto;
-  padding: clamp(2.5rem, 7vw, 5.5rem) 0 clamp(2rem, 4vw, 3rem);
+  /* No bottom padding: whatever follows owns the gap, so the interval does
+     not change depending on whether the recents rail rendered. */
+  padding: clamp(2.5rem, 6vw, 4.5rem) 0 0;
   text-align: center;
 }
 
@@ -1863,7 +1913,7 @@ html {
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
-  margin-top: clamp(2rem, 4vw, 3rem);
+  margin-top: var(--hero-gap);
   padding: 0;
   list-style: none;
 }
@@ -1885,6 +1935,167 @@ html {
   color: var(--accent-ink);
 }
 
+/* ── Entrance motion ────────────────────────────────────────────────
+   The home page arrived fully formed, with no acknowledgement that anything
+   had loaded. A short staggered rise gives the eye an order to read the hero
+   in — eyebrow, headline, promise, the thing you type into — which is the
+   order the copy was written in.
+
+   Deliberately CSS animations rather than a scroll-triggered `opacity: 0`
+   class toggled from JavaScript. This app is prerendered (scripts/prerender.mjs),
+   and a resting state of invisible would mean the prerendered HTML renders
+   blank to anything that reads it before hydration. An animation always
+   settles on its final state whether or not script runs.
+
+   `backwards` fill so the delayed elements hold their start frame instead of
+   flashing in at full opacity and then animating.
+
+   The global prefers-reduced-motion rule collapses these to 0.01ms, which
+   lands on the same final state — so reduced-motion users get the layout
+   instantly rather than a degraded animation. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.home-hero-eyebrow,
+.home-hero-title,
+.home-hero-sub,
+.home-hero .smartpaste,
+.home-hero-trust,
+.home-recents {
+  animation: rise 0.55s var(--ease-out) backwards;
+}
+
+.home-hero-title    { animation-delay: 0.06s; }
+.home-hero-sub      { animation-delay: 0.12s; }
+.home-hero .smartpaste { animation-delay: 0.18s; }
+.home-hero-trust    { animation-delay: 0.24s; }
+.home-recents       { animation-delay: 0.30s; }
+
+/* The index below is a different beat: one gentle fade for the whole grid
+   rather than 45 rows arriving individually, which at this density would
+   read as a page struggling to load rather than as motion. */
+.categories-grid {
+  animation: rise 0.5s var(--ease-out) 0.34s backwards;
+}
+
+/* ── "Jump back in" — the returning-visitor rail ────────────────────
+   A quiet row, deliberately. It sits between the hero's claim and the full
+   index, and if it competed with either it would be worse than not being
+   there: its whole value is that the person who wants it recognises it
+   without reading it. */
+.home-recents {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--hero-gap);
+}
+
+.home-recents-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* An <h2>; the global heading scale would put it at 48px. */
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: var(--leading-none);
+  flex-shrink: 0;
+}
+
+.home-recents-title svg {
+  width: 13px;
+  height: 13px;
+  color: var(--accent-ink);
+}
+
+.home-recents-list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.home-recent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h-md);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.home-recent:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.home-recent-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.home-recent:hover .home-recent-icon {
+  color: var(--accent-ink);
+}
+
+/* The tool list declares its icons at size 48 for the card grid. */
+.home-recent-icon svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.75;
+}
+
+@media (max-width: 560px) {
+  /* The rail is a horizontal scroller on phones rather than a four-line
+     wrap — it is a shortcut, and a shortcut that costs four lines of the
+     first screen has stopped being one. */
+  .home-recents {
+    display: block;
+  }
+
+  .home-recents-title {
+    margin-bottom: var(--space-2-5);
+  }
+
+  .home-recents-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Full-bleed so the last chip does not look clipped at the gutter. */
+    margin: 0 calc(var(--page-padding-x) * -1);
+    padding: 0 var(--page-padding-x);
+  }
+
+  .home-recents-list::-webkit-scrollbar { display: none; }
+}
+
 /* ── "All tools" browse header ─────────────────────────────────── */
 .home-browse-header {
   display: flex;
@@ -1892,7 +2103,7 @@ html {
   justify-content: space-between;
   gap: var(--space-5);
   flex-wrap: wrap;
-  margin: clamp(2rem, 5vw, 3.5rem) 0 var(--space-6);
+  margin: var(--section-gap) 0 var(--space-6);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
 }

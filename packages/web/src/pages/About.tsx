@@ -53,7 +53,9 @@ const About = memo(({ totalTools, activeTools, totalCategories }: AboutProps) =>
         </dl>
       </section>
 
-      <section className="about-section">
+      {/* The footer's "Privacy" link lands here — this section *is* the
+          privacy policy, stated as a mechanism rather than as a document. */}
+      <section className="about-section" id="privacy">
         <header className="about-section-header">
           <span className="about-section-eyebrow">The mechanism</span>
           <h2 className="about-section-title">How that actually works</h2>

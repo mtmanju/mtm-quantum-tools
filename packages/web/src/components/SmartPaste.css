@@ -2,41 +2,52 @@
   margin-bottom: 1.25rem;
 }
 
-/* ── Input ─────────────────────────────────────────────────────── */
+/* ── Input ─────────────────────────────────────────────────────────
+   This is the hero's primary control — the one thing the headline is asking
+   the visitor to do — so it has to out-rank the six sample chips beneath it.
+
+   It did not. The box was a 60%-white fill behind a 55%-white *border*,
+   which is a glass recipe written for the four-colour gradient mesh that
+   used to sit behind it. On the neutral #F8F9FA canvas that replaced the
+   mesh, a white border on near-white is no border: the control had no
+   visible edge in light mode and read as a caption rather than a field.
+
+   A real surface, a real border, and a resting elevation instead — the
+   affordance now comes from contrast rather than from blur. */
 .smartpaste-box {
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
-  padding: 0.75rem 0.875rem;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  gap: var(--space-3);
+  padding: var(--space-3-5) var(--space-4);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-interactive);
   border-radius: var(--radius-lg);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--elevation-2);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.smartpaste-box:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--elevation-3);
 }
 
 [data-theme="dark"] .smartpaste-box {
-  background: var(--bg-secondary);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 8px 28px rgba(0, 0, 0, 0.3);
+  background: var(--bg-elevated);
+  border-color: var(--border-medium);
 }
 
-.smartpaste-box:focus-within {
+.smartpaste-box:focus-within,
+[data-theme="dark"] .smartpaste-box:focus-within {
   border-color: var(--focus-color);
-  box-shadow: var(--focus-ring), 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--focus-ring), var(--elevation-3);
 }
 
 .smartpaste-icon {
   color: var(--accent-ink);
   flex-shrink: 0;
-  margin-top: 0.1875rem;
+  margin-top: 0.125rem;
 }
 
 .smartpaste-input {

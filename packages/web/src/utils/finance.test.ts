@@ -220,17 +220,29 @@ describe('calculateInvestmentReturn', () => {
 
 describe('formatting', () => {
   it('uses the Indian grouping system', () => {
-    expect(formatCurrency(5_000_000)).toBe('₹ 50,00,000')
-    expect(formatCurrency(1_234.5)).toBe('₹ 1,234.5')
+    expect(formatCurrency(5_000_000)).toBe('₹ 50,00,000.00')
+    expect(formatCurrency(1_234.5)).toBe('₹ 1,234.50')
+  })
+
+  /**
+   * The precision used to follow the value, so a row of result tiles could
+   * show 2, 1 and 0 decimal places side by side — and both the on-screen
+   * tabular-nums alignment and the padStart-aligned schedule columns depend
+   * on it not doing that.
+   */
+  it('pads every amount to two decimal places', () => {
+    expect(formatCurrency(50)).toBe('₹ 50.00')
+    expect(formatCurrency(5_413_878.4)).toBe('₹ 54,13,878.40')
+    expect(formatCurrency(43_391.156)).toBe('₹ 43,391.16')
   })
 
   it('keeps the sign outside the symbol', () => {
-    expect(formatCurrency(-2_500)).toBe('-₹ 2,500')
+    expect(formatCurrency(-2_500)).toBe('-₹ 2,500.00')
   })
 
   it('degrades safely on non-finite input', () => {
-    expect(formatCurrency(NaN)).toBe('₹ 0')
-    expect(formatCurrency(Infinity)).toBe('₹ 0')
+    expect(formatCurrency(NaN)).toBe('₹ 0.00')
+    expect(formatCurrency(Infinity)).toBe('₹ 0.00')
     expect(formatPercentage(NaN)).toBe('0%')
   })
 
