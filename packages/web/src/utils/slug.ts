@@ -37,9 +37,25 @@ export const textToSlug = (text: string, separator: string = '-'): SlugResult =>
   }
 
   try {
+    /**
+     * Fold accents to their base letters before stripping.
+     *
+     * `[^\w\s-]` deletes anything outside ASCII word characters, so accented
+     * letters were dropped rather than transliterated: "Ünïcödé Tëxt" slugged
+     * to "ncd-txt" — four letters silently deleted, and a URL that no longer
+     * resembles its title. Any non-English input degraded the same way.
+     *
+     * NFD splits a composed letter into its base plus a combining mark, and
+     * the Unicode mark range removes the marks, so ü becomes u and é becomes
+     * e. Scripts with no ASCII equivalent (Greek, Cyrillic, CJK) still have
+     * nothing to fold to and are stripped as before — but they now fail
+     * loudly via the empty-slug check rather than silently losing letters.
+     */
     const slug = text
       .toLowerCase()
       .trim()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
       .replace(/[^\w\s-]/g, '') // Remove special characters
       .replace(/[\s_]+/g, separator) // Replace spaces and underscores with separator
       .replace(new RegExp(`${separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}+`, 'g'), separator) // Replace multiple separators with single separator

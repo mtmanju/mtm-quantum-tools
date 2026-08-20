@@ -33,40 +33,34 @@ export const encodeHtmlEntities = (text: string): HtmlEntityResult => {
   }
 
   try {
-    const encoded = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/\$/g, '&#36;')
-      .replace(/\//g, '&#47;')
-      .replace(/\\/g, '&#92;')
-      .replace(/`/g, '&#96;')
-      .replace(/=/g, '&#61;')
-      .replace(/!/g, '&#33;')
-      .replace(/@/g, '&#64;')
-      .replace(/#/g, '&#35;')
-      .replace(/%/g, '&#37;')
-      .replace(/\^/g, '&#94;')
-      .replace(/\*/g, '&#42;')
-      .replace(/\(/g, '&#40;')
-      .replace(/\)/g, '&#41;')
-      .replace(/\{/g, '&#123;')
-      .replace(/\}/g, '&#125;')
-      .replace(/\[/g, '&#91;')
-      .replace(/\]/g, '&#93;')
-      .replace(/\|/g, '&#124;')
-      .replace(/\+/g, '&#43;')
-      .replace(/-/g, '&#45;')
-      .replace(/:/g, '&#58;')
-      .replace(/;/g, '&#59;')
-      .replace(/,/g, '&#44;')
-      .replace(/\./g, '&#46;')
-      .replace(/\?/g, '&#63;')
-      .replace(/\s/g, (match) => {
-        return match === ' ' ? '&nbsp;' : match
-      })
+    /**
+     * One pass over the input, via a lookup table.
+     *
+     * This was a chain of ~30 `.replace()` calls, and the later ones rewrote
+     * the output of the earlier ones: `;` -> `&#59;` runs after `<` -> `&lt;`,
+     * so every entity already emitted had its terminator mangled. `<` came out
+     * as `&lt&#59;` and `'` as `&&#35&#59;39&#59;`. Every entity the encoder
+     * produced was malformed — the tool never once emitted valid HTML.
+     *
+     * A single regex pass cannot re-enter its own output, which is the only
+     * way to do this correctly.
+     *
+     * The set is the five characters that are significant in HTML text and
+     * attribute contexts, which is what OWASP prescribes for output encoding.
+     * The old chain also encoded `-`, `.`, `,`, `:`, `(`, `)` and friends to
+     * numeric entities, which no HTML context requires and which made the
+     * output unreadable, and turned every space into `&nbsp;` — a
+     * non-breaking space is a different character, so encoding was not
+     * round-trippable through decode.
+     */
+    const HTML_ESCAPES: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }
+    const encoded = text.replace(/[&<>"']/g, char => HTML_ESCAPES[char])
 
     return {
       isValid: true,

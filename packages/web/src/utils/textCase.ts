@@ -7,6 +7,29 @@ export type CaseType = 'lowercase' | 'uppercase' | 'title' | 'sentence' | 'camel
 /**
  * Converts text to different cases
  */
+/**
+ * Split a string into words, including at case boundaries.
+ *
+ * The converters split on `[\s\-_]+` alone, so a camelCase or PascalCase
+ * input was a single word: convertCase('helloWorldFoo', 'snake') returned
+ * 'helloworldfoo' rather than 'hello_world_foo'. Converting camelCase to
+ * snake_case is the main reason a case converter exists, and it was the one
+ * thing this could not do — it only worked on text that was already
+ * space-separated.
+ *
+ * The two boundaries that matter:
+ *   lower|digit -> Upper   parseValue  -> parse Value
+ *   ACRONYM     -> Word    XMLHttp     -> XML Http
+ *
+ * so parseXMLHttpRequest becomes parse / XML / Http / Request.
+ */
+const splitWords = (text: string): string[] =>
+  text
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .split(/[\s\-_]+/)
+    .filter(word => word.length > 0)
+
 export const convertCase = (text: string, caseType: CaseType): string => {
   // Defensive: Handle null/undefined inputs
   if (text == null) return ''
@@ -35,9 +58,7 @@ export const convertCase = (text: string, caseType: CaseType): string => {
         return text.toUpperCase()
 
       case 'title':
-        return text
-          .split(/\s+/)
-          .filter(word => word.length > 0)
+        return splitWords(text)
           .map(word => {
             const firstChar = word.charAt(0)
             if (!firstChar) return word
@@ -52,9 +73,7 @@ export const convertCase = (text: string, caseType: CaseType): string => {
       }
 
       case 'camel':
-        return text
-          .split(/[\s\-_]+/)
-          .filter(word => word.length > 0)
+        return splitWords(text)
           .map((word, index) => {
             if (index === 0) {
               return word.toLowerCase()
@@ -66,9 +85,7 @@ export const convertCase = (text: string, caseType: CaseType): string => {
           .join('')
 
       case 'pascal':
-        return text
-          .split(/[\s\-_]+/)
-          .filter(word => word.length > 0)
+        return splitWords(text)
           .map(word => {
             const firstChar = word.charAt(0)
             if (!firstChar) return word
@@ -77,23 +94,17 @@ export const convertCase = (text: string, caseType: CaseType): string => {
           .join('')
 
       case 'snake':
-        return text
-          .split(/[\s\-_]+/)
-          .filter(word => word.length > 0)
+        return splitWords(text)
           .map(word => word.toLowerCase())
           .join('_')
 
       case 'kebab':
-        return text
-          .split(/[\s\-_]+/)
-          .filter(word => word.length > 0)
+        return splitWords(text)
           .map(word => word.toLowerCase())
           .join('-')
 
       case 'constant':
-        return text
-          .split(/[\s\-_]+/)
-          .filter(word => word.length > 0)
+        return splitWords(text)
           .map(word => word.toUpperCase())
           .join('_')
 
