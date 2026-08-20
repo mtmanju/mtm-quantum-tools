@@ -1,3 +1,20 @@
+/* Inter, self-hosted.
+   
+   The stack this replaces led with 'Aptos', 'Segoe UI Variable' and
+   '-apple-system' — none of which resolve in a Chromium browser on this
+   machine; measured against a deliberately nonexistent family they were
+   byte-identical, so the first four entries of a six-entry stack were doing
+   nothing and every visitor fell through to whatever `system-ui` happened to
+   be. Display tracking tuned to a hundredth of an em against an unknown
+   typeface is tuning against nothing.
+
+   Self-hosted rather than Google Fonts on purpose: the CSP is `font-src
+   'self'`, and a site whose promise is "works offline, nothing leaves your
+   tab" should not open a connection to fonts.gstatic.com to render its own
+   headline. Each subset below is gated by unicode-range, so an English UI
+   downloads only the ~48 KB Latin file. SIL OFL 1.1. */
+@import '@fontsource-variable/inter/wght.css';
+
 /* Reset and base - DO NOT ADD ANY STYLES HERE */
 * {
   margin: 0;

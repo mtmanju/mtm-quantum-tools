@@ -63,6 +63,11 @@
        on every platform that has it. Lead with the OS UI mono instead. */
     --font-mono: ui-monospace, 'SF Mono', 'SFMono-Regular', 'JetBrains Mono', 'Fira Code',
     Menlo, Monaco, 'Cascadia Code', Consolas, monospace;
+    /* One sans stack, defined once. The body rule and the heading rule each
+       carried their own copy of a six-entry list, so they could drift. */
+    --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system,
+      'Segoe UI', Roboto, sans-serif;
+
     --bg-tertiary: var(--bg-hover);
 
     /* Leading scale. Tool CSS had 11 distinct line-heights for what are only
@@ -171,12 +176,25 @@
     --weight-semibold: 600;
     --weight-bold:     700;
 
-    /* Tracking — 5 intents, replacing 16 near-identical values */
-    --tracking-tighter: -0.03em;  /* display / hero */
-    --tracking-tight:  -0.02em;   /* headings */
-    --tracking-normal: -0.01em;   /* body */
-    --tracking-wide:    0.04em;   /* uppercase labels */
-    --tracking-widest:  0.08em;   /* badges */
+    /* Tracking, retuned for Inter.
+       
+       Optical size drives these: a typeface needs progressively tighter
+       tracking as it gets larger, and progressively looser as it gets small.
+       The previous values were a single flat scale applied to whatever font
+       the OS supplied — and since the declared family never resolved, they
+       were tuned against an unknown. Now that Inter is the actual typeface
+       the numbers can mean something.
+
+       --tracking-normal is 0, not -0.01em. Inter is drawn with sidebearings
+       that are already correct at UI sizes; negative tracking at 14px closes
+       the counters and costs legibility for nothing. Body text keeps the
+       spacing its designer intended. */
+    --tracking-display: -0.045em;  /* 48px+ hero */
+    --tracking-tighter: -0.03em;   /* 24-40px display */
+    --tracking-tight:  -0.02em;    /* headings */
+    --tracking-normal:  0;         /* body — Inter needs no help here */
+    --tracking-wide:    0.04em;    /* uppercase labels */
+    --tracking-widest:  0.08em;    /* badges */
 
     /* ── Accent surfaces ────────────────────────────────────────────
        The gold is a 2.2:1 tone. It can carry a *fill* (with dark text on
@@ -342,7 +360,7 @@ body {
      meaning: primary actions, selected state, and status. */
   background-color: var(--bg-primary);
   color: var(--text-primary);
-    font-family: 'Aptos', 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -387,7 +405,7 @@ h5,
 h6,
 .logo-text,
 .stat-value {
-  font-family: 'Aptos', 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--font-sans);
   letter-spacing: var(--tracking-tighter);
   font-weight: var(--weight-semibold);
 
@@ -750,7 +768,7 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: var(--space-2);
+  padding: var(--space-2-5);
   box-shadow: var(--elevation-1);
   transition:
     border-color var(--transition-base),
@@ -780,9 +798,14 @@ h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--weight-semibol
 }
 
 .category-card-title {
-  /* Was 11px uppercase at tracking-widest — legible, but so quiet that the
-     45 tool names below it all outranked their own heading. */
-  font-size: var(--text-sm);
+  /* Third attempt at this, and the first that actually wins.
+     
+     It started as 11px uppercase, was raised to 13px because "the 45 tool
+     names below it all outranked their own heading" — and then stayed
+     outranked, because the rows are 14px. A heading a full step smaller than
+     its own contents is not a heading. 15px against 14px medium rows puts it
+     where it belongs, and the weight difference does the rest. */
+  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-normal);
   text-transform: none;
@@ -1883,7 +1906,7 @@ html {
   font-size: var(--display-lg);
   font-weight: var(--weight-bold);
   line-height: 1.04;
-  letter-spacing: -0.035em;
+  letter-spacing: var(--tracking-display);
   color: var(--text-primary);
   margin: 0 0 var(--space-5);
   text-wrap: balance;
