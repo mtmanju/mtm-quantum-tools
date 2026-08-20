@@ -251,3 +251,38 @@ describe('formatting', () => {
     expect(formatPercentage(8.5, 0)).toBe('9%')
   })
 })
+
+describe('repayment schedule length', () => {
+  /**
+   * The EMI is rounded to the smallest currency unit, so N instalments of it
+   * cannot exactly clear the principal. The residue used to survive the
+   * payoff threshold and spawn a whole extra month — a 20-year loan reported
+   * "241 months" and "-1 months saved" with no extra payment made.
+   */
+  it('amortises in exactly the contractual number of months', () => {
+    expect(calculateLoanRepaymentSchedule(5_000_000, 8.5, 240, 0)).toHaveLength(240)
+    expect(calculateLoanRepaymentSchedule(1_000_000, 10, 120, 0)).toHaveLength(120)
+    expect(calculateLoanRepaymentSchedule(2_500_000, 7.25, 180, 0)).toHaveLength(180)
+    expect(calculateLoanRepaymentSchedule(800_000, 12, 60, 0)).toHaveLength(60)
+  })
+
+  it('clears the balance to exactly zero on the final instalment', () => {
+    const s = calculateLoanRepaymentSchedule(5_000_000, 8.5, 240, 0)
+    expect(s[s.length - 1].closingBalance).toBe(0)
+  })
+
+  it('reports what the final instalment actually collected', () => {
+    // The settled instalment is larger than the nominal EMI by the residue,
+    // so the row must still reconcile against its own columns.
+    const s = calculateLoanRepaymentSchedule(5_000_000, 8.5, 240, 0)
+    const last = s[s.length - 1]
+    expect(last.emi).toBeCloseTo(last.principalPayment + last.interestPayment, 2)
+    expect(last.emi).toBeGreaterThanOrEqual(calculateEMI(5_000_000, 8.5, 240))
+  })
+
+  it('still finishes early when extra payments are made', () => {
+    const withExtra = calculateLoanRepaymentSchedule(5_000_000, 8.5, 240, 10_000)
+    expect(withExtra.length).toBeLessThan(240)
+    expect(withExtra[withExtra.length - 1].closingBalance).toBe(0)
+  })
+})

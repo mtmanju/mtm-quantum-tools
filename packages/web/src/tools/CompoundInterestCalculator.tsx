@@ -7,6 +7,21 @@ import { calculateCompoundInterest, formatCurrency, formatPercentage } from '../
 import { downloadTextFile } from '../utils/file'
 import './CompoundInterestCalculator.css'
 
+/**
+ * Compounding frequencies. Module scope, not component scope: the list is a
+ * constant, but declared inside the component it was a new array every render
+ * and it sat in a useCallback dependency array — so the callback it was meant
+ * to memoise was rebuilt on every keystroke. A constant that never changes
+ * should not be able to invalidate anything.
+ */
+const FREQUENCY_OPTIONS = [
+  { value: '1', label: 'Annually' },
+  { value: '2', label: 'Semi-Annually' },
+  { value: '4', label: 'Quarterly' },
+  { value: '12', label: 'Monthly' },
+  { value: '365', label: 'Daily' },
+] as const
+
 const CompoundInterestCalculator = memo(() => {
   const [principal, setPrincipal] = useState('')
   const [rate, setRate] = useState('')
@@ -45,18 +60,10 @@ const CompoundInterestCalculator = memo(() => {
   const results = calculation.results
   const error = calculation.error
 
-  const frequencyOptions = [
-    { value: '1', label: 'Annually' },
-    { value: '2', label: 'Semi-Annually' },
-    { value: '4', label: 'Quarterly' },
-    { value: '12', label: 'Monthly' },
-    { value: '365', label: 'Daily' }
-  ]
-
   const handleDownload = useCallback(() => {
     if (!results) return
 
-    const frequencyLabel = frequencyOptions.find(opt => opt.value === compoundingFrequency)?.label || 'Monthly'
+    const frequencyLabel = FREQUENCY_OPTIONS.find(opt => opt.value === compoundingFrequency)?.label || 'Monthly'
 
     const report = `Compound Interest Calculator Report
 =====================================
@@ -77,7 +84,7 @@ Generated on: ${new Date().toLocaleString()}
 `
 
     downloadTextFile(report, 'compound-interest-report.txt')
-  }, [results, principal, rate, time, compoundingFrequency, frequencyOptions])
+  }, [results, principal, rate, time, compoundingFrequency])
 
   return (
     <ToolContainer>
@@ -130,7 +137,7 @@ Generated on: ${new Date().toLocaleString()}
               value={compoundingFrequency}
               onChange={(e) => setCompoundingFrequency(e.target.value)}
             >
-              {frequencyOptions.map(opt => (
+              {FREQUENCY_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>

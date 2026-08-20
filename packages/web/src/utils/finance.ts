@@ -196,14 +196,39 @@ export const calculateLoanRepaymentSchedule = (
   for (let month = 1; month <= maxMonths && balance > precisionThreshold; month++) {
     const openingBalance = roundCurrency(balance)
     const interestPayment = roundCurrency(balance * monthlyRate)
-    const principalFromEMI = roundCurrency(Math.min(emi - interestPayment, balance))
-    const effectivePrincipalPayment = roundCurrency(Math.min(principalFromEMI + extraPayment, balance))
-    const closingBalance = roundCurrency(Math.max(0, balance - effectivePrincipalPayment))
-    
+    let principalFromEMI = roundCurrency(Math.min(emi - interestPayment, balance))
+    let effectivePrincipalPayment = roundCurrency(Math.min(principalFromEMI + extraPayment, balance))
+    let closingBalance = roundCurrency(Math.max(0, balance - effectivePrincipalPayment))
+
+    /**
+     * The final contractual instalment settles the rounding residue.
+     *
+     * The EMI is rounded to the currency's smallest unit, so N payments of it
+     * cannot exactly clear the principal — on a 240-month loan of 50,00,000 at
+     * 8.5% the drift leaves ₹1.04 outstanding after the last payment. That is
+     * over the payoff threshold, so the loop ran one more time and produced a
+     * 241st month collecting ₹1.04: the UI reported a 20-year loan as "241
+     * months" and, with no extra payment made, "-1 months saved". Three of
+     * four representative tenures were over by exactly one month.
+     *
+     * Lenders resolve this the same way — the last instalment is adjusted to
+     * whatever clears the account. Bounded by one instalment so it only ever
+     * absorbs rounding drift: a balance larger than that means the loan
+     * genuinely has not amortised, and those months are real.
+     */
+    if (month === tenure && closingBalance > 0 && closingBalance < emi) {
+      principalFromEMI = roundCurrency(principalFromEMI + closingBalance)
+      effectivePrincipalPayment = roundCurrency(effectivePrincipalPayment + closingBalance)
+      closingBalance = 0
+    }
+
     schedule.push({
       month,
+      // The settled final instalment is larger than the nominal EMI by the
+      // residue, so the row has to report what was actually paid or it will
+      // not reconcile against its own principal + interest columns.
+      emi: roundCurrency(interestPayment + effectivePrincipalPayment),
       openingBalance,
-      emi: roundCurrency(emi),
       principalPayment: principalFromEMI,
       interestPayment,
       extraPayment: roundCurrency(extraPayment),

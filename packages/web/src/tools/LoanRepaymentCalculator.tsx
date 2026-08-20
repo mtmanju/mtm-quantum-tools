@@ -72,10 +72,22 @@ const LoanRepaymentCalculator = memo(() => {
     { initialPageSize: 12 }
   )
 
-  // Reset pagination when results change
+  /**
+   * Back to page one whenever the loan inputs change — a schedule for a
+   * different loan should not open halfway down the previous one.
+   *
+   * `reset` is destructured rather than reached through the object. The
+   * dependency array listed `schedulePagination.reset`, but a member
+   * expression is not something the exhaustive-deps rule can track: it wanted
+   * the whole `schedulePagination` object, which is rebuilt every render and
+   * would have fired this effect constantly. Pulling the function out names
+   * the thing the effect actually depends on, and usePagination already wraps
+   * it in useCallback, so it is stable.
+   */
+  const { reset: resetSchedule } = schedulePagination
   useEffect(() => {
-    schedulePagination.reset()
-  }, [principal, rate, tenure, tenureUnit, extraPayment, schedulePagination.reset])
+    resetSchedule()
+  }, [principal, rate, tenure, tenureUnit, extraPayment, resetSchedule])
 
   const handleDownload = useCallback(() => {
     if (!results) return

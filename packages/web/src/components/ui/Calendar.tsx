@@ -44,7 +44,21 @@ const mondayIndex = (jsDay: number) => (jsDay + 6) % 7
  */
 export function Calendar({ value, onSelect, onClose, max, anchor }: CalendarProps) {
   const selected = parseIso(value)
-  const today = new Date()
+  /**
+   * Today, resolved once per mount.
+   *
+   * This was a bare `new Date()` in the render body, which meant a fresh
+   * object every render — and it sat in the dependency array of the `years`
+   * useMemo below, so that memo never once hit its cache: it rebuilt a
+   * 131-element array on every keystroke while looking like it was memoised.
+   *
+   * Fixing the identity also fixes a subtler bug. `today` feeds the "is this
+   * cell today?" comparison, and a value re-read on every render disagrees
+   * with itself across a midnight boundary — the highlight could land on two
+   * different cells within one open picker. One value per mount is both
+   * stable and correct for a picker's lifetime.
+   */
+  const today = useMemo(() => new Date(), [])
   const maxDate = max ? parseIso(max) : null
 
   const [viewYear, setViewYear] = useState(selected?.y ?? today.getFullYear())
