@@ -30,16 +30,10 @@ export const csvToJson = (
   }
   
   try {
-    const lines = csv.split(/\r?\n/)
-    const rows: string[][] = []
-    
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (skipEmptyLines && !trimmed) continue
-      
-      const row = parseCsvLine(trimmed, delimiter)
-      rows.push(row)
-    }
+    const parsed = parseCsvRows(csv, delimiter)
+    const rows = skipEmptyLines
+      ? parsed.filter(row => row.some(field => field.trim() !== ''))
+      : parsed
     
     if (rows.length === 0) {
       return {
@@ -86,32 +80,70 @@ export const csvToJson = (
   }
 }
 
-const parseCsvLine = (line: string, delimiter: string): string[] => {
-  const result: string[] = []
-  let current = ''
+/**
+ * Scan a whole CSV document into rows.
+ *
+ * This replaces a per-line parser that the caller fed with
+ * `csv.split(/\r?\n/)`. Splitting on newlines before knowing which of them
+ * are inside quotes tears a quoted multi-line field in half: RFC 4180's own
+ * example
+ *
+ *     a,b
+ *     "line1
+ *     line2",x
+ *
+ * is one row whose first field contains a newline, but it parsed as two rows
+ * — `{a:"line1"}` and `{a:"line2,x"}` — silently corrupting the data and the
+ * row count. Addresses, notes and descriptions all routinely contain
+ * newlines, so this was not an exotic case.
+ *
+ * A newline is a row terminator only when the scanner is outside quotes;
+ * inside them it is just another character. Everything else the old parser
+ * did — `""` as an escaped quote, delimiters inside quotes treated as data —
+ * is unchanged.
+ */
+const parseCsvRows = (csv: string, delimiter: string): string[][] => {
+  const rows: string[][] = []
+  let row: string[] = []
+  let field = ''
   let inQuotes = false
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    const nextChar = line[i + 1]
-    
+
+  const endField = () => { row.push(field); field = '' }
+  const endRow = () => { endField(); rows.push(row); row = [] }
+
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i]
+
     if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"'
+      // A doubled quote inside a quoted field is a literal quote.
+      if (inQuotes && csv[i + 1] === '"') {
+        field += '"'
         i++
       } else {
         inQuotes = !inQuotes
       }
-    } else if (char === delimiter && !inQuotes) {
-      result.push(current)
-      current = ''
-    } else {
-      current += char
+      continue
     }
+
+    if (!inQuotes) {
+      if (char === delimiter) { endField(); continue }
+      // Accept CRLF, LF and lone CR as terminators; consume CRLF as one.
+      if (char === '\n') { endRow(); continue }
+      if (char === '\r') {
+        if (csv[i + 1] === '\n') i++
+        endRow()
+        continue
+      }
+    }
+
+    field += char
   }
-  
-  result.push(current)
-  return result
+
+  // Whatever is left is the final row, unless the file ended on a newline
+  // and there is nothing pending.
+  if (field !== '' || row.length > 0) endRow()
+
+  return rows
 }
 
 export const jsonToCsv = (json: string, options: CsvToJsonOptions = {}): CsvParseResult => {
