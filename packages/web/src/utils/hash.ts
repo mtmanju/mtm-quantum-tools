@@ -67,11 +67,21 @@ const md5 = (text: string): string => {
     return wordToHexValue
   }
 
-  // Convert string to UTF-8 bytes
+  // Convert string to UTF-8 bytes, as a latin1 string of those bytes.
+  //
+  // Built in chunks rather than `String.fromCharCode(...bytes)`: spreading a
+  // byte array into an argument list overflows the call stack somewhere north
+  // of ~100k arguments, so the single-expression version threw a
+  // RangeError on any input bigger than about 100 KB — and this tool accepts
+  // dropped files.
   const utf8Encode = (str: string): string => {
-    const encoder = new TextEncoder()
-    const bytes = encoder.encode(str)
-    return String.fromCharCode(...bytes)
+    const bytes = new TextEncoder().encode(str)
+    let out = ''
+    const CHUNK = 0x8000
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      out += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+    }
+    return out
   }
 
   const utf8Str = utf8Encode(text)
@@ -89,10 +99,24 @@ const md5 = (text: string): string => {
   // Add padding bit
   x[wordIndex] |= 0x80 << (bytePos * 8)
   
-  // Add length in bits at the end
+  /**
+   * Append the message length, as a 64-bit little-endian bit count.
+   *
+   * The high word was computed as `originalLength >>> 32`. JavaScript's
+   * bitwise operators coerce to 32 bits first, so `n >>> 32` is `n >>> 0` —
+   * it returns n unchanged rather than n's high half. Every digest therefore
+   * had the low half of the bit length written into *both* length words,
+   * corrupting the final block: md5("abc") came out
+   * 499e9a9e5c15f9d49f5eed268839ab62 instead of the RFC 1321 test vector
+   * 900150983cd24fb0d6963f7d28e17f72.
+   *
+   * Division gets the real high word. It is zero for anything under 512 MB,
+   * which is why the shape of the code looked plausible — the value it wrote
+   * was simply never the one it needed.
+   */
   const lengthIndex = (((originalLength + 64) >>> 9) << 4) + 14
   x[lengthIndex] = originalLength & 0xFFFFFFFF
-  x[lengthIndex + 1] = (originalLength >>> 32) & 0xFFFFFFFF
+  x[lengthIndex + 1] = Math.floor(originalLength / 0x100000000)
 
   for (let i = 0; i < x.length; i += 16) {
     const oldA = a
