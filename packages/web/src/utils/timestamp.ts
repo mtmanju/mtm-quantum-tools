@@ -20,6 +20,51 @@ export interface TimestampResult {
 /**
  * Converts a timestamp to human-readable date
  */
+/**
+ * Reject a date the calendar does not contain.
+ *
+ * JavaScript's date parser rolls an out-of-range day *forward* rather than
+ * refusing it: `new Date('2023-02-29')` is 1 March 2023, and
+ * `new Date('2023-04-31')` is 1 May. The converter then reported a valid
+ * timestamp for a date the user never typed — the worst failure mode a
+ * converter has, because the answer looks right. Out-of-range *months* are
+ * rejected by the engine already, which is why only the day slipped through.
+ *
+ * The check is a round trip: parse, then read the components back out and see
+ * whether they still say what the input said. ISO forms are parsed as UTC and
+ * textual forms as local time, so each is compared in its own frame.
+ *
+ * Returns an error message, or null when the date is real.
+ */
+const rejectRolledOverDate = (input: string, parsed: Date): string | null => {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s]|$)/.exec(input)
+  if (iso) {
+    const [, y, m, d] = iso
+    const rolled =
+      parsed.getUTCFullYear() !== Number(y) ||
+      parsed.getUTCMonth() + 1 !== Number(m) ||
+      parsed.getUTCDate() !== Number(d)
+    return rolled ? `${y}-${m}-${d} is not a real calendar date` : null
+  }
+
+  /**
+   * Textual forms — "Feb 30 2023", "30 February 2023". Only the day is
+   * checked, and only when the string carries exactly one number that could
+   * be a day (1-31) alongside a 4-digit year. That is deliberately narrow:
+   * guessing at every locale's date grammar would reject valid input, and a
+   * converter that refuses real dates is worse than one that accepts a typo.
+   */
+  const hasYear = /\b\d{4}\b/.test(input)
+  const dayCandidates = input.replace(/\b\d{4}\b/g, ' ').match(/\b\d{1,2}\b/g)
+  if (hasYear && dayCandidates?.length === 1) {
+    const day = Number(dayCandidates[0])
+    if (day >= 1 && day <= 31 && parsed.getDate() !== day) {
+      return `${input} is not a real calendar date`
+    }
+  }
+  return null
+}
+
 export const timestampToDate = (input: string | number, timezone?: string): TimestampResult => {
   if (!input) {
     return {
@@ -44,6 +89,10 @@ export const timestampToDate = (input: string | number, timezone?: string): Time
             isValid: false,
             error: 'Invalid date format'
           }
+        }
+        const rolled = rejectRolledOverDate(trimmed, date)
+        if (rolled) {
+          return { isValid: false, error: rolled }
         }
         timestamp = date.getTime()
       } else {
