@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { Theme } from '../constants/theme'
 import { COLORS } from '../constants/theme'
 import { ThemeContext, type ThemeContextType } from './theme-context'
+import { readStorage, writeStorage } from '../utils/safeStorage'
 
 interface ThemeProviderProps {
   children: ReactNode
@@ -10,10 +11,20 @@ interface ThemeProviderProps {
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Initialize from localStorage or system preference
-    const savedTheme = localStorage.getItem('theme') as Theme | null
-    if (savedTheme) return savedTheme
-    
+    // Initialize from localStorage or system preference.
+    //
+    // This runs during render of a provider that wraps the entire tree, so an
+    // unguarded read here is the worst possible place for one: with the browser
+    // set to block site data, `localStorage` throws `SecurityError`, the root
+    // error boundary catches it, and its "Reload Page" button re-runs this
+    // exact line — a permanently dead app rather than a one-time failure.
+    //
+    // The stored value is also validated rather than asserted: `as Theme` would
+    // let any string a previous version (or a hand edit) left behind become the
+    // theme, and `data-theme="purple"` matches no stylesheet.
+    const savedTheme = readStorage('theme')
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme
+
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     return prefersDark ? 'dark' : 'light'
   })
@@ -24,7 +35,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   // Update theme
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme)
-    localStorage.setItem('theme', newTheme)
+    writeStorage('theme', newTheme)
     document.documentElement.setAttribute('data-theme', newTheme)
   }, [])
 
@@ -45,7 +56,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     
     const handleChange = (e: MediaQueryListEvent) => {
       // Only auto-switch if user hasn't manually set a preference
-      if (!localStorage.getItem('theme')) {
+      if (!readStorage('theme')) {
         setTheme(e.matches ? 'dark' : 'light')
       }
     }

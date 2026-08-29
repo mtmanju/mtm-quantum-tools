@@ -50,6 +50,19 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
+  /**
+   * Recents are re-read each time the palette opens.
+   *
+   * They live in localStorage, which no dependency array can represent, so
+   * calling readRecentTools() straight from the results memo meant its deps
+   * stayed ('', tools) for the entire session — `tools` is module-level and
+   * close() resets `query` to '' — and the component never unmounts. The memo
+   * therefore kept returning the empty-recents list it built on first open, and
+   * "Recent" only ever appeared after a full page reload. Holding them in state
+   * makes the dependency real rather than something the linter has to be told
+   * to ignore.
+   */
+  const [recents, setRecents] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -59,6 +72,14 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
   if (query !== lastQuery) {
     setLastQuery(query)
     setActiveIndex(0)
+  }
+
+  // Re-read recents on the closed→open transition, during render for the same
+  // reason: doing it in an effect would paint one frame of the old list first.
+  const [lastOpen, setLastOpen] = useState(open)
+  if (open !== lastOpen) {
+    setLastOpen(open)
+    if (open) setRecents(readRecentTools())
   }
 
   /**
@@ -73,7 +94,6 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
     if (query.trim()) {
       return { results: searchTools(tools, query), recentCount: 0 }
     }
-    const recents = readRecentTools()
     const byId = new Map(tools.map(t => [t.id, t]))
     const recentTools = recents.map(id => byId.get(id)).filter((t): t is PaletteTool => !!t)
     const rest = tools.filter(t => !recents.includes(t.id))
@@ -81,7 +101,7 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
       results: [...recentTools, ...rest].slice(0, MAX_IDLE_RESULTS),
       recentCount: Math.min(recentTools.length, MAX_IDLE_RESULTS),
     }
-  }, [query, tools])
+  }, [query, tools, recents])
 
   const close = useCallback(() => {
     setOpen(false)

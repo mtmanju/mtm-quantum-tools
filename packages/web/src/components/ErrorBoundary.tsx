@@ -3,7 +3,13 @@ import './ErrorBoundary.css'
 
 interface ErrorBoundaryProps {
   children: ReactNode
-  fallback?: ReactNode
+  /**
+   * Replacement UI. Given a function, it receives the error and a `reset` that
+   * clears the boundary in place — which a scoped boundary needs, since
+   * reloading the whole page to recover from one broken panel throws away
+   * everything the user had typed everywhere else.
+   */
+  fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode)
 }
 
 interface ErrorBoundaryState {
@@ -28,8 +34,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error('Error caught by boundary:', error, errorInfo)
   }
 
+  reset = () => {
+    this.setState({ hasError: false, error: null })
+  }
+
   render() {
     if (this.state.hasError) {
+      if (typeof this.props.fallback === 'function') {
+        return this.props.fallback(this.state.error ?? new Error('Unknown error'), this.reset)
+      }
       if (this.props.fallback) {
         return this.props.fallback
       }

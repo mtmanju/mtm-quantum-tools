@@ -63,6 +63,7 @@ import { useTheme } from './context/useTheme'
 import { useDocumentMeta } from './hooks/useDocumentMeta'
 import { useHashScroll } from './hooks/useHashScroll'
 import { useScrollPosition } from './hooks/useScrollPosition'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { readRecentTools, recordRecentTool } from './utils/recentTools'
 import { searchTools } from './utils/search'
 import { MOD_KEY, openCommandPalette } from './utils/commandPalette'
@@ -811,7 +812,33 @@ function App() {
 
             {selectedTool && selectedTool.component ? (
               <div className="tool-workspace">
-                <ToolRenderer component={selectedTool.component} />
+                {/*
+                  Scoped so one broken tool stays one broken panel.
+                  The only boundary used to be the root one in main.tsx, above
+                  BrowserRouter — so a throw inside any single tool replaced the
+                  header, footer, palette and all 45 routes with a full-page
+                  error that navigation could not clear, and whose only control
+                  was a full page reload.
+                  Keyed by tool id so moving to another tool remounts it clean.
+                */}
+                <ErrorBoundary
+                  key={selectedTool.id}
+                  fallback={(error, reset) => (
+                    <div className="tool-not-found">
+                      <h2>This tool hit an error</h2>
+                      <p>{selectedTool.name} couldn't be displayed. Other tools still work.</p>
+                      <details className="error-details">
+                        <summary>Error details</summary>
+                        <pre>{error.message}</pre>
+                      </details>
+                      <button className="back-button" onClick={reset}>
+                        <span>Try again</span>
+                      </button>
+                    </div>
+                  )}
+                >
+                  <ToolRenderer component={selectedTool.component} />
+                </ErrorBoundary>
               </div>
             ) : !selectedTool && (
               <div className="tool-not-found">
