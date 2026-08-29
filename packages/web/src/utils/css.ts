@@ -1,9 +1,34 @@
+import { segmentSource, type Span } from './segment'
+
 export interface CssFormatResult {
   isValid: boolean
   formatted?: string
   error?: string
 }
 
+/**
+ * An unquoted `url(...)` is a single token: CSS Syntax L3 forbids whitespace
+ * inside it, so a formatter that inserts a newline after the `;` of a
+ * `data:image/svg+xml;base64,...` URI produces a declaration the browser drops.
+ * The quoted form needs no special case — the quote rules already cover it.
+ */
+const CSS_URL = /url\(\s*[^)'"]*\)/i
+
+const CSS_SPANS = {
+  quotes: ['"', "'"],
+  blockComment: ['/*', '*/'],
+  rawRegions: [CSS_URL],
+} as const
+
+const cssSpans = (css: string): Span[] => segmentSource(css, CSS_SPANS)
+
+/**
+ * Formats CSS with one declaration per line.
+ *
+ * Structural characters are only acted on inside `code` spans, so a `{`, `;` or
+ * `}` appearing inside a string or a `url()` no longer triggers a line break in
+ * the middle of a value.
+ */
 export const formatCss = (css: string, indent: number = 2): CssFormatResult => {
   if (!css.trim()) {
     return {
@@ -17,74 +42,44 @@ export const formatCss = (css: string, indent: number = 2): CssFormatResult => {
     let indentLevel = 0
     const indentStr = ' '.repeat(indent)
     let inRule = false
-    let inComment = false
-    let inString = false
-    let stringChar = ''
 
-    for (let i = 0; i < css.length; i++) {
-      const char = css[i]
-      const nextChar = css[i + 1]
-      const prevChar = css[i - 1]
+    for (const span of cssSpans(css)) {
+      if (span.kind !== 'code') {
+        formatted += span.text
+        continue
+      }
 
-      if (inComment) {
-        formatted += char
-        if (char === '*' && nextChar === '/') {
-          inComment = false
-          formatted += nextChar
-          i++
+      for (const char of span.text) {
+        if (char === '{') {
+          inRule = true
+          indentLevel++
+          formatted = formatted.trimEnd() + ' {\n' + indentStr.repeat(indentLevel)
+          continue
         }
-        continue
-      }
 
-      if (inString) {
-        formatted += char
-        if (char === stringChar && prevChar !== '\\') {
-          inString = false
+        if (char === '}') {
+          indentLevel = Math.max(0, indentLevel - 1)
+          formatted = formatted.trimEnd() + '\n' + indentStr.repeat(indentLevel) + '}'
+          inRule = false
+          continue
         }
-        continue
-      }
 
-      if (char === '/' && nextChar === '*') {
-        inComment = true
-        formatted += char
-        continue
-      }
-
-      if (char === '"' || char === "'") {
-        inString = true
-        stringChar = char
-        formatted += char
-        continue
-      }
-
-      if (char === '{') {
-        inRule = true
-        formatted += ' {\n'
-        indentLevel++
-        formatted += indentStr.repeat(indentLevel)
-        continue
-      }
-
-      if (char === '}') {
-        indentLevel = Math.max(0, indentLevel - 1)
-        formatted += '\n' + indentStr.repeat(indentLevel) + '}'
-        inRule = false
-        continue
-      }
-
-      if (char === ';') {
-        formatted += ';\n'
-        if (inRule) {
-          formatted += indentStr.repeat(indentLevel)
+        if (char === ';') {
+          formatted = formatted.trimEnd() + ';\n'
+          if (inRule) formatted += indentStr.repeat(indentLevel)
+          continue
         }
-        continue
-      }
 
-      if (char === '\n' || char === '\r') {
-        continue
-      }
+        // Collapse runs of whitespace. Safe here in a way it was not before:
+        // this only ever sees a `code` span, so a run inside a string or a
+        // url() is unreachable.
+        if (/\s/.test(char)) {
+          if (formatted && !/\s$/.test(formatted)) formatted += ' '
+          continue
+        }
 
-      formatted += char
+        formatted += char
+      }
     }
 
     return {
@@ -99,6 +94,22 @@ export const formatCss = (css: string, indent: number = 2): CssFormatResult => {
   }
 }
 
+/**
+ * Minifies CSS.
+ *
+ * Two things this deliberately does not do:
+ *
+ * 1. It never touches a string, comment body, or `url()` — the previous regex
+ *    chain applied `/\/\*[\s\S]*?\*\//g` to the whole sheet, so
+ *    a `content` string holding comment delimiters lost its entire value, and the
+ *    punctuation rules rewrote `content:"a; b"` to `content:"a;b"`.
+ *
+ * 2. It does not strip whitespace around `+` or `-`. Per CSS Values L3 §8.1
+ *    those operators *must* be surrounded by whitespace inside `calc()`, so
+ *    `calc(100% + 20px)` → `calc(100%+20px)` is a parse error that costs the
+ *    whole declaration. Telling a selector combinator apart from an arithmetic
+ *    operator needs a value parser; a few bytes is the cheaper trade.
+ */
 export const minifyCss = (css: string): CssFormatResult => {
   if (!css.trim()) {
     return {
@@ -108,18 +119,26 @@ export const minifyCss = (css: string): CssFormatResult => {
   }
 
   try {
-    const minified = css
-      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
-      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .replace(/\s*\{\s*/g, '{') // Remove spaces around {
-      .replace(/\s*\}\s*/g, '}') // Remove spaces around }
-      .replace(/\s*:\s*/g, ':') // Remove spaces around :
-      .replace(/\s*;\s*/g, ';') // Remove spaces around ;
-      .replace(/\s*,\s*/g, ',') // Remove spaces around ,
-      .replace(/\s*>\s*/g, '>') // Remove spaces around >
-      .replace(/\s*\+\s*/g, '+') // Remove spaces around +
-      .replace(/\s*~\s*/g, '~') // Remove spaces around ~
-      .replace(/;\}/g, '}') // Remove ; before }
+    // A dropped comment leaves a space so adjacent tokens cannot fuse; merging
+    // neighbouring code lets that space collapse with the surrounding run.
+    const spans: Span[] = []
+    for (const span of cssSpans(css)) {
+      const next: Span = span.kind === 'comment' ? { kind: 'code', text: ' ' } : span
+      const prev = spans[spans.length - 1]
+      if (prev && prev.kind === 'code' && next.kind === 'code') prev.text += next.text
+      else spans.push({ ...next })
+    }
+
+    const minified = spans
+      .map(span =>
+        span.kind === 'code'
+          ? span.text
+              .replace(/\s+/g, ' ')
+              .replace(/\s*([{}:;,>])\s*/g, '$1')
+              .replace(/;\}/g, '}')
+          : span.text
+      )
+      .join('')
       .trim()
 
     return {
@@ -143,36 +162,20 @@ export const validateCss = (css: string): CssFormatResult => {
   }
 
   try {
-    // Basic validation - check for balanced braces
     let braceCount = 0
-    let inString = false
-    let stringChar = ''
 
-    for (let i = 0; i < css.length; i++) {
-      const char = css[i]
-      const prevChar = css[i - 1]
-
-      if (inString) {
-        if (char === stringChar && prevChar !== '\\') {
-          inString = false
-        }
-        continue
-      }
-
-      if (char === '"' || char === "'") {
-        inString = true
-        stringChar = char
-        continue
-      }
-
-      if (char === '{') {
-        braceCount++
-      } else if (char === '}') {
-        braceCount--
-        if (braceCount < 0) {
-          return {
-            isValid: false,
-            error: 'Unmatched closing brace'
+    for (const span of cssSpans(css)) {
+      if (span.kind !== 'code') continue
+      for (const char of span.text) {
+        if (char === '{') {
+          braceCount++
+        } else if (char === '}') {
+          braceCount--
+          if (braceCount < 0) {
+            return {
+              isValid: false,
+              error: 'Unmatched closing brace'
+            }
           }
         }
       }
@@ -195,4 +198,3 @@ export const validateCss = (css: string): CssFormatResult => {
     }
   }
 }
-
