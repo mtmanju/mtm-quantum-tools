@@ -85,7 +85,9 @@ export const decodeJwt = (token: string): JwtDecodeResult => {
  * Uses precise timestamp comparison
  */
 export const isJwtExpired = (payload: JwtPayload): boolean => {
-  if (!payload.exp || typeof payload.exp !== 'number') return false
+  // `!payload.exp` was falsy for exp: 0 — a valid NumericDate (1970-01-01)
+  // that is very much in the past — so such a token read as never expiring.
+  if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) return false
   // JWT exp is in seconds, Date.now() is in milliseconds
   const expirationTime = payload.exp * 1000
   const currentTime = Date.now()
@@ -96,7 +98,7 @@ export const isJwtExpired = (payload: JwtPayload): boolean => {
  * Gets time until expiration in seconds
  */
 export const getTimeUntilExpiration = (payload: JwtPayload): number | null => {
-  if (!payload.exp || typeof payload.exp !== 'number') return null
+  if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) return null
   const expirationTime = payload.exp * 1000
   const currentTime = Date.now()
   const timeRemaining = Math.floor((expirationTime - currentTime) / 1000)

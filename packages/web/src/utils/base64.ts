@@ -39,157 +39,92 @@ export const decodeFromBase64 = (base64: string): Base64Result => {
       }
     }
 
-    // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-    let base64Data = base64.includes(',') ? base64.split(',')[1] : base64
-    
-    // Store original length for debugging
-    const originalLength = base64Data.length
-    
-    // Remove all whitespace (spaces, newlines, tabs, etc.)
-    base64Data = base64Data.replace(/\s+/g, '')
-    
-    // Remove any characters that aren't valid Base64 (A-Z, a-z, 0-9, +, /, =)
-    // This handles cases where invalid characters might have been introduced
-    // We'll be more lenient and just remove invalid chars instead of rejecting
-    const validBase64Chars = /[A-Za-z0-9+/=]/g
-    const matches = base64Data.match(validBase64Chars)
-    
-    if (!matches || matches.length === 0) {
-      return {
-        isValid: false,
-        error: 'Invalid Base64 format: no valid Base64 characters found'
-      }
-    }
-    
-    // Reconstruct the string with only valid characters
-    base64Data = matches.join('')
-    
-    // Check if empty after cleaning
+    const trimmed = base64.trim()
+
+    /**
+     * Strip a data-URL prefix only when it really is one.
+     *
+     * This used to be `base64.includes(',') ? base64.split(',')[1] : base64`,
+     * so a comma anywhere truncated the input to whatever followed it:
+     * `Zm9v,YmFy` decoded to "bar" and was reported valid.
+     */
+    const dataUrl = /^data:[^,]*;base64,/i.exec(trimmed)
+    const withoutPrefix = dataUrl ? trimmed.slice(dataUrl[0].length) : trimmed
+
+    // Whitespace is layout, not data: MIME and PEM wrap Base64 at fixed widths.
+    const base64Data = withoutPrefix.replace(/\s+/g, '')
+
     if (!base64Data) {
       return {
         isValid: false,
-        error: 'Invalid Base64 format: empty after cleaning'
+        error: 'Invalid Base64 format: no data to decode'
       }
     }
-    
-    // CRITICAL: Remove any '=' characters that appear in the middle of the string
-    // Base64 padding can ONLY appear at the end (0-2 characters)
-    // If '=' appears in the middle, it's invalid and must be removed
-    const equalsInMiddle = base64Data.match(/=(?!=*$)/g)
-    if (equalsInMiddle && equalsInMiddle.length > 0) {
-      // Remove all '=' characters that aren't at the end
-      const lastEquals = base64Data.match(/=+$/)
-      const paddingAtEnd = lastEquals ? lastEquals[0] : ''
-      base64Data = base64Data.replace(/=/g, '') + paddingAtEnd
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Removed ${equalsInMiddle.length} invalid '=' characters from middle of Base64 string`)
-      }
-    }
-    
-    // Log removed characters for debugging (in development)
-    if (process.env.NODE_ENV === 'development' && base64Data.length !== originalLength) {
-      const removed = base64.match(/[^A-Za-z0-9+/=\s,]/g)
-      if (removed && removed.length > 0) {
-        console.log('Removed invalid characters from Base64:', [...new Set(removed)].slice(0, 20).join(', '))
-      }
-    }
-    
-    // Validate Base64 format - allow padding characters at the end
-    // Base64 can only contain A-Z, a-z, 0-9, +, /, and = for padding
-    // After cleaning, this should always pass, but validate anyway
-    // Use a more lenient pattern that allows empty string (edge case)
-    const base64Pattern = /^[A-Za-z0-9+/]*={0,2}$/
-    if (!base64Pattern.test(base64Data)) {
-      // This should rarely happen after cleaning, but check for edge cases
-      // Find any remaining invalid characters
-      const invalidChars = base64Data.match(/[^A-Za-z0-9+/=]/g)
-      if (invalidChars && invalidChars.length > 0) {
-        const uniqueInvalid = [...new Set(invalidChars)].slice(0, 10) // Limit to first 10 for display
-        const charInfo = uniqueInvalid.map(c => {
-          const code = c.charCodeAt(0)
-          return `'${c}' (U+${code.toString(16).toUpperCase().padStart(4, '0')})`
-        }).join(', ')
-        return {
-          isValid: false,
-          error: `Invalid Base64 format: found invalid characters after cleaning: ${charInfo}${invalidChars.length > 10 ? ` (and ${invalidChars.length - 10} more)` : ''}. This may indicate the Base64 string is corrupted.`
-        }
-      }
-      // If pattern doesn't match but no invalid chars found, might be a padding issue
-      // Check if it's just a padding problem
-      if (base64Data.includes('=') && !/={0,2}$/.test(base64Data)) {
-        return {
-          isValid: false,
-          error: 'Invalid Base64 format: padding characters (=) must only appear at the end (0-2 characters)'
-        }
-      }
-      // Generic fallback - but try to decode anyway if length is valid
-      // Sometimes the pattern fails but the Base64 is actually valid
-      if (base64Data.length > 0 && base64Data.length % 4 === 0) {
-        // Length is valid, try to decode anyway
-        // We'll let the atob() call handle the actual validation
-      } else {
-        return {
-          isValid: false,
-          error: `Invalid Base64 format: validation failed. String length: ${base64Data.length} (must be multiple of 4). Please ensure the Base64 string is complete and properly formatted.`
-        }
-      }
-    }
-    
-    // Fix padding - Base64 padding can only be 0, 1, or 2 '=' characters at the end
-    // Remove ALL padding first, then recalculate the correct amount based on data length
-    let cleanBase64 = base64Data.replace(/=+$/, '')
-    const dataLength = cleanBase64.length
-    
-    // Calculate how much padding is needed to make length a multiple of 4
-    const needsPadding = dataLength % 4
-    
-    // Add the correct amount of padding (0, 1, or 2 characters)
-    if (needsPadding > 0) {
-      cleanBase64 = cleanBase64 + '='.repeat(4 - needsPadding)
-    }
-    
-    // Final check - ensure length is now a multiple of 4
-    if (cleanBase64.length % 4 !== 0) {
+
+    /**
+     * Reject characters outside the alphabet; do not delete them.
+     *
+     * RFC 4648 §3.3 is explicit that a decoder MUST reject data containing
+     * characters outside the base alphabet. This previously stripped them and
+     * carried on, so `aGVsbG8h!!!` decoded to "hello!" and reported success — a
+     * corrupted or partial paste produced plausible output with no indication
+     * that anything had been discarded, which is exactly what a decoder exists
+     * to catch.
+     */
+    const invalid = base64Data.match(/[^A-Za-z0-9+/=]/g)
+    if (invalid) {
+      const unique = [...new Set(invalid)].slice(0, 10)
+      const detail = unique
+        .map(c => `'${c}' (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`)
+        .join(', ')
       return {
         isValid: false,
-        error: `Invalid Base64 format: cannot fix length (${cleanBase64.length} chars is not multiple of 4). The string may be truncated or corrupted.`
+        error: `Invalid Base64: contains characters outside the Base64 alphabet: ${detail}${invalid.length > 10 ? ` (and ${invalid.length - 10} more)` : ''}`
       }
     }
+
+    /**
+     * Padding terminates the data; it cannot appear inside it.
+     *
+     * `SGVsbG8=world` used to have the interior `=` spliced out and the halves
+     * concatenated — reported valid, with no decoded text at all. `Zg==Zg==`,
+     * two concatenated encodings of "f", was fused into three garbage bytes.
+     */
+    if (/=[^=]/.test(base64Data)) {
+      return {
+        isValid: false,
+        error: 'Invalid Base64: padding (=) may only appear at the end of the string'
+      }
+    }
+
+    const padding = (/=*$/.exec(base64Data)?.[0] ?? '').length
+    if (padding > 2) {
+      return {
+        isValid: false,
+        error: 'Invalid Base64: at most two padding characters (=) are allowed'
+      }
+    }
+
+    const body = base64Data.slice(0, base64Data.length - padding)
+    const remainder = body.length % 4
+
+    // A remainder of 1 cannot be produced by any input: 4 output characters
+    // encode 3 bytes, so valid lengths leave 0, 2 or 3.
+    if (remainder === 1) {
+      return {
+        isValid: false,
+        error: 'Invalid Base64: truncated or corrupted (invalid length)'
+      }
+    }
+
+    // Unpadded Base64 is common and unambiguous, so the padding is completed
+    // rather than rejected. That adds no data and changes no decoded bytes.
+    const cleanBase64 = remainder === 0 ? body : body + '='.repeat(4 - remainder)
 
     // Try to decode to bytes first to detect file type
     // This is the real validation - if atob() succeeds, the Base64 is valid
     let bytes: Uint8Array
     try {
-      // Double-check the string is clean before decoding
-      // Sometimes there can be edge cases with very large strings
-      const finalCheck = cleanBase64.replace(/[^A-Za-z0-9+/=]/g, '')
-      if (finalCheck.length !== cleanBase64.length) {
-        // Found more invalid chars - use the cleaned version
-        cleanBase64 = finalCheck
-      }
-      
-      // Final padding fix - remove ALL padding and recalculate
-      cleanBase64 = cleanBase64.replace(/=+$/, '') // Remove all existing padding
-      const finalDataLength = cleanBase64.length
-      const finalNeedsPadding = finalDataLength % 4
-      
-      // Add correct padding (0, 1, or 2 characters only)
-      if (finalNeedsPadding > 0) {
-        cleanBase64 = cleanBase64 + '='.repeat(4 - finalNeedsPadding)
-      }
-      
-      // Ensure we never have more than 2 padding characters
-      const finalPaddingMatch = cleanBase64.match(/=+$/)
-      if (finalPaddingMatch && finalPaddingMatch[0].length > 2) {
-        cleanBase64 = cleanBase64.replace(/=+$/, '')
-        const correctedDataLength = cleanBase64.length
-        const correctedNeedsPadding = correctedDataLength % 4
-        if (correctedNeedsPadding > 0) {
-          cleanBase64 = cleanBase64 + '='.repeat(4 - correctedNeedsPadding)
-        }
-      }
-      
       bytes = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0))
     } catch (decodeError) {
       // If atob fails, the Base64 is invalid

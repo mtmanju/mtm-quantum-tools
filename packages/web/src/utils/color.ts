@@ -7,22 +7,39 @@ export interface ColorValue {
 export const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
   const cleaned = hex.replace('#', '').trim()
   
+  // The 3-digit branch had no NaN guard, unlike the 6-digit one below, so
+  // `#zzz` returned {r:NaN,g:NaN,b:NaN} instead of null — and rgbToHex then
+  // turned that into #000000, silently rendering bad input as black.
   if (cleaned.length === 3) {
+    if (!/^[0-9A-Fa-f]{3}$/.test(cleaned)) return null
     const r = parseInt(cleaned[0] + cleaned[0], 16)
     const g = parseInt(cleaned[1] + cleaned[1], 16)
     const b = parseInt(cleaned[2] + cleaned[2], 16)
     return { r, g, b }
   }
   
-  if (cleaned.length === 6) {
+  // 4-digit is 3-digit plus an alpha nibble (CSS Color L4 §5.2); the alpha is
+  // dropped rather than the whole colour being rejected.
+  if (cleaned.length === 4) {
+    if (!/^[0-9A-Fa-f]{4}$/.test(cleaned)) return null
+    return {
+      r: parseInt(cleaned[0] + cleaned[0], 16),
+      g: parseInt(cleaned[1] + cleaned[1], 16),
+      b: parseInt(cleaned[2] + cleaned[2], 16),
+    }
+  }
+
+  // 6-digit, and 8-digit where the trailing pair is alpha.
+  if (cleaned.length === 6 || cleaned.length === 8) {
+    if (!/^[0-9A-Fa-f]+$/.test(cleaned)) return null
     const r = parseInt(cleaned.substring(0, 2), 16)
     const g = parseInt(cleaned.substring(2, 4), 16)
     const b = parseInt(cleaned.substring(4, 6), 16)
-    
+
     if (isNaN(r) || isNaN(g) || isNaN(b)) return null
     return { r, g, b }
   }
-  
+
   return null
 }
 
@@ -141,16 +158,26 @@ export const parseRgb = (rgb: string): { r: number; g: number; b: number } | nul
 }
 
 export const parseHsl = (hsl: string): { h: number; s: number; l: number } | null => {
-  const match = hsl.match(/(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%/)
+  /**
+   * `(\d+)` could not match a sign or a decimal point, so the minus in
+   * `hsl(-10, 50%, 50%)` fell outside the capture and the hue was read as 10 —
+   * a different colour, returned as though it were the one asked for. It also
+   * rejected `hsl(120, 50.5%, 50%)` outright. CSS Color L4 permits negative and
+   * fractional values in both places; a negative hue is normalised mod 360.
+   */
+  const match = hsl.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%/)
   if (!match) return null
-  
-  const h = parseInt(match[1], 10)
-  const s = parseInt(match[2], 10)
-  const l = parseInt(match[3], 10)
-  
-  if (isNaN(h) || isNaN(s) || isNaN(l)) return null
-  if (h < 0 || h > 360 || s < 0 || s > 100 || l < 0 || l > 100) return null
-  
+
+  const rawH = parseFloat(match[1])
+  const s = parseFloat(match[2])
+  const l = parseFloat(match[3])
+
+  if (isNaN(rawH) || isNaN(s) || isNaN(l)) return null
+  if (s < 0 || s > 100 || l < 0 || l > 100) return null
+
+  // Hue is an angle: it wraps rather than being out of range.
+  const h = ((rawH % 360) + 360) % 360
+
   return { h, s, l }
 }
 
@@ -189,7 +216,14 @@ export const getContrastRating = (contrast: number): { level: string; rating: st
   }
 }
 
+/**
+ * CSS Color L4 §5.2 allows exactly 3, 4, 6 or 8 hex digits.
+ *
+ * `{3,6}` accepted 4- and 5-digit strings that `hexToRgb` then rejected with
+ * null — so `#abcd` and `#12345` validated but did not convert — while
+ * rejecting `#FF00FF80`, which is a valid 8-digit colour with alpha.
+ */
 export const isValidHex = (hex: string): boolean => {
-  return /^#?[0-9A-Fa-f]{3,6}$/.test(hex)
+  return /^#?(?:[0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(hex.trim())
 }
 

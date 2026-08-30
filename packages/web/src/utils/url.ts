@@ -18,8 +18,15 @@ export const encodeUrl = (text: string, component: boolean = true): string => {
     }
   }
   
-  if (!text.trim()) return ''
-  
+  /**
+   * Only genuinely empty input returns empty.
+   *
+   * The guard was `!text.trim()`, so a payload of spaces — the single most
+   * likely thing anyone types into a URL encoder to see what it does —
+   * returned '' rather than %20.
+   */
+  if (!text) return ''
+
   try {
     // encodeURIComponent: Encodes special characters (use for URL components like query params)
     // encodeURI: Encodes only characters that are not valid in URLs (use for full URLs)

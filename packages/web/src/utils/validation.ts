@@ -56,18 +56,28 @@ export const validateTimestamp = (timestamp: number): boolean => {
 /**
  * Validate number base conversion
  */
+const BASE_DIGIT_PATTERNS: Record<2 | 8 | 10 | 16, RegExp> = {
+  2: /^[01]+$/,
+  8: /^[0-7]+$/,
+  10: /^[0-9]+$/,
+  16: /^[0-9a-fA-F]+$/,
+}
+
+/**
+ * Whole-string check, not a prefix check.
+ *
+ * `parseInt` consumes the longest valid prefix and returns NaN only when the
+ * *first* character is invalid, so this used to accept `12` as binary, `789`
+ * as octal and `12abc` as decimal — anything whose leading digit happened to
+ * be legal. Only input like `GG` in hex was ever rejected.
+ */
 export const validateNumberBase = (
   value: string,
   base: 2 | 8 | 10 | 16
 ): boolean => {
-  if (!value.trim()) return false
-  
-  try {
-    const decimal = parseInt(value.replace(/\s/g, ''), base)
-    return !isNaN(decimal) && isFinite(decimal) && decimal >= 0
-  } catch {
-    return false
-  }
+  const cleaned = value.replace(/\s/g, '')
+  if (!cleaned) return false
+  return BASE_DIGIT_PATTERNS[base].test(cleaned)
 }
 
 /**

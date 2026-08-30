@@ -197,3 +197,125 @@ describe('detect — every detection is well-formed', () => {
     }
   })
 })
+
+
+/** Find one detection by kind, for the regression suites below. */
+const find = (input: string, kind: DetectionKind) => detect(input).find(d => d.kind === kind)
+
+describe('detect — calendar dates that do not exist', () => {
+  /**
+   * `new Date('2024-02-30')` is not NaN — V8 rolls day-of-month overflow
+   * forward — so the NaN check passed and the tool offered the Unix time for
+   * March 1. The same guard already existed in timestamp.ts; this copy was
+   * missed when that one was fixed.
+   */
+  it.each(['2024-02-30', '2023-02-29', '2024-04-31', '2024-11-31', '2024-06-31'])(
+    'rejects %s',
+    input => expect(find(input, 'iso-date')).toBeUndefined()
+  )
+
+  it.each(['2024-01-15', '2024-02-29', '2024-12-31', '2023-02-28'])('accepts %s', input =>
+    expect(find(input, 'iso-date')).toBeDefined()
+  )
+
+  it('accepts a real date whose UTC day differs because of the offset', () => {
+    // 02:00+05:00 is the previous day in UTC; comparing the parsed instant
+    // against the written day would reject it.
+    expect(find('2024-01-15T02:00:00+05:00', 'iso-date')).toBeDefined()
+    expect(find('2024-01-15T23:00:00-08:00', 'iso-date')).toBeDefined()
+  })
+})
+
+describe('detect — chmod special bits', () => {
+  const rendered = (mode: string) => find(mode, 'chmod')?.actions[0].run?.(mode)
+
+  /**
+   * The leading digit was discarded, so 1777 rendered exactly like 0777 —
+   * losing the sticky bit that is the only reason to write 1777 at all.
+   */
+  it.each([
+    ['1777', 'rwxrwxrwt'],
+    ['4755', 'rwsr-xr-x'],
+    ['2755', 'rwxr-sr-x'],
+    ['0777', 'rwxrwxrwx'],
+  ])('renders %s as %s', (mode, expected) => {
+    expect(rendered(mode)).toContain(expected)
+  })
+
+  it('uses uppercase when the underlying execute bit is unset', () => {
+    // setuid without execute is S, not s (chmod(1)).
+    expect(rendered('4644')).toContain('rwSr--r--')
+    expect(rendered('1666')).toContain('rw-rw-rwT')
+  })
+
+  it('distinguishes a special mode from its plain equivalent', () => {
+    expect(rendered('1777')).not.toBe(rendered('0777'))
+    expect(rendered('4755')).not.toBe(rendered('0755'))
+  })
+})
+
+describe('detect — cron false positives', () => {
+  /**
+   * The alphabetic alternative was a bare [A-Z]{3}, unrestricted by field
+   * position and checked against no vocabulary, so any five three-letter words
+   * outranked the text fallback at 0.86 confidence.
+   */
+  it.each([
+    'you can not see the',
+    'let him buy the car now',
+    'one two red car dog',
+  ])('does not read %s as cron', prose => expect(kinds(prose)).not.toContain('cron'))
+
+  it.each(['0 9 * * MON', '0 0 1 JAN *', '0 0 1 JAN-MAR MON-FRI', '0 30 9 * * MON'])(
+    'still recognises %s',
+    expr => expect(kinds(expr)).toContain('cron')
+  )
+
+  it('rejects a day name in a numeric-only field', () => {
+    expect(kinds('MON 9 * * *')).not.toContain('cron')
+  })
+})
+
+describe('detect — JWT with surrounding whitespace', () => {
+  /**
+   * detectJwt was the only detector working on the raw value rather than a
+   * trimmed one, so a token copied out of a log line or an Authorization
+   * header was not detected at all.
+   */
+  it.each([
+    ['leading space', ' ' + JWT],
+    ['leading newline', '\n' + JWT],
+    ['trailing newline', JWT + '\n'],
+    ['both', '  ' + JWT + '  \n'],
+  ])('detects a token with %s', (_label, input) => {
+    expect(kinds(input)).toContain('jwt')
+  })
+})
+
+describe('detect — large input', () => {
+  /**
+   * detect() used to append an ellipsis at 100 KB and hand the mutilated
+   * string to both the detectors and the text card — so a 108 KB JSON body
+   * became unparseable, and the character count described a string the user
+   * never pasted.
+   */
+  it('reports the real character and word count', () => {
+    const big = 'word '.repeat(60_000)
+    const summary = detect(big).at(-1)!.summary
+    expect(summary).toContain('300000 characters')
+    expect(summary).toContain('60000 words')
+  })
+
+  it('still detects a JSON body larger than 100 KB', () => {
+    const json = JSON.stringify({ a: Array.from({ length: 20_000 }, (_, i) => i) })
+    expect(json.length).toBeGreaterThan(100_000)
+    expect(kinds(json)).toContain('json')
+  })
+
+  it('degrades to the text card past the ceiling without corrupting counts', () => {
+    const huge = 'a'.repeat(1_200_000)
+    const result = detect(huge)
+    expect(result.at(-1)!.summary).toContain('1200000 characters')
+    expect(result.at(-1)!.kind).toBe('text')
+  })
+})

@@ -111,3 +111,66 @@ describe('decodeFromBase64 — invalid input', () => {
     expect(decodeFromBase64('').isValid).toBe(false)
   })
 })
+
+
+describe('decodeFromBase64 — RFC 4648 strictness', () => {
+  // RFC 4648 §10 test vectors.
+  it.each([
+    ['Zg==', 'f'],
+    ['Zm8=', 'fo'],
+    ['Zm9v', 'foo'],
+    ['Zm9vYg==', 'foob'],
+    ['Zm9vYmE=', 'fooba'],
+    ['Zm9vYmFy', 'foobar'],
+  ])('decodes %o to %o', (input, expected) => {
+    expect(decodeFromBase64(input).decoded).toBe(expected)
+  })
+
+  it.each([
+    ['', 'f', 'Zg=='],
+    ['', 'fo', 'Zm8='],
+    ['', 'foobar', 'Zm9vYmFy'],
+  ])('encodes %s%o as %o', (_pad, input, expected) => {
+    expect(encodeToBase64(input)).toBe(expected)
+  })
+
+  /**
+   * §3.3: a decoder MUST reject data containing characters outside the base
+   * alphabet. This used to delete them and carry on, so a corrupted or partial
+   * paste produced plausible output and reported success — precisely what a
+   * decoder exists to catch.
+   */
+  it.each([
+    ['non-alphabet characters', 'aGVsbG8h!!!'],
+    ['an embedded dollar sign', 'Zm9v$YmFy'],
+    ['a comma', 'Zm9v,YmFy'],
+    ['padding in the middle', 'SGVsbG8=world'],
+    ['two concatenated encodings', 'Zg==Zg=='],
+    ['too much padding', '===='],
+  ])('rejects %s', (_label, input) => {
+    const result = decodeFromBase64(input)
+    expect(result.isValid).toBe(false)
+    expect(result.error).toBeTruthy()
+  })
+
+  it('rejects an impossible length', () => {
+    // 4 characters encode 3 bytes, so a remainder of 1 cannot occur.
+    expect(decodeFromBase64('Zm9vY').isValid).toBe(false)
+  })
+
+  it('accepts unpadded input, which is unambiguous', () => {
+    expect(decodeFromBase64('Zm9vYg').decoded).toBe('foob')
+    expect(decodeFromBase64('Zm8').decoded).toBe('fo')
+  })
+
+  it('strips a real data-URL prefix but not an arbitrary comma', () => {
+    expect(decodeFromBase64('data:text/plain;base64,Zm9vYmFy').decoded).toBe('foobar')
+    // `base64.includes(',') ? split(',')[1] : base64` truncated at any comma.
+    expect(decodeFromBase64('Zm9v,YmFy').isValid).toBe(false)
+  })
+
+  it('round-trips a large payload without throwing', () => {
+    const large = 'a'.repeat(120_000)
+    expect(decodeFromBase64(encodeToBase64(large)).decoded).toBe(large)
+  })
+})

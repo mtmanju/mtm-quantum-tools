@@ -48,43 +48,88 @@ export const generatePassphrase = (wordCount: number = 4, separator: string = '-
 /**
  * Generates a random password based on options
  */
+/**
+ * Uniform random index in [0, limit), free of modulo bias.
+ *
+ * `value % limit` skews toward low indices whenever `limit` does not divide
+ * 2^32 exactly. At the alphabet sizes here that bias is around 2e-8 per
+ * character and not observable — but rejection sampling costs one comparison,
+ * and a password generator is the wrong place to keep a known-skewed
+ * distribution just because the skew is currently small.
+ */
+const randomIndex = (limit: number): number => {
+  const ceiling = Math.floor(0x100000000 / limit) * limit
+  const buf = new Uint32Array(1)
+  for (;;) {
+    crypto.getRandomValues(buf)
+    if (buf[0] < ceiling) return buf[0] % limit
+  }
+}
+
+/** Fisher-Yates, crypto-seeded. */
+const shuffle = <T,>(items: T[]): T[] => {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = randomIndex(i + 1)
+    ;[items[i], items[j]] = [items[j], items[i]]
+  }
+  return items
+}
+
 export const generatePassword = (options: PasswordOptions): string => {
-  let charset = ''
-
-  if (options.includeLowercase) {
-    charset += LOWERCASE
-  }
-  if (options.includeUppercase) {
-    charset += UPPERCASE
-  }
-  if (options.includeNumbers) {
-    charset += NUMBERS
-  }
-  if (options.includeSymbols) {
-    charset += SYMBOLS
+  const length = Math.floor(options.length)
+  if (!Number.isFinite(length) || length <= 0) {
+    throw new Error('Password length must be a positive whole number')
   }
 
-  if (options.excludeSimilar) {
-    charset = charset.split('').filter(char => !SIMILAR.includes(char)).join('')
+  const filterPool = (pool: string): string => {
+    let chars = pool.split('')
+    if (options.excludeSimilar) chars = chars.filter(c => !SIMILAR.includes(c))
+    if (options.excludeAmbiguous) chars = chars.filter(c => !AMBIGUOUS.includes(c))
+    return chars.join('')
   }
 
-  if (options.excludeAmbiguous) {
-    charset = charset.split('').filter(char => !AMBIGUOUS.includes(char)).join('')
-  }
+  // Each selected class is kept as its own pool so the result can be made to
+  // actually contain one of each, rather than merely being allowed to.
+  const pools: string[] = []
+  if (options.includeLowercase) pools.push(filterPool(LOWERCASE))
+  if (options.includeUppercase) pools.push(filterPool(UPPERCASE))
+  if (options.includeNumbers) pools.push(filterPool(NUMBERS))
+  if (options.includeSymbols) pools.push(filterPool(SYMBOLS))
+
+  const usable = pools.filter(pool => pool.length > 0)
+  const charset = usable.join('')
 
   if (charset.length === 0) {
     throw new Error('At least one character type must be selected')
   }
 
-  const password: string[] = []
-  const array = new Uint32Array(options.length)
-  crypto.getRandomValues(array)
+  /**
+   * Guarantee one character from every selected class.
+   *
+   * Previously the classes were concatenated into one charset and every
+   * position drawn from it, so ticking "Include Numbers" only made digits
+   * *possible*. At length 8 with all four boxes ticked, 51% of generated
+   * passwords were missing at least one ticked class — a user who asks for
+   * digits and receives `&Jr|.!UO` fails the target site's policy and has no
+   * idea why.
+   *
+   * The guaranteed characters are shuffled into place rather than written to
+   * fixed leading indices, which would make the first four positions
+   * predictable by class and leak structure to anyone cracking the output.
+   *
+   * If the requested length cannot hold one of each, the guarantee is dropped
+   * for the classes that do not fit rather than silently truncating: a
+   * too-short password is still drawn from the full charset.
+   */
+  const chars: string[] = usable
+    .slice(0, length)
+    .map(pool => pool[randomIndex(pool.length)])
 
-  for (let i = 0; i < options.length; i++) {
-    password.push(charset[array[i] % charset.length])
+  for (let i = chars.length; i < length; i++) {
+    chars.push(charset[randomIndex(charset.length)])
   }
 
-  return password.join('')
+  return shuffle(chars).join('')
 }
 
 /**
@@ -108,8 +153,12 @@ export const calculatePasswordEntropy = (password: string): number => {
   
   if (charsetSize === 0) return 0
   
-  // Entropy = log2(charsetSize^length)
-  return Math.log2(Math.pow(charsetSize, password.length))
+  // log2(charsetSize^length) written as length * log2(charsetSize).
+  //
+  // Math.pow overflows to Infinity before the log is taken — at charset 63 that
+  // happens around 172 characters, so a long passphrase reported Infinity bits,
+  // which rendered as the literal string "Infinity" and serialised to null.
+  return password.length * Math.log2(charsetSize)
 }
 
 /**

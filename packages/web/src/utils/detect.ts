@@ -91,7 +91,11 @@ const truncate = (s: string, n = 400) => (s.length > n ? s.slice(0, n) + '…' :
 // ─── detectors ────────────────────────────────────────────────────────────
 
 function detectJwt(v: string): Detection | null {
-  const parts = v.split('.')
+  // Trimmed like every other detector. Without this a token copied out of a
+  // log line, an Authorization header or a wrapped terminal buffer — all of
+  // which routinely carry a leading space or newline — was not detected at
+  // all, because the whitespace landed inside part 0 and failed B64URL_CHARS.
+  const parts = v.trim().split('.')
   if (parts.length !== 3) return null
   if (!parts.slice(0, 2).every(p => p.length > 0 && B64URL_CHARS.test(p))) return null
 
@@ -303,9 +307,34 @@ function relativeTime(d: Date): string {
 
 function detectIsoDate(v: string): Detection | null {
   const t = v.trim()
-  if (!/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.test(t)) return null
+  const shape = /^(\d{4})-(\d{2})-(\d{2})([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.exec(t)
+  if (!shape) return null
   const d = new Date(t)
   if (Number.isNaN(d.getTime())) return null
+
+  /**
+   * A date that does not exist is not a date.
+   *
+   * `new Date('2024-02-30')` is not NaN — V8 rolls day-of-month overflow
+   * forward — so the NaN check above passes and the tool confidently offered
+   * the Unix time for *March 1*. 2023-02-29, 2024-04-31 and 2024-11-31 all
+   * behaved the same way. Only out-of-range months like 2024-13-01 were caught.
+   *
+   * Round-tripping the digits through Date.UTC checks the calendar triple on
+   * its own, deliberately ignoring the time and any offset: `2024-01-15T02:00+05:00`
+   * is Jan 14 in UTC, so comparing the *parsed instant* against the written
+   * day would reject a perfectly real date. This is the same class of guard
+   * `timestamp.ts` already uses; the copy here was missed when that was fixed.
+   */
+  const [, year, month, day] = shape
+  const probe = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+  if (
+    probe.getUTCFullYear() !== Number(year) ||
+    probe.getUTCMonth() + 1 !== Number(month) ||
+    probe.getUTCDate() !== Number(day)
+  ) {
+    return null
+  }
   return {
     kind: 'iso-date',
     label: 'ISO 8601 date',
@@ -380,12 +409,42 @@ function detectIp(v: string): Detection | null {
   }
 }
 
-const CRON_FIELD = /^(\*|\d+|\d+-\d+|\*\/\d+|\d+\/\d+|\d+(,\d+)+|[A-Z]{3}(-[A-Z]{3})?)$/i
+const CRON_NUMERIC = /^(\*|\d+|\d+-\d+|\*\/\d+|\d+\/\d+|\d+(,\d+)+)$/
+
+/**
+ * Only real month and day names, and only in the fields that take them.
+ *
+ * The alphabetic alternative used to be a bare `[A-Z]{3}(-[A-Z]{3})?`, matching
+ * any three-letter token in any position — so "you can not see the" and "let
+ * him buy the car now" were both offered as cron schedules at 0.86 confidence,
+ * outranking the text fallback. Cron only accepts names in the month and
+ * day-of-week fields, and only from these two sets.
+ */
+const CRON_MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+const CRON_DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
+const cronNamesFor = (index: number, fieldCount: number): string[] => {
+  // A 6-field expression carries a leading seconds field, shifting the rest.
+  const offset = fieldCount === 6 ? 1 : 0
+  if (index === 3 + offset) return CRON_MONTHS
+  if (index === 4 + offset) return CRON_DAYS
+  return []
+}
+
+const cronFieldValid = (field: string, index: number, fieldCount: number): boolean => {
+  if (CRON_NUMERIC.test(field)) return true
+  const names = cronNamesFor(index, fieldCount)
+  if (!names.length) return false
+  return field
+    .toUpperCase()
+    .split('-')
+    .every(part => names.includes(part))
+}
 
 function detectCron(v: string): Detection | null {
   const fields = v.trim().split(/\s+/)
   if (fields.length < 5 || fields.length > 6) return null
-  if (!fields.every(f => CRON_FIELD.test(f))) return null
+  if (!fields.every((f, i) => cronFieldValid(f, i, fields.length))) return null
   if (fields.every(f => f === '*')) {
     // "* * * * *" is valid but so is a line of asterisks; keep it, low-ish.
     return { kind: 'cron', label: 'Cron expression', confidence: 0.8, summary: 'Runs every minute', actions: [{ id: 'cron-parse', label: 'Explain', toolId: 'cron-parser' }] }
@@ -444,11 +503,46 @@ function detectCsv(v: string): Detection | null {
   return null
 }
 
+/**
+ * Render an octal mode, including the special bits.
+ *
+ * The leading digit used to be thrown away (`t.length === 4 ? t.slice(1) : t`),
+ * so `1777` rendered as `rwxrwxrwx` — identical to `0777`, and missing exactly
+ * the sticky bit that makes 1777 worth typing. `4755` (setuid) and `2755`
+ * (setgid) were likewise indistinguishable from `0755`. Those are the two most
+ * common reasons anyone writes a 4-digit mode, and telling them apart is the
+ * whole reason to look a mode up.
+ *
+ * Per chmod(1) the special bits replace the execute character of their triad:
+ * `s`/`S` for setuid and setgid, `t`/`T` for sticky, uppercase when the
+ * underlying execute bit is not set.
+ */
+function octalToRwx(mode: string): string {
+  const padded = mode.padStart(4, '0')
+  const special = Number(padded[0])
+  const triads = padded.slice(1).split('').map(Number)
+  const specialBit = [special & 4, special & 2, special & 1]
+  const specialChar = ['s', 's', 't']
+
+  return triads
+    .map((d, i) => {
+      const execute = d & 1
+      const third = specialBit[i]
+        ? execute
+          ? specialChar[i]
+          : specialChar[i].toUpperCase()
+        : execute
+          ? 'x'
+          : '-'
+      return `${d & 4 ? 'r' : '-'}${d & 2 ? 'w' : '-'}${third}`
+    })
+    .join('')
+}
+
 function detectChmod(v: string): Detection | null {
   const t = v.trim()
   if (!/^[0-7]{3,4}$/.test(t)) return null
-  const digits = (t.length === 4 ? t.slice(1) : t).split('').map(Number)
-  const rwx = digits.map(d => `${d & 4 ? 'r' : '-'}${d & 2 ? 'w' : '-'}${d & 1 ? 'x' : '-'}`).join('')
+  const rwx = octalToRwx(t)
   return {
     kind: 'chmod',
     label: 'File permissions',
@@ -501,22 +595,42 @@ function textFallback(v: string): Detection {
  * Identify what `input` is. Returns matches highest-confidence first, always
  * with a text fallback last so there is never a dead end.
  */
+const DETECTOR_LIMIT = 1_000_000
+
 export function detect(input: string): Detection[] {
   if (!input.trim()) return []
-  const value = truncate(input, 100_000)
 
+  /**
+   * Large input is skipped, not mutilated.
+   *
+   * This used to run the detectors against `truncate(input, 100_000)`, which
+   * appends an ellipsis — so a 108 KB API response, well within what people
+   * paste, became unparseable and got no JSON detection at all. The truncated
+   * string was also handed to `textFallback`, which reports `v.length`, so the
+   * always-present Text card claimed "100001 characters" for a 300,000
+   * character paste and folded the ellipsis into the final word count.
+   *
+   * The ceiling is 1 MB rather than 100 KB because the whole detector suite
+   * measures ~1.2 ms at 75 KB and ~3.2 ms at 890 KB — cheap enough for a paste,
+   * and comfortably above the API responses and log excerpts people actually
+   * paste. Past it the detectors are skipped entirely rather than fed a
+   * mutilated string, and the text card stays correct.
+   */
   const found: Detection[] = []
-  for (const detector of DETECTORS) {
-    try {
-      const result = detector(value)
-      if (result) found.push(result)
-    } catch {
-      // A detector must never be able to break the bar.
+  if (input.length <= DETECTOR_LIMIT) {
+    for (const detector of DETECTORS) {
+      try {
+        const result = detector(input)
+        if (result) found.push(result)
+      } catch {
+        // A detector must never be able to break the bar.
+      }
     }
   }
 
   found.sort((a, b) => b.confidence - a.confidence)
-  return [...found, textFallback(value)]
+  // Counted from the real input, never a truncated copy.
+  return [...found, textFallback(input)]
 }
 
 export { truncate }
