@@ -66,7 +66,10 @@ export const validateJson = (jsonString: string): JsonValidationResult => {
  */
 export const formatJson = (jsonString: string, indent: number = 2): string => {
   const validation = validateJson(jsonString)
-  if (!validation.isValid || !validation.parsed) {
+  // `!validation.parsed` was truthiness, not a success check: RFC 8259 §2 makes
+  // any value a valid JSON text, so `0`, `false`, `null` and `""` parse fine and
+  // then failed this guard — the function returned the raw input unformatted.
+  if (!validation.isValid) {
     return jsonString
   }
 
@@ -82,7 +85,8 @@ export const formatJson = (jsonString: string, indent: number = 2): string => {
  */
 export const minifyJson = (jsonString: string): string => {
   const validation = validateJson(jsonString)
-  if (!validation.isValid || !validation.parsed) {
+  // See formatJson: a falsy parsed value is still a successful parse.
+  if (!validation.isValid) {
     return jsonString
   }
 

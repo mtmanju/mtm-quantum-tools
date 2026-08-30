@@ -11,7 +11,7 @@ import { toast } from './toast'
  * calling revokeObjectURL synchronously after click() can silently cancel
  * the download before it begins (especially from async handlers).
  */
-function triggerDownload(url: string, filename: string): void {
+function triggerDownload(url: string, filename: string, silent = false): void {
   const a = document.createElement('a')
   a.style.display = 'none'
   a.href = url
@@ -24,7 +24,9 @@ function triggerDownload(url: string, filename: string): void {
   // 60 s pinned every generated file in memory, which the PDF/image tools can
   // run into tens of megabytes.
   setTimeout(() => URL.revokeObjectURL(url), 5_000)
-  toast(`Downloaded ${filename}`, 'success')
+  // Bulk callers pass silent and raise one summary toast instead: a loop over
+  // 60 PDF pages otherwise raises 60 of them.
+  if (!silent) toast(`Downloaded ${filename}`, 'success')
 }
 
 /**
@@ -33,11 +35,12 @@ function triggerDownload(url: string, filename: string): void {
 export const downloadTextFile = (
   content: string,
   filename: string,
-  mimeType: string = 'text/plain'
+  mimeType: string = 'text/plain',
+  options: { silent?: boolean } = {}
 ): void => {
   if (!content || !filename) return
   const blob = new Blob([content], { type: mimeType })
-  triggerDownload(URL.createObjectURL(blob), filename)
+  triggerDownload(URL.createObjectURL(blob), filename, options.silent)
 }
 
 /**
@@ -46,7 +49,8 @@ export const downloadTextFile = (
 export const downloadBinaryFile = (
   content: Uint8Array | Blob,
   filename: string,
-  mimeType?: string
+  mimeType?: string,
+  options: { silent?: boolean } = {}
 ): void => {
   if (!content || !filename) return
 
@@ -61,6 +65,6 @@ export const downloadBinaryFile = (
     blob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
   }
 
-  triggerDownload(URL.createObjectURL(blob), filename)
+  triggerDownload(URL.createObjectURL(blob), filename, options.silent)
 }
 

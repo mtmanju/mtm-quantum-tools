@@ -287,9 +287,19 @@ export const replaceRegex = (
 
   try {
     const flagStr = flagsToString(flags)
-    const regex = new RegExp(pattern, flagStr)
-    const replaced = testString.replace(regex, replacement)
-    const matches = testString.match(regex)
+    const replaced = testString.replace(new RegExp(pattern, flagStr), replacement)
+
+    /**
+     * Counted with a second, fresh RegExp.
+     *
+     * Reusing one object for both operations left its `lastIndex` set: with the
+     * sticky flag and no global flag, String.replace leaves lastIndex at the end
+     * of the match, so the follow-up .match() resumed from there and found
+     * nothing — the function reported `replacements: 0` while returning a string
+     * it had demonstrably changed. `testRegex` already builds a fresh regex per
+     * call for exactly this reason.
+     */
+    const matches = testString.match(new RegExp(pattern, flagStr))
     const replacements = matches ? (flags.global ? matches.length : 1) : 0
 
     return {

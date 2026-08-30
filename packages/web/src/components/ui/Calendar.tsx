@@ -59,7 +59,10 @@ export function Calendar({ value, onSelect, onClose, max, anchor }: CalendarProp
    * stable and correct for a picker's lifetime.
    */
   const today = useMemo(() => new Date(), [])
-  const maxDate = max ? parseIso(max) : null
+  // Memoised because it feeds the `years` dependency array below: parseIso
+  // returns a fresh object each call, so an unmemoised value changed identity
+  // every render and the memo it guarded never hit its cache.
+  const maxDate = useMemo(() => (max ? parseIso(max) : null), [max])
 
   const [viewYear, setViewYear] = useState(selected?.y ?? today.getFullYear())
   const [viewMonth, setViewMonth] = useState(selected?.m ?? today.getMonth())

@@ -13,8 +13,23 @@ export interface EmailValidationResult {
 // Standard email regex (RFC 5322 simplified)
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// Strict email regex (RFC 5322 compliant)
-const STRICT_EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+/**
+ * Strict mode: a dot-atom local part, per RFC 5322 §3.2.3.
+ *
+ * The previous class put `.` inside the atom (`[a-zA-Z0-9.!#$...]+`), which
+ * makes a dot an ordinary character — so `a..b@example.com`, `.user@example.com`
+ * and `user.@example.com` all passed strict validation. A dot-atom is
+ * `atom ('.' atom)*`: dots separate atoms and therefore cannot lead, trail, or
+ * repeat.
+ */
+const ATOM = "[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+"
+const STRICT_EMAIL_REGEX = new RegExp(
+  `^${ATOM}(?:\\.${ATOM})*@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
+)
+
+/** RFC 5321 §4.5.3.1: 64 octets for the local part, 254 for the whole path. */
+const MAX_LOCAL_PART = 64
+const MAX_EMAIL_LENGTH = 254
 
 // Enhanced validation for domain part
 const validateDomain = (domain: string): { isValid: boolean; error?: string } => {
@@ -70,15 +85,19 @@ export const validateEmail = (email: string, strict: boolean = false): EmailVali
 
   if (!regex.test(trimmed)) {
     const parts = trimmed.split('@')
-    const hasAt = parts.length === 2
-    const localPart = hasAt ? parts[0] : ''
-    const domain = hasAt ? parts[1] : ''
+    // `parts.length === 2` made hasAt false for `user@@example.com`, which then
+    // reported "Missing @ symbol" for an address containing two of them.
+    const hasAt = trimmed.includes('@')
+    const localPart = parts.length === 2 ? parts[0] : ''
+    const domain = parts.length === 2 ? parts[1] : ''
     const hasDomain = domain.length > 0
     const hasTld = hasDomain && domain.includes('.')
 
     let error = 'Invalid email format'
     if (!hasAt) {
       error = 'Missing @ symbol'
+    } else if (parts.length > 2) {
+      error = 'Address contains more than one @ symbol'
     } else if (!hasDomain) {
       error = 'Missing domain'
     } else if (!hasTld) {
@@ -102,8 +121,32 @@ export const validateEmail = (email: string, strict: boolean = false): EmailVali
 
   const [localPart, domain] = trimmed.split('@')
 
-  // Additional domain validation in strict mode
+  // Additional validation in strict mode
   if (strict) {
+    /**
+     * Length limits nothing else enforced.
+     *
+     * validateDomain covers the 253/63 domain limits, but the local part had no
+     * ceiling at all — a 65-character local part with a short domain passed, and
+     * the only reason a 319-character address was rejected was that its *domain*
+     * happened to be over-long.
+     */
+    if (localPart.length > MAX_LOCAL_PART) {
+      return {
+        isValid: false,
+        error: `Local part exceeds maximum length (${MAX_LOCAL_PART} characters)`,
+        details: { hasAt: true, hasDomain: true, hasTld: domain.includes('.'), domain, localPart }
+      }
+    }
+
+    if (trimmed.length > MAX_EMAIL_LENGTH) {
+      return {
+        isValid: false,
+        error: `Address exceeds maximum length (${MAX_EMAIL_LENGTH} characters)`,
+        details: { hasAt: true, hasDomain: true, hasTld: domain.includes('.'), domain, localPart }
+      }
+    }
+
     const domainValidation = validateDomain(domain)
     if (!domainValidation.isValid) {
       return {

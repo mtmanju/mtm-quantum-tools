@@ -19,6 +19,14 @@ export function dmyToIso(dmy: string): string {
   const day = Number(d), month = Number(mo), year = Number(y)
   if (month < 1 || month > 12 || day < 1 || day > 31) return ''
   const date = new Date(year, month - 1, day)
+  /**
+   * `new Date(50, 0, 1)` means 1950, not year 50 — the legacy two-digit-year
+   * mapping applies to any year below 100, so the round-trip check below
+   * rejected every such date while 0100 and up passed. isoToDmy happily
+   * produced 01/01/0050, which this then refused: the two halves of one module
+   * disagreed about the same date. setFullYear bypasses the mapping.
+   */
+  date.setFullYear(year)
   // Rejects 31/02/2024 and friends, which Date otherwise rolls forward.
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return ''
   return `${y}-${mo}-${d}`

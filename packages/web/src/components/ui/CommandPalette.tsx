@@ -65,6 +65,9 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
   const [recents, setRecents] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  /** What had focus before the palette opened, so it can be given back. */
+  const previouslyFocused = useRef<HTMLElement | null>(null)
 
   // Reset the highlight when the query changes, during render rather than in
   // an effect — an effect would paint one frame with a stale selection.
@@ -107,6 +110,15 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
     setOpen(false)
     setQuery('')
     setActiveIndex(0)
+    /**
+     * Hand focus back where it came from.
+     *
+     * Closing unmounted the focused input, which drops focus to <body> — so the
+     * next Tab restarted from the skip link at the top of the document instead
+     * of returning to the control that opened the palette. WCAG 2.4.3.
+     */
+    previouslyFocused.current?.focus()
+    previouslyFocused.current = null
   }, [])
 
   // Global hotkey: ⌘K / Ctrl-K, and "/" when not already typing somewhere.
@@ -139,9 +151,47 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
 
   useEffect(() => {
     if (open) {
+      previouslyFocused.current = document.activeElement as HTMLElement | null
       // Focus after paint so the caret lands reliably.
       requestAnimationFrame(() => inputRef.current?.focus())
     }
+  }, [open])
+
+  /**
+   * Keep Tab inside the dialog.
+   *
+   * The panel declares role="dialog" aria-modal="true", which tells assistive
+   * technology the rest of the page is inert — but nothing stopped Tab leaving
+   * it, so a keyboard user landed on controls their screen reader had just been
+   * told did not exist. WCAG 2.1.2.
+   */
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      const panel = panelRef.current
+      if (!panel) return
+
+      const focusable = [
+        ...panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ),
+      ].filter(el => el.offsetParent !== null || el === document.activeElement)
+
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
   }, [open])
 
   // Keep the highlighted row in view during arrow navigation.
@@ -184,7 +234,13 @@ export function CommandPalette({ tools, onSelect }: CommandPaletteProps) {
       className="cmdk-backdrop"
       onMouseDown={e => { if (e.target === e.currentTarget) close() }}
     >
-      <div className="cmdk-panel" role="dialog" aria-modal="true" aria-label="Search tools">
+      <div
+        ref={panelRef}
+        className="cmdk-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search tools"
+      >
         <div className="cmdk-input-row">
           <Search size={16} className="cmdk-input-icon" aria-hidden="true" />
           <input

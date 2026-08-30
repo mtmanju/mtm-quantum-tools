@@ -94,3 +94,52 @@ describe('flagsToString', () => {
     expect(flagsToString(f({ caseInsensitive: true, multiline: true }))).toContain('i')
   })
 })
+
+
+describe('replaceRegex — replacement count', () => {
+  const flags = (o: Partial<Record<string, boolean>> = {}) => ({
+    global: false,
+    caseInsensitive: false,
+    multiline: false,
+    dotAll: false,
+    unicode: false,
+    sticky: false,
+    ...o,
+  })
+
+  /**
+   * One RegExp object was used for both `.replace()` and the follow-up
+   * `.match()`. With the sticky flag and no global flag, String.replace leaves
+   * lastIndex at the end of the match, so the count resumed from there and
+   * found nothing — reporting `replacements: 0` for a string it had just
+   * changed. Reachable from the UI: RegexTester exposes a sticky toggle.
+   */
+  it('counts a sticky replacement that actually happened', () => {
+    const result = replaceRegex('a', 'ab', 'X', flags({ sticky: true }) as never)
+    expect(result.replaced).toBe('Xb')
+    expect(result.replacements).toBe(1)
+  })
+
+  it('agrees with the non-sticky count', () => {
+    const sticky = replaceRegex('a', 'ab', 'X', flags({ sticky: true }) as never)
+    const plain = replaceRegex('a', 'ab', 'X', flags() as never)
+    expect(sticky.replacements).toBe(plain.replacements)
+  })
+
+  it('counts every match when global is set', () => {
+    const result = replaceRegex('a', 'aXa', 'Y', flags({ global: true }) as never)
+    expect(result.replaced).toBe('YXY')
+    expect(result.replacements).toBe(2)
+  })
+
+  it('reports zero when nothing matched', () => {
+    const result = replaceRegex('z', 'abc', 'Y', flags() as never)
+    expect(result.replacements).toBe(0)
+    expect(result.replaced).toBe('abc')
+  })
+
+  it('is stable across repeated calls', () => {
+    const run = () => replaceRegex('a', 'aXa', 'Y', flags({ global: true }) as never).replacements
+    expect([run(), run(), run()]).toEqual([2, 2, 2])
+  })
+})

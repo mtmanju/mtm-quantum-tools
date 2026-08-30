@@ -6,6 +6,7 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { validatePdf, getPdfPageCount, formatFileSize, generatePdfThumbnail, type PdfFile } from '../utils/pdf'
+import { toast } from '../utils/toast'
 import { downloadBinaryFile } from '../utils/file'
 import './PdfToImage.css'
 
@@ -138,8 +139,9 @@ const PdfToImage = () => {
         setConversionProgress({ current: i, total: totalPages })
         const blob = await pdfPageToBlob(pdf, i, scale, format)
         const padded = String(i).padStart(3, '0')
-        downloadBinaryFile(blob, `${baseName}-page-${padded}.${ext}`, mime)
+        downloadBinaryFile(blob, `${baseName}-page-${padded}.${ext}`, mime, { silent: true })
       }
+      toast(`Downloaded ${totalPages} image${totalPages === 1 ? '' : 's'}`, 'success')
 
       await loadingTask.destroy()
     } catch (err) {

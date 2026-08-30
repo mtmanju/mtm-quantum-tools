@@ -5,6 +5,7 @@ import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
 import { validatePdf, getPdfPageCount, formatFileSize, generatePdfThumbnail, splitPdfByPages, type PdfFile } from '../utils/pdf'
+import { toast } from '../utils/toast'
 import { downloadBinaryFile } from '../utils/file'
 import './PdfSplitter.css'
 
@@ -83,13 +84,16 @@ const PdfSplitter = () => {
     try {
       const results = await splitPdfByPages(pdfFile.file)
       
+      // Silent per file, one summary after: a 60-page split otherwise raises
+      // 60 toasts at once.
       for (const result of results) {
         const buffer = new ArrayBuffer(result.data.length)
         const view = new Uint8Array(buffer)
         view.set(result.data)
         const blob = new Blob([buffer as ArrayBuffer], { type: 'application/pdf' })
-        downloadBinaryFile(blob, result.name, 'application/pdf')
+        downloadBinaryFile(blob, result.name, 'application/pdf', { silent: true })
       }
+      toast(`Downloaded ${results.length} page${results.length === 1 ? '' : 's'}`, 'success')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to split PDF')
     } finally {

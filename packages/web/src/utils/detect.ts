@@ -134,9 +134,27 @@ function detectJwt(v: string): Detection | null {
           run: () => {
             const exp = decoded?.payload?.exp
             if (typeof exp !== 'number') return 'No `exp` claim. This token does not expire.'
+
+            /**
+             * A NumericDate is seconds since the epoch (RFC 7519 §2), but tokens
+             * are routinely minted with milliseconds or Go's UnixNano instead.
+             * `new Date(exp * 1000).toISOString()` throws RangeError once the
+             * value passes ±8.64e15 ms, and SmartPaste calls action.run()
+             * unguarded — so the throw escaped into the React event handler.
+             * Naming the likely unit mistake is more useful than a crash, and
+             * more useful than a date in the year 055840.
+             */
             const when = new Date(exp * 1000)
+            if (Number.isNaN(when.getTime())) {
+              return `exp ${exp} is out of range for a date. RFC 7519 expects seconds since the epoch — this looks like milliseconds or nanoseconds.`
+            }
+
             const expired = when.getTime() < Date.now()
-            return `${expired ? 'EXPIRED' : 'Valid'}. exp ${exp} (${when.toISOString()})`
+            const suspiciousUnit =
+              exp > 4_102_444_800
+                ? '\nNote: this is far beyond the year 2100 — check whether it is in seconds.'
+                : ''
+            return `${expired ? 'EXPIRED' : 'Valid'}. exp ${exp} (${when.toISOString()})${suspiciousUnit}`
           },
         },
       ],
