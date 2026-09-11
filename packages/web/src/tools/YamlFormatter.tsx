@@ -1,5 +1,5 @@
 import { Check, Copy, FileCode, FileText, Minus, Plus, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -15,6 +15,16 @@ import './YamlFormatter.css'
 
 const YamlFormatter = () => {
   const [yamlContent, setYamlContent] = useState('')
+  /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredYamlContent = useDeferredValue(yamlContent)
 
   // Accept a value handed over by the paste bar.
   useHandoff('yaml-formatter', setYamlContent)
@@ -27,10 +37,10 @@ const YamlFormatter = () => {
   const validation = useMemo(() => validateYaml(yamlContent), [yamlContent])
 
   const formattedYaml = useMemo(() => {
-    if (!yamlContent.trim()) return ''
+    if (!deferredYamlContent.trim()) return ''
     if (!validation.isValid) return ''
-    return formatYaml(yamlContent, indentSize)
-  }, [yamlContent, validation.isValid, indentSize])
+    return formatYaml(deferredYamlContent, indentSize)
+  }, [deferredYamlContent, validation.isValid, indentSize])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {

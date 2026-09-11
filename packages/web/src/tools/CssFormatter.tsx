@@ -1,5 +1,5 @@
 import { Check, Copy, FileCode, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -15,6 +15,16 @@ import './CssFormatter.css'
 
 const CssFormatter = () => {
   const [cssContent, setCssContent] = useState('')
+  /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredCssContent = useDeferredValue(cssContent)
   /**
    * Which transform the output pane is showing.
    *
@@ -36,11 +46,11 @@ const CssFormatter = () => {
   const validation = useMemo(() => validateCss(cssContent), [cssContent])
 
   const formattedCss = useMemo(() => {
-    if (!cssContent.trim()) return ''
+    if (!deferredCssContent.trim()) return ''
     if (!validation.isValid) return ''
-    const result = outputMode === 'minify' ? minifyCss(cssContent) : formatCss(cssContent, 2)
+    const result = outputMode === 'minify' ? minifyCss(deferredCssContent) : formatCss(deferredCssContent, 2)
     return result.formatted || ''
-  }, [cssContent, validation.isValid, outputMode])
+  }, [deferredCssContent, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {

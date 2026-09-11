@@ -1,5 +1,5 @@
 import { Check, Copy, Upload, X, ArrowRightLeft } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -14,6 +14,16 @@ import './JsonXmlConverter.css'
 
 const JsonXmlConverter = () => {
   const [input, setInput] = useState('')
+  /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredInput = useDeferredValue(input)
 
   // Accept a value handed over by the paste bar.
   useHandoff('json-xml-converter', setInput)
@@ -44,17 +54,17 @@ const JsonXmlConverter = () => {
   })
 
   const conversion = useMemo(() => {
-    if (!input.trim()) return { value: '', error: '' }
+    if (!deferredInput.trim()) return { value: '', error: '' }
 
     try {
       if (mode === 'json-to-xml') {
-        const result = jsonToXml(input)
+        const result = jsonToXml(deferredInput)
         if (!result.isValid) {
           return { value: '', error: result.error || 'Conversion failed' }
         }
         return { value: result.converted || '', error: '' }
       } else {
-        const result = xmlToJson(input)
+        const result = xmlToJson(deferredInput)
         if (!result.isValid) {
           return { value: '', error: result.error || 'Conversion failed' }
         }
@@ -63,7 +73,7 @@ const JsonXmlConverter = () => {
     } catch (err) {
       return { value: '', error: err instanceof Error ? err.message : 'Conversion failed' }
     }
-  }, [input, mode])
+  }, [deferredInput, mode])
 
   const output = conversion.value
   const error = actionError || conversion.error

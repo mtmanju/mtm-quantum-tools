@@ -1,5 +1,5 @@
 import { AlignLeft, Check, Copy, FileText, Hash, ScanSearch, Type, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EmptyState } from '../components/ui/EmptyState'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -69,36 +69,59 @@ const StringInspector = () => {
 
   const copyHook = useCopy()
 
+  /**
+   * Analysis follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser paints the character. Deferring the
+   * derived work lets the keystroke commit on its own; the textarea keeps the
+   * urgent value so the caret never lags.
+   */
+  const deferredInput = useDeferredValue(input)
+
   // ── Stats ────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const chars = [...input]
+    const chars = [...deferredInput]
     const charCount = chars.length
     const uniqueChars = new Set(chars).size
-    const words = input.trim() ? input.trim().split(/\s+/).length : 0
-    const lines = input ? input.split('\n').length : 0
+    const words = deferredInput.trim() ? deferredInput.trim().split(/\s+/).length : 0
+    const lines = deferredInput ? deferredInput.split('\n').length : 0
     return {
       charCount,
-      utf8Bytes: getUtf8Bytes(input),
-      utf16Bytes: getUtf16Bytes(input),
+      utf8Bytes: getUtf8Bytes(deferredInput),
+      utf16Bytes: getUtf16Bytes(deferredInput),
       words,
       lines,
       uniqueChars,
     }
-  }, [input])
+  }, [deferredInput])
 
   // ── Code points ──────────────────────────────────────────────────────────
-  const allCodePoints = useMemo(() => (input ? buildCodePoints(input) : []), [input])
-  const codePoints = useMemo(() => allCodePoints.slice(0, MAX_CODE_POINTS), [allCodePoints])
-  const truncated = allCodePoints.length > MAX_CODE_POINTS
+  /**
+   * Only the rows that are rendered get built.
+   *
+   * This mapped the whole string into six-field objects and then sliced 200 off
+   * the front — 2M objects allocated per keystroke for a table showing 200 of
+   * them. The total comes from `stats.charCount`, which counts code points
+   * without materialising anything.
+   */
+  const codePoints = useMemo(
+    () => (deferredInput ? buildCodePoints([...deferredInput].slice(0, MAX_CODE_POINTS).join('')) : []),
+    [deferredInput]
+  )
+  const truncated = stats.charCount > MAX_CODE_POINTS
 
   // ── Frequency ────────────────────────────────────────────────────────────
   const frequency = useMemo(() => {
-    if (!input) return []
+    if (!deferredInput) return []
     const freq: Record<string, number> = {}
-    for (const char of [...input]) {
+    for (const char of [...deferredInput]) {
       freq[char] = (freq[char] || 0) + 1
     }
-    const total = [...input].length
+    // Counted from the same string the frequencies came from: mixing the
+    // urgent and deferred values would compute percentages against a different
+    // document than the counts.
+    const total = stats.charCount
     return Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 20)
@@ -107,7 +130,7 @@ const StringInspector = () => {
         count,
         pct: ((count / total) * 100).toFixed(1),
       }))
-  }, [input])
+  }, [deferredInput, stats.charCount])
 
   // ── Encodings ────────────────────────────────────────────────────────────
   const encodings = useMemo(() => {
@@ -177,12 +200,12 @@ Words:            ${stats.words.toLocaleString()}
 Lines:            ${stats.lines.toLocaleString()}
 Unique chars:     ${stats.uniqueChars.toLocaleString()}
 
-Code Points (first ${Math.min(MAX_CODE_POINTS, allCodePoints.length)} of ${allCodePoints.length}):
+Code Points (first ${Math.min(MAX_CODE_POINTS, stats.charCount)} of ${stats.charCount}):
   Chr U+Hex   Category             Decimal  Escape
 ${cpLines}
 `
     downloadTextFile(report, 'string-inspector-report.txt')
-  }, [input, stats, codePoints, allCodePoints.length])
+  }, [input, stats, codePoints])
 
   const handleClear = useCallback(() => {
     setInput('')
@@ -329,7 +352,7 @@ ${cpLines}
               <div className="string-section-content">
                 {truncated && (
                   <p className="string-truncation-note">
-                    Showing first {MAX_CODE_POINTS} of {allCodePoints.length.toLocaleString()} characters.
+                    Showing first {MAX_CODE_POINTS} of {stats.charCount.toLocaleString()} characters.
                   </p>
                 )}
                 <div className="string-code-table-wrapper">

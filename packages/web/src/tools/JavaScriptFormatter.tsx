@@ -1,5 +1,5 @@
 import { Check, Copy, FileCode, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -16,6 +16,16 @@ import './JavaScriptFormatter.css'
 const JavaScriptFormatter = () => {
   const [jsContent, setJsContent] = useState('')
   /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredJsContent = useDeferredValue(jsContent)
+  /**
    * Which transform the output pane is showing — see the other formatters:
    * Minify wrote into the input while the output re-ran the formatter, so
    * Download exported the pretty version of text the user had minified.
@@ -30,12 +40,12 @@ const JavaScriptFormatter = () => {
   const copyOutputHook = useCopy()
 
   const formattedJs = useMemo(() => {
-    if (!jsContent.trim()) return ''
+    if (!deferredJsContent.trim()) return ''
     const result = outputMode === 'minify'
-      ? minifyJavaScript(jsContent)
-      : formatJavaScript(jsContent, 2)
+      ? minifyJavaScript(deferredJsContent)
+      : formatJavaScript(deferredJsContent, 2)
     return result.formatted || ''
-  }, [jsContent, outputMode])
+  }, [deferredJsContent, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {

@@ -1,5 +1,5 @@
 import { Check, Copy, Upload, X, ArrowRightLeft, FileSpreadsheet, FileDown } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -15,6 +15,16 @@ import './CsvToJsonConverter.css'
 
 const CsvToJsonConverter = () => {
   const [input, setInput] = useState('')
+  /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredInput = useDeferredValue(input)
 
   // Accept a value handed over by the paste bar.
   useHandoff('csv-to-json', setInput)
@@ -45,17 +55,17 @@ const CsvToJsonConverter = () => {
   })
 
   const conversion = useMemo(() => {
-    if (!input.trim()) return { value: '', error: '' }
+    if (!deferredInput.trim()) return { value: '', error: '' }
 
     try {
       if (mode === 'csv-to-json') {
-        const result = csvToJson(input, { delimiter: delimiter || ',', hasHeaders })
+        const result = csvToJson(deferredInput, { delimiter: delimiter || ',', hasHeaders })
         if (!result.isValid) {
           return { value: '', error: result.error || 'Failed to convert CSV to JSON' }
         }
         return { value: result.json || '', error: '' }
       } else {
-        const result = jsonToCsv(input, { delimiter: delimiter || ',', hasHeaders })
+        const result = jsonToCsv(deferredInput, { delimiter: delimiter || ',', hasHeaders })
         if (!result.isValid) {
           return { value: '', error: result.error || 'Failed to convert JSON to CSV' }
         }
@@ -64,7 +74,7 @@ const CsvToJsonConverter = () => {
     } catch (err) {
       return { value: '', error: err instanceof Error ? err.message : 'Conversion failed' }
     }
-  }, [input, mode, delimiter, hasHeaders])
+  }, [deferredInput, mode, delimiter, hasHeaders])
 
   const output = conversion.value
   const error = actionError || conversion.error

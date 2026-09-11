@@ -1,5 +1,5 @@
 import { Check, Copy, Database, FileCode, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -39,6 +39,16 @@ const EXAMPLES = [
 const SqlFormatter = () => {
   const [sqlContent, setSqlContent] = useState('')
   /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredSqlContent = useDeferredValue(sqlContent)
+  /**
    * Which transform the output pane is showing.
    *
    * Minify wrote its result back into the *input* while the output pane,
@@ -59,12 +69,12 @@ const SqlFormatter = () => {
   const validation = useMemo(() => validateSql(sqlContent), [sqlContent])
 
   const formattedSql = useMemo(() => {
-    if (!sqlContent.trim()) return ''
+    if (!deferredSqlContent.trim()) return ''
     if (!validation.isValid) return ''
     return outputMode === 'minify'
-      ? minifySql(sqlContent)
-      : formatSql(sqlContent)
-  }, [sqlContent, validation.isValid, outputMode])
+      ? minifySql(deferredSqlContent)
+      : formatSql(deferredSqlContent)
+  }, [deferredSqlContent, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {

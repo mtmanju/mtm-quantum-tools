@@ -1,5 +1,5 @@
 import { Check, Copy, FileText, Upload, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EmptyState } from '../components/ui/EmptyState'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -15,6 +15,16 @@ import './WordCounter.css'
 
 const WordCounter = () => {
   const [text, setText] = useState('')
+  /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredText = useDeferredValue(text)
 
   // Accept a value handed over by the paste bar.
   useHandoff('word-counter', setText)
@@ -22,7 +32,7 @@ const WordCounter = () => {
 
   const copyHook = useCopy()
 
-  const stats = useMemo(() => analyzeText(text), [text])
+  const stats = useMemo(() => analyzeText(deferredText), [deferredText])
 
   const fileUpload = useFileUpload({
     onFileRead: (content) => {

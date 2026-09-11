@@ -1,5 +1,5 @@
 import { Check, Copy, Upload, X, GitCompare, FileText, FileDown } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -67,12 +67,26 @@ const DiffChecker = () => {
   const copyNewHook = useCopy()
   const copyDiffHook = useCopy()
 
+  /**
+   * The diff follows typing rather than being computed during it.
+   *
+   * `input` is a discrete event, so React renders its consequences
+   * synchronously: at 500 KB, 84 ms of every keystroke was React re-running
+   * these memos and re-rendering the result rows before the browser could
+   * paint the character. Deferring lets the keystroke commit on its own and the
+   * diff catch up at a lower priority, with intermediate values dropped when
+   * typing outpaces it. The textarea keeps the urgent value, so the caret never
+   * lags or jumps.
+   */
+  const deferredOld = useDeferredValue(oldText)
+  const deferredNew = useDeferredValue(newText)
+
   const diffResult = useMemo(() => {
-    if (!oldText.trim() && !newText.trim()) {
+    if (!deferredOld.trim() && !deferredNew.trim()) {
       return null
     }
-    return computeDiff(oldText, newText, ignoreWhitespace)
-  }, [oldText, newText, ignoreWhitespace])
+    return computeDiff(deferredOld, deferredNew, ignoreWhitespace)
+  }, [deferredOld, deferredNew, ignoreWhitespace])
 
   const diffOutput = useMemo(() => {
     if (!diffResult) return ''

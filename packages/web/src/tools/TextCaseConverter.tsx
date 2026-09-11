@@ -1,5 +1,5 @@
 import { Check, Copy, Upload, X, Type } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -24,6 +24,16 @@ const PREVIEW_CHARS = 2000
 
 const TextCaseConverter = () => {
   const [input, setInput] = useState('')
+  /**
+   * Derived output follows typing rather than blocking it.
+   *
+   * `input` is a discrete event, so React computes its consequences
+   * synchronously before the browser can paint the character. Deferring the
+   * derived work lets the keystroke commit on its own and the results catch
+   * up at a lower priority. The textarea keeps the urgent value, so the
+   * caret never lags or jumps.
+   */
+  const deferredInput = useDeferredValue(input)
 
   // Accept a value handed over by the paste bar.
   useHandoff('text-case-converter', setInput)
@@ -45,12 +55,12 @@ const TextCaseConverter = () => {
   })
 
   const output = useMemo(() => {
-    if (!input.trim()) return ''
-    return convertCase(input, caseType)
-  }, [input, caseType])
+    if (!deferredInput.trim()) return ''
+    return convertCase(deferredInput, caseType)
+  }, [deferredInput, caseType])
 
   const allCases = useMemo(() => {
-    if (!input.trim()) return null
+    if (!deferredInput.trim()) return null
     const types: Array<{ type: CaseType; label: string }> = [
       { type: 'lowercase', label: 'lowercase' },
       { type: 'uppercase', label: 'UPPERCASE' },
@@ -63,7 +73,7 @@ const TextCaseConverter = () => {
       { type: 'constant', label: 'CONSTANT_CASE' },
     ]
     return types.map(({ type, label }) => {
-      const value = convertCase(input, type)
+      const value = convertCase(deferredInput, type)
       return {
         type,
         label,
@@ -74,7 +84,7 @@ const TextCaseConverter = () => {
         length: value.length,
       }
     })
-  }, [input])
+  }, [deferredInput])
 
   const handleClear = useCallback(() => {
     setInput('')
