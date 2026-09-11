@@ -1,5 +1,5 @@
 import { Check, Copy, Upload, X, Zap, Send, Play, Info, Key } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropzoneTextarea } from '../components/ui/DropzoneTextarea'
 import { EditorLayout } from '../components/ui/EditorLayout'
 import { EditorPanel } from '../components/ui/EditorPanel'
@@ -74,6 +74,22 @@ const ApiTester = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  /** The in-flight request, so it can be abandoned rather than left to land. */
+  const abortRef = useRef<AbortController | null>(null)
+
+  /**
+   * The origin the Authorization header was entered for.
+   *
+   * The header is ordinary `headers` state, so it survived any edit to the URL
+   * bar and was serialised into every later request. Test an internal API,
+   * paste a production token, then change the host to debug something else,
+   * and the credential went to the new host with nothing on screen saying so.
+   */
+  const [authOrigin, setAuthOrigin] = useState<string | null>(null)
+
+  // Abandon anything in flight when the tool unmounts.
+  useEffect(() => () => abortRef.current?.abort(), [])
+
   const copyHeadersHook = useCopy()
   const copyBodyHook = useCopy()
   const copyResponseHook = useCopy()
@@ -134,9 +150,32 @@ const ApiTester = () => {
       return
     }
     if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      setResponse(null)
       setError('Only http:// and https:// URLs are supported')
       return
     }
+
+    /**
+     * Never send a bound credential to a different origin.
+     *
+     * Refusing rather than silently stripping: a request that quietly drops its
+     * auth returns a confusing 401, and a request that quietly keeps it leaks
+     * the token. Only headers added through the Bearer button are bound — a
+     * hand-typed Authorization line is the user's own business.
+     */
+    const hasAuthHeader = /^\s*authorization\s*:/im.test(headers)
+    if (hasAuthHeader && authOrigin && authOrigin !== parsedUrl.origin) {
+      setResponse(null)
+      setError(
+        `The Authorization header was added for ${authOrigin}. It will not be sent to ${parsedUrl.origin} — remove it, or use "Add Bearer token" again to bind it to this host.`
+      )
+      return
+    }
+
+    // Supersede any request still running: its response must not overwrite this one.
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
 
     setIsLoading(true)
     setError('')
@@ -148,7 +187,8 @@ const ApiTester = () => {
       
       const requestOptions: RequestInit = {
         method,
-        headers: parsedHeaders
+        headers: parsedHeaders,
+        signal: controller.signal
       }
 
       if (['POST', 'PUT', 'PATCH'].includes(method) && body.trim()) {
@@ -178,6 +218,7 @@ const ApiTester = () => {
         responseHeaders[key] = value
       })
 
+      if (controller.signal.aborted) return
       setResponse({
         status: res.status,
         statusText: res.statusText,
@@ -186,14 +227,40 @@ const ApiTester = () => {
         time: responseTime
       })
     } catch (err) {
+      // An abort is a deliberate cancellation, not a failure to report.
+      if (controller.signal.aborted) return
       setError(err instanceof Error ? err.message : 'Request failed')
       setResponse(null)
     } finally {
-      setIsLoading(false)
+      // Only the current request owns the loading flag; a superseded one
+      // clearing it would hide the spinner for the request that replaced it.
+      if (abortRef.current === controller) {
+        abortRef.current = null
+        setIsLoading(false)
+      }
     }
-  }, [url, method, headers, body, parseHeaders])
+  }, [url, method, headers, body, parseHeaders, authOrigin])
+
+  /**
+   * Abandon the in-flight request.
+   *
+   * There was no way to stop one: the Send button disabled itself while
+   * loading, so a request against a slow or hanging host left the tool stuck
+   * on "Sending…" until the browser's own timeout, with the response then
+   * landing over whatever the user had moved on to.
+   */
+  const handleCancel = useCallback(() => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setIsLoading(false)
+    setError('Request cancelled.')
+  }, [])
 
   const handleClear = useCallback(() => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setIsLoading(false)
+    setAuthOrigin(null)
     setUrl('')
     setHeaders('Accept: application/json')
     setBody('')
@@ -202,6 +269,11 @@ const ApiTester = () => {
   }, [])
 
   const handleLoadExample = useCallback((example: ApiExample) => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setIsLoading(false)
+    // The example replaces the headers box, so any bound credential is gone.
+    setAuthOrigin(null)
     setMethod(example.method)
     setUrl(example.url)
     setHeaders(example.headers ?? '')
@@ -211,15 +283,28 @@ const ApiTester = () => {
   }, [])
 
   const handleAddBearerAuth = useCallback(() => {
+    // Bind the credential to a concrete origin up front; without a valid URL
+    // there is nothing to bind it to and no way to detect a later host change.
+    let origin: string
+    try {
+      const parsed = new URL(url.trim())
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('scheme')
+      origin = parsed.origin
+    } catch {
+      setError('Enter the request URL first, so the token can be tied to that host.')
+      return
+    }
+
     const token = window.prompt('Enter Bearer token (just the token, no "Bearer" prefix):')
     if (!token) return
     const line = `Authorization: Bearer ${token.trim()}`
+    setAuthOrigin(origin)
     setHeaders(prev => {
       const lines = prev.split('\n').filter(l => !/^\s*authorization\s*:/i.test(l))
       const next = lines.filter(Boolean).join('\n')
       return next ? `${next}\n${line}` : line
     })
-  }, [])
+  }, [url])
 
   const toolbarButtons = [
     {
@@ -328,12 +413,12 @@ const ApiTester = () => {
           <button
             type="button"
             className="api-send-btn"
-            onClick={handleSend}
-            disabled={!url.trim() || isLoading}
-            title="Send request (Ctrl+Enter)"
+            onClick={isLoading ? handleCancel : handleSend}
+            disabled={!url.trim() && !isLoading}
+            title={isLoading ? 'Cancel request' : 'Send request (Ctrl+Enter)'}
           >
-            {isLoading ? <Play size={15} /> : <Send size={15} />}
-            <span>{isLoading ? 'Sending…' : 'Send'}</span>
+            {isLoading ? <X size={15} /> : <Send size={15} />}
+            <span>{isLoading ? 'Cancel' : 'Send'}</span>
           </button>
         </div>
       </div>
