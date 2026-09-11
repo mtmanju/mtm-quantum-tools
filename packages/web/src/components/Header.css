@@ -234,7 +234,7 @@
 }
 
 .theme-toggle svg {
-  transition: transform 0.45s var(--ease-spring);
+  transition: transform 0.45s var(--ease-out);
 }
 
 .theme-toggle:hover svg {

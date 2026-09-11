@@ -129,8 +129,6 @@
     /* Animation curves - Modern easing functions */
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* ─────────────────────────────────────────────────────────────
        Design scale.
@@ -1668,7 +1666,7 @@ html {
   box-shadow: var(--shadow-sm);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
-  transition: all 0.4s var(--ease-spring);
+  transition: all 0.4s var(--ease-out);
   position: relative;
   z-index: 1;
 }
