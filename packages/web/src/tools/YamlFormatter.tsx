@@ -34,7 +34,11 @@ const YamlFormatter = () => {
   const copyInputHook = useCopy()
   const copyOutputHook = useCopy()
 
-  const validation = useMemo(() => validateYaml(yamlContent), [yamlContent])
+  /**
+   * Validation is a full parse now, so it follows typing rather than blocking
+   * it — same reason the formatted output is deferred.
+   */
+  const validation = useMemo(() => validateYaml(deferredYamlContent), [deferredYamlContent])
 
   const formattedYaml = useMemo(() => {
     if (!deferredYamlContent.trim()) return ''
@@ -60,14 +64,26 @@ const YamlFormatter = () => {
       return
     }
 
-    if (!validation.isValid) {
-      setError(validation.error || 'Invalid YAML')
+    /**
+     * Re-checked against the live text rather than the deferred validation.
+     * Format rewrites the document in place; doing that from a result that is
+     * one render behind would write back the previous keystroke's YAML.
+     */
+    const check = validateYaml(yamlContent)
+    if (!check.isValid) {
+      setError(check.error || 'Invalid YAML')
       return
     }
 
-    setYamlContent(formattedYaml)
+    const formatted = formatYaml(yamlContent, indentSize)
+    if (!formatted) {
+      setError('Failed to format YAML')
+      return
+    }
+
+    setYamlContent(formatted)
     setError('')
-  }, [yamlContent, validation, formattedYaml])
+  }, [yamlContent, indentSize])
 
   const handleDownload = useCallback(() => {
     const content = formattedYaml
