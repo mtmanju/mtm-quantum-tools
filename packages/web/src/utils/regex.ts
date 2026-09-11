@@ -25,6 +25,14 @@ export interface RegexTestResult {
   testString: string
   pattern: string
   flags: string
+  /**
+   * Matching stopped at the cap; `matches.length` is a floor, not a total.
+   *
+   * Without this the UI reported "Found 10000 matches" as an exact figure for
+   * any input with more, and left the rest of the document unhighlighted with
+   * nothing saying why.
+   */
+  truncated?: boolean
 }
 
 /**
@@ -137,7 +145,8 @@ export const testRegex = (
           matches,
           testString,
           pattern,
-          flags: flagStr
+          flags: flagStr,
+          truncated: true
         }
       }
     } else {

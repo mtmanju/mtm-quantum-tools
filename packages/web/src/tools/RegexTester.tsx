@@ -7,8 +7,9 @@ import { ErrorBar } from '../components/ui/ErrorBar'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { useCopy } from '../hooks/useCopy'
+import { useRegexEvaluator } from '../hooks/useRegexEvaluator'
 import { useFileUpload } from '../hooks/useFileUpload'
-import { testRegex, highlightMatches, replaceRegex, type RegexFlags } from '../utils/regex'
+import { highlightMatches, type RegexFlags } from '../utils/regex'
 import { useHandoff } from '../hooks/useHandoff'
 import './RegexTester.css'
 
@@ -50,16 +51,34 @@ const RegexTester = () => {
   const copyResultHook = useCopy()
   const copyHook = useCopy()
 
+  /**
+   * Evaluated in a worker, not in a memo on the render path.
+   *
+   * `testRegex` ran synchronously on every keystroke. A pattern with nested
+   * quantifiers backtracks exponentially — `(a+)+$` against a run of `a`s
+   * measured 146 ms at 24 characters and 534 ms at 26 — so the tab locked up
+   * the moment `(a+)+` existed, while the user was still typing the rest of
+   * the pattern, with no recovery but closing it. A regex cannot be
+   * interrupted once started, so the evaluation has to happen somewhere that
+   * can be destroyed.
+   */
+  const evaluation = useRegexEvaluator(pattern, testString, flags, replacement, mode)
+
   const testComputed = useMemo(() => {
-    if (!pattern.trim() || !testString.trim()) {
-      return { value: null, error: '' }
+    if (evaluation.timedOut) {
+      return {
+        value: null,
+        error:
+          'This pattern took too long to evaluate and was stopped. Nested quantifiers such as (a+)+ can backtrack exponentially — try rewriting it, or testing against a shorter string.',
+      }
     }
-    const result = testRegex(pattern, testString, flags)
+    const result = evaluation.test
+    if (!result) return { value: null, error: '' }
     if (!result.isValid) {
       return { value: result, error: result.error || 'Invalid regex pattern' }
     }
     return { value: result, error: '' }
-  }, [pattern, testString, flags])
+  }, [evaluation])
 
   const testResult = testComputed.value
 
@@ -71,15 +90,21 @@ const RegexTester = () => {
   }, [testResult, testString])
 
   const replaceComputed = useMemo(() => {
-    if (mode !== 'replace' || !pattern.trim() || !testString.trim()) {
-      return { value: null, error: '' }
+    if (mode !== 'replace') return { value: null, error: '' }
+    if (evaluation.timedOut) {
+      return {
+        value: null,
+        error:
+          'This pattern took too long to evaluate and was stopped. Nested quantifiers such as (a+)+ can backtrack exponentially — try rewriting it, or testing against a shorter string.',
+      }
     }
-    const result = replaceRegex(pattern, testString, replacement, flags)
+    const result = evaluation.replace
+    if (!result) return { value: null, error: '' }
     if (!result.isValid) {
       return { value: result, error: result.error || 'Replace failed' }
     }
     return { value: result, error: '' }
-  }, [pattern, testString, replacement, flags, mode])
+  }, [evaluation, mode])
 
   const replaceResult = replaceComputed.value
 
@@ -101,7 +126,12 @@ const RegexTester = () => {
       return 'No matches found'
     }
 
-    let output = `Found ${testResult.matches.length} match${testResult.matches.length !== 1 ? 'es' : ''}:\n\n`
+    // A capped count is a floor, not a total — this used to read "Found 10000
+    // matches" for any input with more, with the tail left unhighlighted.
+    const count = testResult.matches.length
+    let output = testResult.truncated
+      ? `Found ${count.toLocaleString()}+ matches (showing the first ${count.toLocaleString()}):\n\n`
+      : `Found ${count} match${count !== 1 ? 'es' : ''}:\n\n`
     
     testResult.matches.forEach((match, index) => {
       output += `Match ${index + 1}:\n`
