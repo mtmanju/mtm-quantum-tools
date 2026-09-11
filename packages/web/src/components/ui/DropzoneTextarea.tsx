@@ -1,41 +1,22 @@
 import { Upload } from 'lucide-react'
-import { memo, useCallback, useState, type RefObject } from 'react'
+import { memo, type RefObject, type TextareaHTMLAttributes } from 'react'
 import { type DropzoneInputProps, type DropzoneRootProps } from 'react-dropzone'
-import { CodeEditor } from './CodeEditor'
 import './DropzoneTextarea.css'
 
-/**
- * The primary input of about twenty tools: a drop target wrapped around an
- * editor.
- *
- * It used to wrap a `<textarea>`, and the name has been kept so the call sites
- * did not all have to change. What it wraps now is {@link CodeEditor}, which
- * renders only the visible lines — see that file for why.
- */
-interface DropzoneTextareaProps {
+interface DropzoneTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   getRootProps: <T extends DropzoneRootProps>(props?: T) => T
   getInputProps: <T extends DropzoneInputProps>(props?: T) => T
   isDragActive: boolean
-
-  value: string
   /**
-   * Shaped like a change event so the twenty-odd `e => setX(e.target.value)`
-   * call sites read the same as they always have, but honest about being the
-   * only thing this component actually provides — there is no DOM event behind
-   * it to preventDefault or to read a `currentTarget` from.
-   */
-  onChange?: (event: { target: { value: string } }) => void
-  /** The real paste event: call `preventDefault()` to replace the insertion. */
-  onPaste?: (event: ClipboardEvent) => void
-  placeholder?: string
-  spellCheck?: boolean
-  className?: string
-  'aria-label'?: string
-
-  /**
-   * Absorb react-dropzone and useFileUpload state so it does not reach the
-   * editor. Callers spread the whole hook result in, and these are the keys
-   * that come with it.
+   * Absorb react-dropzone and useFileUpload state so it doesn't land on the
+   * <textarea>.
+   *
+   * This list is not decoration — anything react-dropzone returns that is not
+   * named here gets spread onto a real DOM node, and React then warns for
+   * every unknown camelCase prop. react-dropzone 20 added isDragUnknown,
+   * isDragGlobal and isProcessing, which is exactly how that regressed: three
+   * new booleans started reaching the textarea as attributes. If a future
+   * upgrade adds more state, they belong here too.
    */
   isDragAccept?: boolean
   isDragReject?: boolean
@@ -59,28 +40,40 @@ export const DropzoneTextarea = memo(({
   getRootProps,
   getInputProps,
   isDragActive,
-  value,
-  onChange,
-  onPaste,
-  placeholder,
-  spellCheck = false,
-  className,
-  'aria-label': ariaLabel,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isDragAccept: _da, isDragReject: _dr, isFocused: _if, isFileDialogActive: _fd,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isDragUnknown: _du, isDragGlobal: _dg, isProcessing: _ip,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  acceptedFiles: _af, fileRejections: _fr, rootRef: _rr, inputRef: _ir,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  open: _o, handleUploadClick: _hu,
+  // Absorbed so it never reaches the <textarea>; the overlay uses
+  // dropzoneActiveText instead.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  dropzoneText: _dt,
   dropzoneHint = 'Supports file upload or paste directly',
   dropzoneActiveText = 'Drop file here',
+  value,
+  ...textareaProps
 }: DropzoneTextareaProps) => {
   /**
-   * The overlay used to be suppressed by `:has(:focus)` and
-   * `:has(:not(:placeholder-shown))`, neither of which an editor made of
-   * ordinary elements can answer. Same rule, tracked explicitly.
+   * A placeholder is not a label.
+   *
+   * These textareas are the primary input of about twenty tools, and none of
+   * them passed an aria-label — so the only accessible name each one had was
+   * its `placeholder`. That is the one attribute guaranteed to disappear the
+   * moment the field is non-empty: tab away and back after pasting, and the
+   * field announces as an unnamed edit box. It is also only ever a *fallback*
+   * name, which not every assistive technology uses.
+   *
+   * Falling back to the placeholder gives every one of them a name that
+   * survives typing, in one place rather than twenty. A caller that wants a
+   * better name can still pass `aria-label`: the spread comes after this, so
+   * it wins.
    */
-  const [isEditorFocused, setIsEditorFocused] = useState(false)
-  const showOverlay = isDragActive && !isEditorFocused && !value
-
-  const handleValueChange = useCallback(
-    (next: string) => onChange?.({ target: { value: next } }),
-    [onChange]
-  )
+  const placeholderLabel =
+    typeof textareaProps.placeholder === 'string' ? textareaProps.placeholder : undefined
 
   return (
     <div className="dropzone-textarea-wrapper" {...getRootProps()}>
@@ -89,24 +82,13 @@ export const DropzoneTextarea = memo(({
           the accessibility tree and announces as an unlabelled file control to
           anyone reading the page rather than tabbing through it. */}
       <input aria-label="Upload a file" {...getInputProps()} />
-      <CodeEditor
+      <textarea
+        aria-label={placeholderLabel}
+        {...textareaProps}
         value={value}
-        onValueChange={handleValueChange}
-        onPaste={onPaste}
-        onFocusChange={setIsEditorFocused}
-        placeholder={placeholder}
-        spellCheck={spellCheck}
-        /**
-         * A placeholder is not a label: it is the one attribute guaranteed to
-         * disappear the moment the field is non-empty, so a field named only
-         * by it announces as an unnamed edit box as soon as you type. Falling
-         * back to it still beats nothing, and a caller that passes aria-label
-         * wins.
-         */
-        ariaLabel={ariaLabel ?? placeholder}
-        className={className}
+        className={`dropzone-textarea ${textareaProps.className || ''}`}
       />
-      {showOverlay && (
+      {isDragActive && (
         <div className="dropzone-overlay active">
           <div className="dropzone-icon">
             <Upload size={32} strokeWidth={2} />
@@ -120,3 +102,4 @@ export const DropzoneTextarea = memo(({
 })
 
 DropzoneTextarea.displayName = 'DropzoneTextarea'
+

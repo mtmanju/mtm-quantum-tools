@@ -171,9 +171,7 @@
   color: var(--text-tertiary);
 }
 
-/* The class lands on the editor root, so the masking has to reach the element
-   that actually holds the text. */
-.jwt-editor-hidden .cm-content {
+.jwt-editor-hidden {
   -webkit-text-security: disc;
   text-security: disc;
 }
