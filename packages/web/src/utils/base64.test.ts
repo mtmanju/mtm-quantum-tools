@@ -174,3 +174,38 @@ describe('decodeFromBase64 — RFC 4648 strictness', () => {
     expect(decodeFromBase64(encodeToBase64(large)).decoded).toBe(large)
   })
 })
+
+
+describe('decodeFromBase64 — quoted input', () => {
+  /**
+   * Base64 is usually copied out of something that quotes it: a JSON value, a
+   * YAML scalar, a source literal. No quote character is in the alphabet, so a
+   * matched outer pair can only be a wrapper — rejecting it told users a
+   * perfectly good image was invalid.
+   */
+  it.each([
+    ['double quotes', `"${PNG_BASE64}"`],
+    ['single quotes', `'${PNG_BASE64}'`],
+    ['backticks', '`' + PNG_BASE64 + '`'],
+    ['quotes around a data URL', `"data:image/png;base64,${PNG_BASE64}"`],
+  ])('decodes a PNG wrapped in %s', (_label, input) => {
+    const result = decodeFromBase64(input)
+    expect(result.isValid).toBe(true)
+    expect(result.mimeType).toBe('image/png')
+    expect(Array.from(result.decodedBytes!)).toEqual(Array.from(PNG_BYTES))
+  })
+
+  it('handles quotes combined with wrapping whitespace', () => {
+    const wrapped = `"${formatBase64(PNG_BASE64)}"`
+    expect(Array.from(decodeFromBase64(wrapped).decodedBytes!)).toEqual(Array.from(PNG_BYTES))
+  })
+
+  it('still rejects an unmatched quote', () => {
+    expect(decodeFromBase64(`"${PNG_BASE64}`).isValid).toBe(false)
+  })
+
+  it('still rejects a quote inside the data', () => {
+    const corrupted = PNG_BASE64.slice(0, 10) + '"' + PNG_BASE64.slice(10)
+    expect(decodeFromBase64(corrupted).isValid).toBe(false)
+  })
+})

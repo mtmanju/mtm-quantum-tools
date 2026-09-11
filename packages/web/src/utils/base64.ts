@@ -39,7 +39,21 @@ export const decodeFromBase64 = (base64: string): Base64Result => {
       }
     }
 
-    const trimmed = base64.trim()
+    /**
+     * Unwrap surrounding quotes.
+     *
+     * Base64 is most often copied out of something that quotes it — a JSON
+     * value, a YAML scalar, a source literal — and the quotes come with it.
+     * No quote character is in the Base64 alphabet, so a leading and trailing
+     * pair can only ever be a wrapper, never data. Rejecting it was correct by
+     * the letter of RFC 4648 and useless in practice: every other decoder
+     * accepts it, and the user is told their image is invalid when it is not.
+     *
+     * Only a matched outer pair is removed. A stray quote *inside* the data
+     * still fails validation, which is the corruption case worth catching.
+     */
+    const unquoted = base64.trim().replace(/^(['"`])([\s\S]*)\1$/, '$2')
+    const trimmed = unquoted.trim()
 
     /**
      * Strip a data-URL prefix only when it really is one.
