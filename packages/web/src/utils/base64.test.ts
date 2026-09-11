@@ -175,37 +175,62 @@ describe('decodeFromBase64 — RFC 4648 strictness', () => {
   })
 })
 
-
-describe('decodeFromBase64 — quoted input', () => {
+describe('decodeFromBase64 — payload wrapped in other syntax', () => {
   /**
-   * Base64 is usually copied out of something that quotes it: a JSON value, a
-   * YAML scalar, a source literal. No quote character is in the alphabet, so a
-   * matched outer pair can only be a wrapper — rejecting it told users a
-   * perfectly good image was invalid.
+   * Base64 is almost never copied on its own: it arrives as a JSON value, an
+   * img src, a CSS url(), a YAML scalar. Strict alphabet checking rejected all
+   * of it and told users a perfectly good image was invalid.
    */
   it.each([
     ['double quotes', `"${PNG_BASE64}"`],
     ['single quotes', `'${PNG_BASE64}'`],
-    ['backticks', '`' + PNG_BASE64 + '`'],
-    ['quotes around a data URL', `"data:image/png;base64,${PNG_BASE64}"`],
-  ])('decodes a PNG wrapped in %s', (_label, input) => {
+    ['smart quotes', `\u201C${PNG_BASE64}\u201D`],
+    ['a JSON key/value fragment', `"image": "data:image/png;base64,${PNG_BASE64}"`],
+    ['a JSON object', `{"data":"${PNG_BASE64}"}`],
+    ['an img src attribute', `<img src="data:image/png;base64,${PNG_BASE64}">`],
+    ['a CSS url()', `url("data:image/png;base64,${PNG_BASE64}")`],
+    ['a trailing comma', `"${PNG_BASE64}",`],
+    ['a JSON-escaped slash', `"data:image\\/png;base64,${PNG_BASE64}"`],
+    ['a bare data URL', `data:image/png;base64,${PNG_BASE64}`],
+  ])('extracts the PNG from %s', (_label, input) => {
     const result = decodeFromBase64(input)
     expect(result.isValid).toBe(true)
     expect(result.mimeType).toBe('image/png')
     expect(Array.from(result.decodedBytes!)).toEqual(Array.from(PNG_BYTES))
   })
 
-  it('handles quotes combined with wrapping whitespace', () => {
+  it('prefers the payload over a shorter quoted key', () => {
+    // `{"data":"..."}` contains two quoted runs; the longer one is the payload.
+    const result = decodeFromBase64(`{"data":"${PNG_BASE64}"}`)
+    expect(Array.from(result.decodedBytes!)).toEqual(Array.from(PNG_BYTES))
+  })
+
+  it('handles a wrapper combined with 76-column wrapping', () => {
     const wrapped = `"${formatBase64(PNG_BASE64)}"`
     expect(Array.from(decodeFromBase64(wrapped).decodedBytes!)).toEqual(Array.from(PNG_BYTES))
+  })
+
+  /**
+   * Extraction must not become "delete anything that is not Base64" — that is
+   * the bug the strictness exists to prevent. Each candidate is a contiguous
+   * run delimited by a recognised wrapper and is still validated strictly.
+   */
+  it('still rejects corruption inside the data', () => {
+    const corrupted = PNG_BASE64.slice(0, 10) + '"' + PNG_BASE64.slice(10)
+    expect(decodeFromBase64(corrupted).isValid).toBe(false)
   })
 
   it('still rejects an unmatched quote', () => {
     expect(decodeFromBase64(`"${PNG_BASE64}`).isValid).toBe(false)
   })
 
-  it('still rejects a quote inside the data', () => {
-    const corrupted = PNG_BASE64.slice(0, 10) + '"' + PNG_BASE64.slice(10)
-    expect(decodeFromBase64(corrupted).isValid).toBe(false)
+  it('still rejects prose', () => {
+    expect(decodeFromBase64('hello world this is prose').isValid).toBe(false)
+  })
+
+  it('reports the error for the input as given, not for a fragment inside it', () => {
+    const result = decodeFromBase64('aGVsbG8h!!!')
+    expect(result.isValid).toBe(false)
+    expect(result.error).toMatch(/outside the Base64 alphabet/)
   })
 })

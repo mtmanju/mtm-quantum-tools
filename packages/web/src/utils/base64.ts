@@ -30,6 +30,88 @@ export const encodeToBase64 = (text: string): string => {
 /**
  * Decodes Base64 to string
  */
+/**
+ * Normalise one candidate string into canonical Base64, or explain why it is not.
+ *
+ * Strict per RFC 4648 §3.3: characters outside the alphabet are rejected, never
+ * deleted. Whitespace is removed first because MIME and PEM wrap Base64 at fixed
+ * widths, and missing padding is completed because it is unambiguous — neither
+ * changes a single decoded byte.
+ */
+const normalizeBase64 = (raw: string): { clean: string } | { error: string } => {
+  const base64Data = raw.replace(/\s+/g, '')
+  if (!base64Data) return { error: 'Invalid Base64 format: no data to decode' }
+
+  const invalid = base64Data.match(/[^A-Za-z0-9+/=]/g)
+  if (invalid) {
+    const unique = [...new Set(invalid)].slice(0, 10)
+    const detail = unique
+      .map(c => `'${c}' (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`)
+      .join(', ')
+    return {
+      error: `Invalid Base64: contains characters outside the Base64 alphabet: ${detail}${invalid.length > 10 ? ` (and ${invalid.length - 10} more)` : ''}`,
+    }
+  }
+
+  // Padding terminates the data; it cannot appear inside it. `SGVsbG8=world`
+  // used to have the interior `=` spliced out and the halves concatenated.
+  if (/=[^=]/.test(base64Data)) {
+    return { error: 'Invalid Base64: padding (=) may only appear at the end of the string' }
+  }
+
+  const padding = (/=*$/.exec(base64Data)?.[0] ?? '').length
+  if (padding > 2) {
+    return { error: 'Invalid Base64: at most two padding characters (=) are allowed' }
+  }
+
+  const body = base64Data.slice(0, base64Data.length - padding)
+  const remainder = body.length % 4
+
+  // A remainder of 1 cannot be produced by any input: 4 characters encode 3 bytes.
+  if (remainder === 1) {
+    return { error: 'Invalid Base64: truncated or corrupted (invalid length)' }
+  }
+
+  return { clean: remainder === 0 ? body : body + '='.repeat(4 - remainder) }
+}
+
+/** Quote characters that wrap Base64 in the wild, including smart quotes. */
+const QUOTES = '"\'`\u201C\u201D\u2018\u2019'
+
+/**
+ * Pull the Base64 payload out of whatever it was copied inside.
+ *
+ * Base64 is almost never copied on its own. It arrives as a JSON value, an
+ * `<img src="...">` attribute, a CSS `url(...)`, a YAML scalar or a source
+ * literal, and the surrounding syntax comes with it. Rejecting all of that was
+ * correct by the letter of RFC 4648 and useless in practice — the user is told
+ * their perfectly good image is invalid, and every other decoder accepts it.
+ *
+ * This is NOT a return to "delete anything that is not Base64", which is the
+ * bug the strictness exists to prevent. Each candidate is a *contiguous* run
+ * delimited by a recognised wrapper, and every candidate is then validated
+ * strictly — so corruption inside the data still fails. The longest candidate
+ * wins, which is what picks the payload out of `{"data":"..."}` rather than the
+ * key.
+ */
+const extractCandidates = (input: string): string[] => {
+  const candidates = [input]
+
+  // A data: URL anywhere in the text, quoted or not. Backslashes are allowed in
+  // the media-type run because JSON escapes the slash as `image\/png`.
+  for (const m of input.matchAll(/data:[^,;]*;base64,([A-Za-z0-9+/=\s]+)/gi)) {
+    candidates.push(m[1])
+  }
+
+  // Any quoted run made only of Base64 characters.
+  for (const m of input.matchAll(new RegExp(`[${QUOTES}]([A-Za-z0-9+/=\\s]+)[${QUOTES}]`, 'g'))) {
+    candidates.push(m[1])
+  }
+
+  // Longest first: the payload is always longer than the key or the media type.
+  return [...new Set(candidates)].sort((a, b) => b.trim().length - a.trim().length)
+}
+
 export const decodeFromBase64 = (base64: string): Base64Result => {
   try {
     if (!base64 || typeof base64 !== 'string') {
@@ -39,101 +121,27 @@ export const decodeFromBase64 = (base64: string): Base64Result => {
       }
     }
 
-    /**
-     * Unwrap surrounding quotes.
-     *
-     * Base64 is most often copied out of something that quotes it — a JSON
-     * value, a YAML scalar, a source literal — and the quotes come with it.
-     * No quote character is in the Base64 alphabet, so a leading and trailing
-     * pair can only ever be a wrapper, never data. Rejecting it was correct by
-     * the letter of RFC 4648 and useless in practice: every other decoder
-     * accepts it, and the user is told their image is invalid when it is not.
-     *
-     * Only a matched outer pair is removed. A stray quote *inside* the data
-     * still fails validation, which is the corruption case worth catching.
-     */
-    const unquoted = base64.trim().replace(/^(['"`])([\s\S]*)\1$/, '$2')
-    const trimmed = unquoted.trim()
+    const trimmed = base64.trim()
 
-    /**
-     * Strip a data-URL prefix only when it really is one.
-     *
-     * This used to be `base64.includes(',') ? base64.split(',')[1] : base64`,
-     * so a comma anywhere truncated the input to whatever followed it:
-     * `Zm9v,YmFy` decoded to "bar" and was reported valid.
-     */
-    const dataUrl = /^data:[^,]*;base64,/i.exec(trimmed)
-    const withoutPrefix = dataUrl ? trimmed.slice(dataUrl[0].length) : trimmed
+    let cleanBase64: string | null = null
+    // The error from the input as given, so a genuinely corrupt paste reports
+    // what is wrong with it rather than something about a fragment inside it.
+    let firstError = 'Invalid Base64 format: no data to decode'
 
-    // Whitespace is layout, not data: MIME and PEM wrap Base64 at fixed widths.
-    const base64Data = withoutPrefix.replace(/\s+/g, '')
-
-    if (!base64Data) {
-      return {
-        isValid: false,
-        error: 'Invalid Base64 format: no data to decode'
+    for (const candidate of extractCandidates(trimmed)) {
+      const prefix = /^data:[^,]*;base64,/i.exec(candidate.trim())
+      const payload = prefix ? candidate.trim().slice(prefix[0].length) : candidate
+      const result = normalizeBase64(payload)
+      if ('clean' in result) {
+        cleanBase64 = result.clean
+        break
       }
+      if (candidate === trimmed) firstError = result.error
     }
 
-    /**
-     * Reject characters outside the alphabet; do not delete them.
-     *
-     * RFC 4648 §3.3 is explicit that a decoder MUST reject data containing
-     * characters outside the base alphabet. This previously stripped them and
-     * carried on, so `aGVsbG8h!!!` decoded to "hello!" and reported success — a
-     * corrupted or partial paste produced plausible output with no indication
-     * that anything had been discarded, which is exactly what a decoder exists
-     * to catch.
-     */
-    const invalid = base64Data.match(/[^A-Za-z0-9+/=]/g)
-    if (invalid) {
-      const unique = [...new Set(invalid)].slice(0, 10)
-      const detail = unique
-        .map(c => `'${c}' (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`)
-        .join(', ')
-      return {
-        isValid: false,
-        error: `Invalid Base64: contains characters outside the Base64 alphabet: ${detail}${invalid.length > 10 ? ` (and ${invalid.length - 10} more)` : ''}`
-      }
+    if (cleanBase64 === null) {
+      return { isValid: false, error: firstError }
     }
-
-    /**
-     * Padding terminates the data; it cannot appear inside it.
-     *
-     * `SGVsbG8=world` used to have the interior `=` spliced out and the halves
-     * concatenated — reported valid, with no decoded text at all. `Zg==Zg==`,
-     * two concatenated encodings of "f", was fused into three garbage bytes.
-     */
-    if (/=[^=]/.test(base64Data)) {
-      return {
-        isValid: false,
-        error: 'Invalid Base64: padding (=) may only appear at the end of the string'
-      }
-    }
-
-    const padding = (/=*$/.exec(base64Data)?.[0] ?? '').length
-    if (padding > 2) {
-      return {
-        isValid: false,
-        error: 'Invalid Base64: at most two padding characters (=) are allowed'
-      }
-    }
-
-    const body = base64Data.slice(0, base64Data.length - padding)
-    const remainder = body.length % 4
-
-    // A remainder of 1 cannot be produced by any input: 4 output characters
-    // encode 3 bytes, so valid lengths leave 0, 2 or 3.
-    if (remainder === 1) {
-      return {
-        isValid: false,
-        error: 'Invalid Base64: truncated or corrupted (invalid length)'
-      }
-    }
-
-    // Unpadded Base64 is common and unambiguous, so the padding is completed
-    // rather than rejected. That adds no data and changes no decoded bytes.
-    const cleanBase64 = remainder === 0 ? body : body + '='.repeat(4 - remainder)
 
     // Try to decode to bytes first to detect file type
     // This is the real validation - if atob() succeeds, the Base64 is valid
