@@ -1,0 +1,42 @@
+/**
+ * The editor is styled to be indistinguishable from the textarea it replaced:
+ * same monospace face, same 1rem padding, same elevated surface, no border and
+ * no focus ring of its own (the panel around it carries that).
+ */
+.code-editor {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.code-editor .cm-editor {
+  height: 100%;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.code-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.code-editor .cm-scroller {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  overflow: auto;
+}
+
+.code-editor .cm-content {
+  padding: 1rem;
+  caret-color: var(--text-primary);
+}
+
+.code-editor .cm-line {
+  padding: 0;
+}
+
+.code-editor .cm-placeholder {
+  color: var(--text-tertiary);
+}
