@@ -478,8 +478,19 @@ const Base64Converter = () => {
                   setActionError('')
                 }}
                 onPaste={(e) => {
-                  const pastedText = e.clipboardData.getData('text')
+                  const pastedText = e.clipboardData?.getData('text')
                   if (pastedText) {
+                    /**
+                     * Replace the insertion rather than adding to it.
+                     *
+                     * Without this the browser pasted the raw text straight
+                     * after this handler ran, firing a change that overwrote
+                     * everything cleaned below — so a pasted data: URL kept
+                     * its `data:image/png;base64,` prefix and its line breaks,
+                     * and this whole block did nothing at all.
+                     */
+                    e.preventDefault()
+
                     // Clean the pasted text - remove any extra whitespace and invalid characters
                     let cleaned = pastedText.trim()
                     

@@ -199,8 +199,11 @@ const JwtDecoder = () => {
                 setCopiedStates(prev => ({ ...prev, token: false }))
               }}
               onPaste={(e) => {
-                const pastedText = e.clipboardData.getData('text')
+                const pastedText = e.clipboardData?.getData('text')
                 if (pastedText) {
+                  // Replace the insertion: otherwise the browser's own paste
+                  // lands afterwards and undoes the trim.
+                  e.preventDefault()
                   setToken(pastedText.trim())
                   setError('')
                   setCopiedStates(prev => ({ ...prev, token: false }))
