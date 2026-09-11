@@ -46,7 +46,17 @@ const LoanRepaymentCalculator = memo(() => {
     
     const totalInterest = schedule.reduce((sum, month) => sum + month.interestPayment, 0)
     const totalPrincipalPaid = schedule.reduce((sum, month) => sum + (month.principalPayment + month.extraPayment), 0)
-    const totalExtraPayment = schedule.reduce((sum, month) => sum + month.extraPayment, 0)
+    /**
+     * Count only the extra that the balance could actually absorb.
+     *
+     * The final instalment carries the nominal extra even when principalPayment
+     * has already cleared the whole opening balance, so summing the raw column
+     * reported a payment the schedule's own row does not account for.
+     */
+    const totalExtraPayment = schedule.reduce(
+      (sum, month) => sum + Math.max(0, Math.min(month.extraPayment, month.openingBalance - month.principalPayment)),
+      0
+    )
     const actualTenure = schedule.length
 
     return {
@@ -224,7 +234,9 @@ Results:
               <div className="result-card">
                 <div className="result-label">Time Saved</div>
                 <div className="result-value savings">
-                  {results.originalTenure - results.actualTenure} months
+                  {/* Clamped: a fractional tenure like 0.5 months produced
+                      "-0.5 months saved" on a loan that never amortised. */}
+                  {Math.max(0, Math.round(results.originalTenure) - results.actualTenure)} months
                 </div>
               </div>
 
@@ -236,7 +248,15 @@ Results:
               <div className="result-card">
                 <div className="result-label">Total Amount Paid</div>
                 <div className="result-value">
-                  {formatCurrency(results.totalPrincipal + results.totalInterest + results.totalExtraPayment)}
+                  {/*
+                    Principal + interest is the whole of it. Extra payments ARE
+                    principal repayments, so they are already inside
+                    totalPrincipal — adding them again overstated a 20-year
+                    ₹50L loan with ₹10k extra by ₹15.5L (18.8%), contradicting
+                    the schedule rendered directly below, whose own emi column
+                    sums to exactly principal + interest.
+                  */}
+                  {formatCurrency(results.totalPrincipal + results.totalInterest)}
                 </div>
               </div>
             </div>
@@ -254,7 +274,10 @@ Results:
               <div className="repayment-schedule">
                 <h3>
                   Repayment Schedule
-                  {!schedulePagination.showAll && ` (${schedulePagination.pageSize} of ${schedulePagination.totalItems} months)`}
+                  {/* pageSize is not clamped to the item count, so a 6-month
+                      loan read "12 of 6 months". */}
+                  {!schedulePagination.showAll &&
+                    ` (${Math.min(schedulePagination.pageSize, schedulePagination.totalItems)} of ${schedulePagination.totalItems} months)`}
                   {schedulePagination.showAll && ` (All ${schedulePagination.totalItems} months)`}
                 </h3>
                 <div className="schedule-table">

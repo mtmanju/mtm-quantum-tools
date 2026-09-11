@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, FileText, Image as ImageIcon, Check } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
+import { useLatestRun } from '../hooks/useLatestRun'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
@@ -43,17 +44,33 @@ async function pdfPageToBlob(
   const mime = format === 'png' ? 'image/png' : 'image/jpeg'
   const quality = format === 'jpg' ? 0.92 : undefined
 
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      blob => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
-      mime,
-      quality
-    )
-  })
+  try {
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        blob => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
+        mime,
+        quality
+      )
+    })
+  } finally {
+    /**
+     * Release the page and the backing store before the next iteration.
+     *
+     * At 4x scale a US-Letter canvas is ~2448x3168, about 31 MB of RGBA. The
+     * loop below runs back to back with no yield, so without this a 60-page
+     * document allocates ~1.8 GB of canvases plus 60 uncleaned page proxies in
+     * the worker before the first one can be collected. Setting the dimensions
+     * to 0 is what actually frees a canvas; dropping the reference does not.
+     */
+    page.cleanup()
+    canvas.width = 0
+    canvas.height = 0
+  }
 }
 
 const PdfToImage = () => {
   const [pdfFile, setPdfFile] = useState<PdfFile | null>(null)
+  const { begin, cancel } = useLatestRun()
   const [format, setFormat] = useState<ImageFormat>('png')
   const [scale, setScale] = useState<number>(2)
   const [error, setError] = useState('')
@@ -70,10 +87,14 @@ const PdfToImage = () => {
       return
     }
 
+    // Claim this selection: three awaits follow, and a slower earlier pick
+    // must not overwrite a faster later one.
+    const isCurrent = begin()
     setIsValidating(true)
     setError('')
 
     const isValid = await validatePdf(file)
+    if (!isCurrent()) return
     if (!isValid) {
       setError(`${file.name} is not a valid PDF file`)
       setIsValidating(false)
@@ -87,6 +108,7 @@ const PdfToImage = () => {
     } catch (err) {
       console.error('Failed to generate thumbnail', err)
     }
+    if (!isCurrent()) return
 
     setPdfFile({
       file,
@@ -96,7 +118,7 @@ const PdfToImage = () => {
       thumbnail
     })
     setIsValidating(false)
-  }, [])
+  }, [begin])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileSelect,
@@ -125,38 +147,64 @@ const PdfToImage = () => {
     setError('')
     setConversionProgress(null)
 
+    const isCurrent = begin()
+    // Kept outside the try so teardown still runs when the loop throws.
+    let loadingTask: ReturnType<typeof pdfjsLib.getDocument> | null = null
+
     try {
       const arrayBuffer = await pdfFile.file.arrayBuffer()
       // Keep the loading task: pdf.js 6 moved teardown onto it (see utils/pdf.ts).
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, verbosity: 0 })
+      loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, verbosity: 0 })
       const pdf = await loadingTask.promise
       const totalPages = pdf.numPages
       const baseName = pdfFile.name.replace(/\.pdf$/i, '')
       const ext = format === 'png' ? 'png' : 'jpg'
       const mime = format === 'png' ? 'image/png' : 'image/jpeg'
 
+      let converted = 0
       for (let i = 1; i <= totalPages; i++) {
+        /**
+         * Stop when the user has moved on.
+         *
+         * Clear and the dropzone were never disabled during a run, so clearing
+         * at page 5 of 60 left the loop downloading 55 more files into the
+         * user's folder and raising a success toast over an emptied tool.
+         * Dropping a different PDF was worse: pages of the old document kept
+         * arriving while the card showed the new one.
+         */
+        if (!isCurrent()) return
         setConversionProgress({ current: i, total: totalPages })
         const blob = await pdfPageToBlob(pdf, i, scale, format)
+        if (!isCurrent()) return
         const padded = String(i).padStart(3, '0')
         downloadBinaryFile(blob, `${baseName}-page-${padded}.${ext}`, mime, { silent: true })
+        converted++
       }
-      toast(`Downloaded ${totalPages} image${totalPages === 1 ? '' : 's'}`, 'success')
-
-      await loadingTask.destroy()
+      toast(`Downloaded ${converted} image${converted === 1 ? '' : 's'}`, 'success')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to convert PDF')
+      if (isCurrent()) setError(err instanceof Error ? err.message : 'Failed to convert PDF')
     } finally {
-      setIsConverting(false)
-      setConversionProgress(null)
+      /**
+       * destroy() used to be the last statement inside the try, so any throw
+       * from the page loop skipped it and the pdf.js worker kept the whole
+       * parsed document. Three failed retries on a 100 MB file retained three
+       * orphaned documents until a page reload.
+       */
+      await loadingTask?.destroy()
+      if (isCurrent()) {
+        setIsConverting(false)
+        setConversionProgress(null)
+      }
     }
-  }, [pdfFile, scale, format])
+  }, [pdfFile, scale, format, begin])
 
   const handleRemove = useCallback(() => {
+    // Stop any in-flight conversion writing into a cleared UI.
+    cancel()
     setPdfFile(null)
     setError('')
     setConversionProgress(null)
-  }, [])
+  }, [cancel])
 
   const toolbarButtons = [
     {

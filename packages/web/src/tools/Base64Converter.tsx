@@ -260,21 +260,21 @@ const Base64Converter = () => {
       icon: <FileText size={16} />,
       label: 'Format',
       onClick: handleFormat,
-      disabled: !input.trim() || mode !== 'encode',
+      disabled: (!input.trim() && !encodedFile) || mode !== 'encode',
       title: 'Format Base64 with line breaks'
     },
     {
       icon: <X size={16} />,
       label: 'Minify',
       onClick: handleMinify,
-      disabled: !input.trim(),
+      disabled: !input.trim() && !encodedFile,
       title: 'Remove all whitespace'
     },
     {
       icon: copyInputHook.copied ? <Check size={16} /> : <Copy size={16} />,
       label: copyInputHook.copied ? 'Copied!' : 'Copy input',
       onClick: () => copyInputHook.copy(input, (err) => setActionError(err)),
-      disabled: !input.trim(),
+      disabled: !input.trim() && !encodedFile,
       title: 'Copy input',
       showDividerBefore: true
     },
@@ -289,7 +289,10 @@ const Base64Converter = () => {
       icon: <FileDown size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !output.trim() || mode !== 'decode',
+      // `output` is deliberately blanked for binary payloads, and gating on it
+      // disabled Download in exactly the case it exists for: decode a PNG, see
+      // the preview, and the toolbar's Download was dead.
+      disabled: !decodeResult?.decodedBytes?.length || mode !== 'decode',
       title: 'Download decoded file',
       showDividerBefore: true
     },
@@ -297,7 +300,7 @@ const Base64Converter = () => {
       icon: <X size={16} />,
       label: 'Clear',
       onClick: handleClear,
-      disabled: !input.trim(),
+      disabled: !input.trim() && !encodedFile,
       title: 'Clear',
       showDividerBefore: true
     }

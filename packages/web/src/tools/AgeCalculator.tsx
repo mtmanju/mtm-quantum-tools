@@ -52,8 +52,18 @@ function calculateAge(birth: Date, asOf: Date): AgeBreakdown {
 
   if (days < 0) {
     months--
-    const prevMonth = new Date(asOf.getFullYear(), asOf.getMonth(), 0)
-    days += prevMonth.getDate()
+    /**
+     * Borrow from the month the birth day actually falls in.
+     *
+     * This used `new Date(asOf.getFullYear(), asOf.getMonth(), 0)` — the month
+     * before *asOf* — so when the birth day-of-month exceeded that month's
+     * length the borrow under-compensated and the result went negative: birth
+     * 1990-01-31 viewed on 2025-03-01 reported "35 years 1 months -2 days".
+     */
+    const anchor = new Date(asOf.getFullYear(), asOf.getMonth() - 1, 1)
+    const daysInBorrowedMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0).getDate()
+    days += Math.max(daysInBorrowedMonth, birth.getDate() <= daysInBorrowedMonth ? daysInBorrowedMonth : birth.getDate())
+    if (days < 0) days = 0
   }
   if (months < 0) {
     years--
@@ -109,10 +119,16 @@ function getChineseZodiac(year: number): ZodiacInfo {
 
 function daysUntilNextBirthday(birth: Date, asOf: Date): { days: number; date: Date } {
   const asOfMidnight = new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate())
-  const thisYear = new Date(asOf.getFullYear(), birth.getMonth(), birth.getDate())
+  /**
+   * Clamp to the last day of the month so a Feb-29 birthday does not roll into
+   * March 1 in a common year — `new Date(2025, 1, 29)` normalises to 01/03.
+   */
+  const clampDay = (year: number, month: number, day: number) =>
+    new Date(year, month, Math.min(day, new Date(year, month + 1, 0).getDate()))
+  const thisYear = clampDay(asOf.getFullYear(), birth.getMonth(), birth.getDate())
   const nextBirthday =
     thisYear < asOfMidnight
-      ? new Date(asOf.getFullYear() + 1, birth.getMonth(), birth.getDate())
+      ? clampDay(asOf.getFullYear() + 1, birth.getMonth(), birth.getDate())
       : thisYear
   const days = Math.round(
     (nextBirthday.getTime() - asOfMidnight.getTime()) / (1000 * 60 * 60 * 24)
@@ -183,7 +199,16 @@ const AgeCalculator = () => {
     }
 
     const age = calculateAge(birth, asOf)
-    const diffMs = asOf.getTime() - birth.getTime()
+    /**
+     * Day counts come from calendar fields, not wall-clock milliseconds.
+     *
+     * Both endpoints are local midnights, but across a DST change the elapsed
+     * ms is not a whole number of days: 2000-01-15 to 2025-07-15 in New York is
+     * 9312.958 days, so Total Days read 9,312 for a 9,313-day span and Total
+     * Hours landed 23 hours short of a whole day.
+     */
+    const utcDay = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+    const diffMs = utcDay(asOf) - utcDay(birth)
     const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
     const totalHours = Math.floor(diffMs / (1000 * 60 * 60))
     const totalMinutes = Math.floor(diffMs / (1000 * 60))

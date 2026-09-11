@@ -112,13 +112,26 @@ const StringInspector = () => {
   // ── Encodings ────────────────────────────────────────────────────────────
   const encodings = useMemo(() => {
     if (!input) return { base64: '', urlEncoded: '', htmlEncoded: '' }
+
+    /**
+     * Replace unpaired surrogates before any percent-encoding.
+     *
+     * `encodeURIComponent` throws URIError on a lone surrogate. The btoa call
+     * below was wrapped in a try, but the urlEncoded line was not — so pasting
+     * text containing one (common when copying out of a JS or JSON source)
+     * threw during render, the per-tool ErrorBoundary swallowed the component,
+     * and the panel became "This tool hit an error" with the user's text gone.
+     */
+    const encodable = input.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g,
+      m => m.length === 2 ? m[0] + '\uFFFD' : '\uFFFD')
+
     let base64: string
     try {
-      base64 = btoa(unescape(encodeURIComponent(input)))
+      base64 = btoa(unescape(encodeURIComponent(encodable)))
     } catch {
       base64 = '(unable to encode)'
     }
-    const urlEncoded = encodeURIComponent(input)
+    const urlEncoded = encodeURIComponent(encodable)
     const htmlEncoded = input
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')

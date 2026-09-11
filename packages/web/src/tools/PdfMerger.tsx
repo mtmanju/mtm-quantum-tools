@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, Printer, AlertCircle, FileText, Check, GripVertical } from 'lucide-react'
+import { useLatestRun } from '../hooks/useLatestRun'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
@@ -10,6 +11,7 @@ import './PdfMerger.css'
 
 const PdfMerger = () => {
   const [pdfFiles, setPdfFiles] = useState<PdfFile[]>([])
+  const { begin } = useLatestRun()
   const [error, setError] = useState('')
   const [isMerging, setIsMerging] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -20,29 +22,40 @@ const PdfMerger = () => {
   const handleFileSelect = useCallback(async (files: File[]) => {
     if (!files || files.length === 0) return
 
+    // Claim this selection: three awaits follow, and a slower earlier
+    // pick must not overwrite a faster later one.
+    const isCurrent = begin()
     setIsValidating(true)
     setError('')
 
     const newFiles: PdfFile[] = []
-    
+    /**
+     * Bad files are recorded and skipped, not fatal to the batch.
+     *
+     * This used to `return` on the first rejection, discarding `newFiles`
+     * entirely — so dropping five PDFs where the fourth was corrupt threw away
+     * the three already parsed and thumbnailed (the expensive part) along with
+     * the fifth, leaving an empty grid and one error message.
+     */
+    const skipped: string[] = []
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      
+
       if (!file.name.toLowerCase().endsWith('.pdf')) {
-        setError(`${file.name} is not a PDF file`)
-        setIsValidating(false)
-        return
+        skipped.push(file.name)
+        continue
       }
 
       const isValid = await validatePdf(file)
+      if (!isCurrent()) return
       if (!isValid) {
-        setError(`${file.name} is not a valid PDF file`)
-        setIsValidating(false)
-        return
+        skipped.push(file.name)
+        continue
       }
 
       const pageCount = await getPdfPageCount(file)
-      
+
       // Generate thumbnail immediately - wait for it
       let thumbnail = ''
       try {
@@ -50,7 +63,8 @@ const PdfMerger = () => {
       } catch (err) {
         console.error('Failed to generate thumbnail for', file.name, err)
       }
-      
+      if (!isCurrent()) return
+
       newFiles.push({
         file,
         name: file.name,
@@ -60,9 +74,17 @@ const PdfMerger = () => {
       })
     }
 
-    setPdfFiles(prev => [...prev, ...newFiles])
+    if (skipped.length) {
+      setError(
+        skipped.length === 1
+          ? `${skipped[0]} is not a valid PDF and was skipped`
+          : `${skipped.length} files were not valid PDFs and were skipped: ${skipped.join(', ')}`
+      )
+    }
+
+    if (newFiles.length) setPdfFiles(prev => [...prev, ...newFiles])
     setIsValidating(false)
-  }, [])
+  }, [begin])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileSelect,

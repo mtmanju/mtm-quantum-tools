@@ -15,6 +15,15 @@ const UuidGenerator = () => {
   const [error, setError] = useState('')
 
   const copyHook = useCopy()
+  /**
+   * Which row was copied.
+   *
+   * useCopy holds a single boolean, and one instance drove every row plus the
+   * toolbar's copy-all — so copying row 3 ticked all ten rows and flipped the
+   * toolbar to "Copied!", leaving the user unable to tell what was actually on
+   * the clipboard.
+   */
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   const handleGenerate = useCallback(() => {
     setError('')
@@ -132,10 +141,14 @@ const UuidGenerator = () => {
                 <button
                   type="button"
                   className="uuid-copy-btn"
-                  onClick={() => copyHook.copy(uuid, (err) => setError(err))}
+                  onClick={() => {
+                    copyHook.copy(uuid, (err) => setError(err))
+                    setCopiedIndex(index)
+                    setTimeout(() => setCopiedIndex(i => (i === index ? null : i)), 2000)
+                  }}
                   title="Copy UUID"
                 >
-                  {copyHook.copied ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedIndex === index ? <Check size={14} /> : <Copy size={14} />}
                 </button>
               </div>
             ))}

@@ -116,7 +116,19 @@ type ContentItem =
 // ─── Inline Text Parser ────────────────────────────────────────────────────────
 
 // Matches: **bold**, *italic*, `code`, ~~strike~~, [link](url), plain text
-const INLINE_RE = /\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|~~([^~]+)~~|\[([^\]]+)\]\([^)]+\)|([^*`~[\]]+)/g
+/**
+ * The final alternative is a catch-all, so nothing is silently dropped.
+ *
+ * The plain-text branch excludes * ` ~ [ ], and no alternative matched a bare
+ * one — exec simply skipped it. "Array index [0] matters" exported to DOCX as
+ * "Array index 0 matters", brackets gone from the Word file while the on-screen
+ * preview showed them correctly.
+ */
+const INLINE_RE = /\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|~~([^~]+)~~|\[([^\]]+)\]\([^)]+\)|([^*`~[\]]+)|([\s\S])/g
+
+/** Shared by both exports; the HTML path interpolated fileName raw. */
+const escapeHtmlTitle = (name: string) =>
+  (name || 'document').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 function parseInlineRuns(text: string): TextRun[] {
   const runs: TextRun[] = []
@@ -129,6 +141,9 @@ function parseInlineRuns(text: string): TextRun[] {
     else if (match[4] !== undefined) runs.push(new TextRun({ text: match[4], strike: true }))
     else if (match[5] !== undefined) runs.push(new TextRun({ text: match[5] })) // link text only
     else if (match[6]) runs.push(new TextRun({ text: match[6] }))
+    // Group 7 is the catch-all: a bare * ` ~ [ or ] that no other alternative
+    // claimed. Emitting it literally is what stops it being deleted.
+    else if (match[7] !== undefined) runs.push(new TextRun({ text: match[7] }))
   }
   return runs.length ? runs : [new TextRun({ text })]
 }
@@ -166,14 +181,23 @@ function parseMarkdownContent(markdown: string): ContentItem[] {
 
     // ── Tables ───────────────────────────────────────────────────────────────
     if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-      const headers = trimmed.split('|').map(c => c.trim()).filter(Boolean)
+      // Trim the edges positionally, never by emptiness: filter(Boolean)
+      // also dropped genuinely empty cells, so `| Bolt |  | 12 |` became
+      // ["Bolt","12"] and every later column shifted left in the DOCX.
+      const splitRow = (line: string) => {
+        const cells = line.split('|')
+        if (cells.length && cells[0].trim() === '') cells.shift()
+        if (cells.length && cells[cells.length - 1].trim() === '') cells.pop()
+        return cells.map(c => c.trim())
+      }
+      const headers = splitRow(trimmed)
       const rows: string[][] = []
       i++
       if (i < lines.length && TABLE_SEPARATOR_RE.test(lines[i].trim())) i++ // skip separator
       while (i < lines.length) {
         const t = lines[i].trim()
         if (!t.startsWith('|') || !t.endsWith('|')) break
-        if (!TABLE_SEPARATOR_RE.test(t)) rows.push(t.split('|').map(c => c.trim()).filter(Boolean))
+        if (!TABLE_SEPARATOR_RE.test(t)) rows.push(splitRow(t))
         i++
       }
       items.push({ type: 'table', headers, rows })
@@ -533,6 +557,7 @@ const MarkdownConverter = () => {
   const previewRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorLayoutRef = useRef<HTMLDivElement>(null)
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Derived state ────────────────────────────────────────────────────────────
@@ -606,17 +631,34 @@ const MarkdownConverter = () => {
   // ── Auto-save ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!markdownContent) return
+    /**
+     * An emptied editor clears the draft.
+     *
+     * Only handleClear removed the key, so select-all-delete left the previous
+     * content in localStorage and the mount restore put it straight back on
+     * reload. For a tool whose promise is that nothing you paste is uploaded,
+     * text the user visibly deleted persisting on disk is the wrong default.
+     */
+    if (!markdownContent) {
+      try { localStorage.removeItem(AUTO_SAVE_KEY) } catch { /* storage unavailable */ }
+      return
+    }
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => {
       setAutoSaveStatus('saving')
       try {
         localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify({ content: markdownContent, name: fileName }))
         setAutoSaveStatus('saved')
-        setTimeout(() => setAutoSaveStatus('idle'), 2000)
+        // Tracked so the cleanup can cancel it: an untracked inner timer from a
+        // previous save fired after the next one, blinking "Saved" back out.
+        if (idleTimer.current) clearTimeout(idleTimer.current)
+        idleTimer.current = setTimeout(() => setAutoSaveStatus('idle'), 2000)
       } catch { setAutoSaveStatus('idle') }
     }, AUTO_SAVE_DELAY_MS)
-    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+      if (idleTimer.current) clearTimeout(idleTimer.current)
+    }
   }, [markdownContent, fileName])
 
   // ── Mermaid preview rendering ────────────────────────────────────────────────
@@ -697,7 +739,7 @@ const MarkdownConverter = () => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName || 'document'}</title>
+  <title>${escapeHtmlTitle(fileName)}</title>
   <style>
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;color:#1a1a1a;line-height:1.7}
     h1,h2,h3,h4{font-weight:600;margin-top:2rem;margin-bottom:.75rem}

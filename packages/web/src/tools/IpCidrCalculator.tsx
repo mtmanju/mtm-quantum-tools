@@ -28,8 +28,12 @@ function ipToInt(ip: string): number {
   const parts = ip.split('.')
   if (parts.length !== 4) throw new Error('Invalid IP address')
   return parts.reduce((acc, part) => {
-    const n = parseInt(part, 10)
-    if (isNaN(n) || n < 0 || n > 255) throw new Error('Invalid IP address octet')
+    // Whole-token match: parseInt stops at the first invalid character, so
+    // `192.168.1.1abc` parsed as 1 and `1e2.0.0.1` as 1 — the tool then
+    // reported a subnet for an address the user never typed, with no error.
+    if (!/^\d{1,3}$/.test(part)) throw new Error(`Invalid IP address octet: "${part}"`)
+    const n = Number(part)
+    if (n > 255) throw new Error('Invalid IP address octet')
     return (acc << 8) | n
   }, 0) >>> 0
 }
@@ -39,7 +43,17 @@ function intToIp(n: number): string {
 }
 
 function calculateSubnet(ip: string, prefix: number): SubnetResult {
-  if (prefix < 0 || prefix > 32) throw new Error('CIDR prefix must be between 0 and 32')
+  /**
+   * Integer check, not two comparisons.
+   *
+   * `NaN < 0` and `NaN > 32` are both false, so a non-numeric prefix sailed
+   * through: pasting `192.168.1.0/abc` shifted by NaN (i.e. by 0), producing a
+   * full green results grid reading `192.168.1.0/NaN`, mask `255.255.255.255`
+   * and Total Hosts `NaN` — with no error bar at all.
+   */
+  if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) {
+    throw new Error('CIDR prefix must be a whole number between 0 and 32')
+  }
 
   const ipInt = ipToInt(ip)
   const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0
@@ -82,6 +96,8 @@ function calculateSubnet(ip: string, prefix: number): SubnetResult {
 const COMMON_PREFIXES = [8, 16, 24, 25, 26, 27, 28, 30, 32]
 
 function formatHosts(n: number): string {
+  // /0 yields 4,294,967,296 hosts, which rendered as the unreadable "4294.97M".
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`
   return n.toLocaleString()

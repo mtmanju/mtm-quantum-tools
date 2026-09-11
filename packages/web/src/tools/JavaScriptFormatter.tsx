@@ -15,6 +15,12 @@ import './JavaScriptFormatter.css'
 
 const JavaScriptFormatter = () => {
   const [jsContent, setJsContent] = useState('')
+  /**
+   * Which transform the output pane is showing — see the other formatters:
+   * Minify wrote into the input while the output re-ran the formatter, so
+   * Download exported the pretty version of text the user had minified.
+   */
+  const [outputMode, setOutputMode] = useState<'format' | 'minify'>('format')
 
   // Accept a value handed over by the paste bar.
   useHandoff('javascript-formatter', setJsContent)
@@ -25,9 +31,11 @@ const JavaScriptFormatter = () => {
 
   const formattedJs = useMemo(() => {
     if (!jsContent.trim()) return ''
-    const result = formatJavaScript(jsContent, 2)
+    const result = outputMode === 'minify'
+      ? minifyJavaScript(jsContent)
+      : formatJavaScript(jsContent, 2)
     return result.formatted || ''
-  }, [jsContent])
+  }, [jsContent, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -51,6 +59,7 @@ const JavaScriptFormatter = () => {
     const result = formatJavaScript(jsContent, 2)
     if (result.isValid && result.formatted) {
       setJsContent(result.formatted)
+      setOutputMode('format')
       setError('')
     } else {
       setError(result.error || 'Failed to format JavaScript')
@@ -66,6 +75,7 @@ const JavaScriptFormatter = () => {
     const result = minifyJavaScript(jsContent)
     if (result.isValid && result.formatted) {
       setJsContent(result.formatted)
+      setOutputMode('minify')
       setError('')
     } else {
       setError(result.error || 'Failed to minify JavaScript')
@@ -73,11 +83,11 @@ const JavaScriptFormatter = () => {
   }, [jsContent])
 
   const handleDownload = useCallback(() => {
-    const content = formattedJs || jsContent
+    const content = formattedJs
     if (!content.trim()) return
 
     downloadTextFile(content, 'formatted.js', 'text/javascript')
-  }, [formattedJs, jsContent])
+  }, [formattedJs])
 
   const handleClear = useCallback(() => {
     setJsContent('')
@@ -124,7 +134,7 @@ const JavaScriptFormatter = () => {
       icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !jsContent.trim(),
+      disabled: !formattedJs.trim(),
       title: 'Download JavaScript file',
     },
     {

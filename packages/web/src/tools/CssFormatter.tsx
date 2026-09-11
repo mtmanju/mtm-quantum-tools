@@ -15,6 +15,16 @@ import './CssFormatter.css'
 
 const CssFormatter = () => {
   const [cssContent, setCssContent] = useState('')
+  /**
+   * Which transform the output pane is showing.
+   *
+   * Minify wrote its result back into the *input* while the output pane,
+   * Download and Copy-output all re-ran the formatter over that input — so
+   * clicking Compact collapsed the left pane and instantly re-expanded the
+   * right one, and Download saved the pretty version of the text the user
+   * had just asked to minify. The minified result had no export path at all.
+   */
+  const [outputMode, setOutputMode] = useState<'format' | 'minify'>('format')
 
   // Accept a value handed over by the paste bar.
   useHandoff('css-formatter', setCssContent)
@@ -28,9 +38,9 @@ const CssFormatter = () => {
   const formattedCss = useMemo(() => {
     if (!cssContent.trim()) return ''
     if (!validation.isValid) return ''
-    const result = formatCss(cssContent, 2)
+    const result = outputMode === 'minify' ? minifyCss(cssContent) : formatCss(cssContent, 2)
     return result.formatted || ''
-  }, [cssContent, validation.isValid])
+  }, [cssContent, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -58,6 +68,7 @@ const CssFormatter = () => {
     const result = formatCss(cssContent, 2)
     if (result.isValid && result.formatted) {
       setCssContent(result.formatted)
+      setOutputMode('format')
       setError('')
     } else {
       setError(result.error || 'Failed to format CSS')
@@ -85,11 +96,11 @@ const CssFormatter = () => {
   }, [cssContent, validation])
 
   const handleDownload = useCallback(() => {
-    const content = formattedCss || cssContent
+    const content = formattedCss
     if (!content.trim()) return
 
     downloadTextFile(content, 'formatted.css', 'text/css')
-  }, [formattedCss, cssContent])
+  }, [formattedCss])
 
   const handleClear = useCallback(() => {
     setCssContent('')
@@ -136,7 +147,7 @@ const CssFormatter = () => {
       icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !cssContent.trim(),
+      disabled: !cssContent.trim() || !validation.isValid,
       title: 'Download CSS file',
     },
     {

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, RotateCw, FileText, Check, RefreshCw } from 'lucide-react'
 import { PDFDocument, degrees } from 'pdf-lib'
+import { useLatestRun } from '../hooks/useLatestRun'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
@@ -26,6 +27,7 @@ async function rotatePdf(file: File, rotationDegrees: number): Promise<Uint8Arra
 
 const PdfRotator = () => {
   const [pdfFile, setPdfFile] = useState<PdfFile | null>(null)
+  const { begin, cancel } = useLatestRun()
   const [error, setError] = useState('')
   const [isRotating, setIsRotating] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -41,10 +43,14 @@ const PdfRotator = () => {
       return
     }
 
+    // Claim this selection: three awaits follow, and a slower earlier
+    // pick must not overwrite a faster later one.
+    const isCurrent = begin()
     setIsValidating(true)
     setError('')
 
     const isValid = await validatePdf(file)
+    if (!isCurrent()) return
     if (!isValid) {
       setError(`${file.name} is not a valid PDF file`)
       setIsValidating(false)
@@ -58,6 +64,7 @@ const PdfRotator = () => {
     } catch (err) {
       console.error('Failed to generate thumbnail', err)
     }
+    if (!isCurrent()) return
 
     setPdfFile({
       file,
@@ -67,7 +74,7 @@ const PdfRotator = () => {
       thumbnail
     })
     setIsValidating(false)
-  }, [])
+  }, [begin])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileSelect,
@@ -113,9 +120,11 @@ const PdfRotator = () => {
   }, [pdfFile, rotation])
 
   const handleRemove = useCallback(() => {
+    // Stop any in-flight conversion writing into a cleared UI.
+    cancel()
     setPdfFile(null)
     setError('')
-  }, [])
+  }, [cancel])
 
   const toolbarButtons = [
     {

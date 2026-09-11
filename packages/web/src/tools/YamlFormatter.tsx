@@ -60,11 +60,11 @@ const YamlFormatter = () => {
   }, [yamlContent, validation, formattedYaml])
 
   const handleDownload = useCallback(() => {
-    const content = formattedYaml || yamlContent
+    const content = formattedYaml
     if (!content.trim()) return
 
     downloadTextFile(content, 'formatted.yaml', 'text/yaml')
-  }, [formattedYaml, yamlContent])
+  }, [formattedYaml])
 
   const handleClear = useCallback(() => {
     setYamlContent('')
@@ -97,7 +97,7 @@ const YamlFormatter = () => {
       icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !yamlContent.trim(),
+      disabled: !yamlContent.trim() || !validation.isValid,
       title: 'Download YAML file',
     },
     {

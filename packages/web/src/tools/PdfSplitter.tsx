@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, FileText, Check, Scissors } from 'lucide-react'
+import { useLatestRun } from '../hooks/useLatestRun'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
@@ -11,6 +12,7 @@ import './PdfSplitter.css'
 
 const PdfSplitter = () => {
   const [pdfFile, setPdfFile] = useState<PdfFile | null>(null)
+  const { begin, cancel } = useLatestRun()
   const [error, setError] = useState('')
   const [isSplitting, setIsSplitting] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -25,10 +27,14 @@ const PdfSplitter = () => {
       return
     }
 
+    // Claim this selection: three awaits follow, and a slower earlier
+    // pick must not overwrite a faster later one.
+    const isCurrent = begin()
     setIsValidating(true)
     setError('')
 
     const isValid = await validatePdf(file)
+    if (!isCurrent()) return
     if (!isValid) {
       setError(`${file.name} is not a valid PDF file`)
       setIsValidating(false)
@@ -42,6 +48,7 @@ const PdfSplitter = () => {
     } catch (err) {
       console.error('Failed to generate thumbnail', err)
     }
+    if (!isCurrent()) return
 
     setPdfFile({
       file,
@@ -51,7 +58,7 @@ const PdfSplitter = () => {
       thumbnail
     })
     setIsValidating(false)
-  }, [])
+  }, [begin])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileSelect,
@@ -102,9 +109,11 @@ const PdfSplitter = () => {
   }, [pdfFile])
 
   const handleRemove = useCallback(() => {
+    // Stop any in-flight conversion writing into a cleared UI.
+    cancel()
     setPdfFile(null)
     setError('')
-  }, [])
+  }, [cancel])
 
   const toolbarButtons = [
     {

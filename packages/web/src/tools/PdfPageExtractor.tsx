@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, FileText, Check, Scissors, FileOutput, Hash } from 'lucide-react'
 import { PDFDocument } from 'pdf-lib'
+import { useLatestRun } from '../hooks/useLatestRun'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
@@ -13,20 +14,36 @@ function parsePageRanges(input: string, totalPages: number): number[] {
   const result = new Set<number>()
   const parts = input.split(',').map(s => s.trim()).filter(Boolean)
 
+  /**
+   * Whole-token matching, because parseInt accepts trailing garbage.
+   *
+   * `parseInt('5 8')` is 5 and `parseInt('1\u20135')` (en dash) is 1 — neither is
+   * NaN, so nothing threw. Typing `1-5 8 12` with spaces instead of commas, or
+   * pasting `1\u20135` from an email where the client auto-converted the hyphen,
+   * silently produced a smaller PDF with pages missing and no error at all.
+   * The old destructure also discarded everything after a second dash, so
+   * `2-5-9` quietly became `2-5`.
+   *
+   * An open-ended `12-` now means "to the end", which is what the placeholder
+   * syntax implies and which previously failed as an invalid range.
+   */
+  const RANGE = /^(\d+)\s*-\s*(\d+)?$/
+  const SINGLE = /^\d+$/
+
   for (const part of parts) {
-    if (part.includes('-')) {
-      const [startStr, endStr] = part.split('-').map(s => s.trim())
-      const start = parseInt(startStr)
-      const end = parseInt(endStr)
-      if (isNaN(start) || isNaN(end)) throw new Error(`Invalid range: "${part}"`)
+    const range = RANGE.exec(part)
+    if (range) {
+      const start = Number(range[1])
+      const end = range[2] === undefined ? totalPages : Number(range[2])
       if (start < 1 || end > totalPages) throw new Error(`Range "${part}" outside PDF bounds (1-${totalPages})`)
       if (start > end) throw new Error(`Range "${part}" is backwards: the start page must not be after the end page`)
       for (let i = start; i <= end; i++) result.add(i)
-    } else {
-      const n = parseInt(part)
-      if (isNaN(n)) throw new Error(`Invalid page number: "${part}"`)
+    } else if (SINGLE.test(part)) {
+      const n = Number(part)
       if (n < 1 || n > totalPages) throw new Error(`Page ${n} outside PDF bounds (1-${totalPages})`)
       result.add(n)
+    } else {
+      throw new Error(`Invalid page or range: "${part}". Use formats like 1, 3-5, or 8- (separated by commas)`)
     }
   }
 
@@ -48,6 +65,7 @@ async function extractPages(file: File, pageNumbers: number[]): Promise<Uint8Arr
 
 const PdfPageExtractor = () => {
   const [pdfFile, setPdfFile] = useState<PdfFile | null>(null)
+  const { begin, cancel } = useLatestRun()
   const [error, setError] = useState('')
   const [isExtracting, setIsExtracting] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
@@ -63,10 +81,14 @@ const PdfPageExtractor = () => {
       return
     }
 
+    // Claim this selection: three awaits follow, and a slower earlier
+    // pick must not overwrite a faster later one.
+    const isCurrent = begin()
     setIsValidating(true)
     setError('')
 
     const isValid = await validatePdf(file)
+    if (!isCurrent()) return
     if (!isValid) {
       setError(`${file.name} is not a valid PDF file`)
       setIsValidating(false)
@@ -80,6 +102,7 @@ const PdfPageExtractor = () => {
     } catch (err) {
       console.error('Failed to generate thumbnail', err)
     }
+    if (!isCurrent()) return
 
     setPdfFile({
       file,
@@ -90,7 +113,7 @@ const PdfPageExtractor = () => {
     })
     setRangeInput(pageCount > 0 ? `1-${pageCount}` : '')
     setIsValidating(false)
-  }, [])
+  }, [begin])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileSelect,
@@ -151,10 +174,12 @@ const PdfPageExtractor = () => {
   }, [pdfFile, parsed.pages])
 
   const handleRemove = useCallback(() => {
+    // Stop any in-flight conversion writing into a cleared UI.
+    cancel()
     setPdfFile(null)
     setRangeInput('')
     setError('')
-  }, [])
+  }, [cancel])
 
   const canExtract = !!pdfFile && parsed.pages.length > 0 && !parsed.error && !isExtracting
 

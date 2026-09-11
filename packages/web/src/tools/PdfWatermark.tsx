@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, FileText, Droplet, Stamp, Check } from 'lucide-react'
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib'
+import { useLatestRun } from '../hooks/useLatestRun'
 import { ToolContainer } from '../components/ui/ToolContainer'
 import { Toolbar } from '../components/ui/Toolbar'
 import { ErrorBar } from '../components/ui/ErrorBar'
@@ -43,6 +44,16 @@ async function addWatermark(file: File, opts: WatermarkOptions): Promise<Uint8Ar
     let y: number
     const margin = 50
 
+    /**
+     * Keep the text on the page.
+     *
+     * `x` was used unclamped, so a watermark wider than the page started off
+     * the left edge: "CONFIDENTIAL — DO NOT DISTRIBUTE" at 100pt is ~1750pt
+     * against a 612pt US-Letter width, giving x = -1188 for bottom-right. Only
+     * the tail was visible, and the tool still reported success.
+     */
+    const clampX = (value: number) => Math.max(margin, Math.min(value, Math.max(margin, width - margin)))
+
     switch (opts.position) {
       case 'top-left':
         x = margin
@@ -66,6 +77,8 @@ async function addWatermark(file: File, opts: WatermarkOptions): Promise<Uint8Ar
         y = (height - textHeight) / 2
         break
     }
+
+    x = clampX(x)
 
     page.drawText(opts.text, {
       x,
@@ -99,6 +112,7 @@ const POSITION_OPTIONS: PositionOption[] = [
 
 const PdfWatermark = () => {
   const [pdfFile, setPdfFile] = useState<PdfFile | null>(null)
+  const { begin, cancel } = useLatestRun()
   const [text, setText] = useState('CONFIDENTIAL')
   const [fontSize, setFontSize] = useState(50)
   const [opacity, setOpacity] = useState(0.3)
@@ -118,10 +132,14 @@ const PdfWatermark = () => {
       return
     }
 
+    // Claim this selection: three awaits follow, and a slower earlier
+    // pick must not overwrite a faster later one.
+    const isCurrent = begin()
     setIsValidating(true)
     setError('')
 
     const isValid = await validatePdf(file)
+    if (!isCurrent()) return
     if (!isValid) {
       setError(`${file.name} is not a valid PDF file`)
       setIsValidating(false)
@@ -135,6 +153,7 @@ const PdfWatermark = () => {
     } catch (err) {
       console.error('Failed to generate thumbnail', err)
     }
+    if (!isCurrent()) return
 
     setPdfFile({
       file,
@@ -144,7 +163,7 @@ const PdfWatermark = () => {
       thumbnail
     })
     setIsValidating(false)
-  }, [])
+  }, [begin])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleFileSelect,
@@ -196,9 +215,11 @@ const PdfWatermark = () => {
   }, [pdfFile, text, fontSize, opacity, rotation, color, position])
 
   const handleRemove = useCallback(() => {
+    // Stop any in-flight conversion writing into a cleared UI.
+    cancel()
     setPdfFile(null)
     setError('')
-  }, [])
+  }, [cancel])
 
   const toolbarButtons = [
     {

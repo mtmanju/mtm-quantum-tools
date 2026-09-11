@@ -201,9 +201,7 @@ const ColorConverter = () => {
               }
               value={format === 'hex' && isValidHex(input) ? input.startsWith('#') ? input : `#${input}` : input}
               onChange={(e) => {
-                const value = format === 'hex' && e.target.type === 'color' 
-                  ? e.target.value 
-                  : e.target.value
+                const value = e.target.value
                 setInput(value)
                 setActionError('')
               }}
@@ -224,7 +222,7 @@ const ColorConverter = () => {
           </div>
         </div>
 
-        {!colorResult && (
+        {!colorResult && !error && (
           <EmptyState
             icon={<Palette size={32} strokeWidth={1.5} aria-hidden="true" />}
             title="Your colour, in every format"

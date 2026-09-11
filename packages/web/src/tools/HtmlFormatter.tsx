@@ -15,6 +15,16 @@ import './HtmlFormatter.css'
 
 const HtmlFormatter = () => {
   const [htmlContent, setHtmlContent] = useState('')
+  /**
+   * Which transform the output pane is showing.
+   *
+   * Minify wrote its result back into the *input* while the output pane,
+   * Download and Copy-output all re-ran the formatter over that input — so
+   * clicking Compact collapsed the left pane and instantly re-expanded the
+   * right one, and Download saved the pretty version of the text the user
+   * had just asked to minify. The minified result had no export path at all.
+   */
+  const [outputMode, setOutputMode] = useState<'format' | 'minify'>('format')
 
   // Accept a value handed over by the paste bar.
   useHandoff('html-formatter', setHtmlContent)
@@ -28,8 +38,10 @@ const HtmlFormatter = () => {
   const formattedHtml = useMemo(() => {
     if (!htmlContent.trim()) return ''
     if (!validation.isValid) return ''
-    return formatHtml(htmlContent)
-  }, [htmlContent, validation.isValid])
+    return outputMode === 'minify'
+      ? minifyHtml(htmlContent)
+      : formatHtml(htmlContent)
+  }, [htmlContent, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -71,15 +83,16 @@ const HtmlFormatter = () => {
 
     const minified = minifyHtml(htmlContent)
     setHtmlContent(minified)
+    setOutputMode('minify')
     setError('')
   }, [htmlContent, validation])
 
   const handleDownload = useCallback(() => {
-    const content = formattedHtml || htmlContent
+    const content = formattedHtml
     if (!content.trim()) return
 
     downloadTextFile(content, 'formatted.html', 'text/html')
-  }, [formattedHtml, htmlContent])
+  }, [formattedHtml])
 
   const handleClear = useCallback(() => {
     setHtmlContent('')
@@ -112,7 +125,7 @@ const HtmlFormatter = () => {
       icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !htmlContent.trim(),
+      disabled: !htmlContent.trim() || !validation.isValid,
       title: 'Download HTML file',
     },
     {

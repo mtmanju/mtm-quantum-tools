@@ -85,29 +85,58 @@ const HashGenerator = () => {
    */
   useEffect(() => {
     if (!input.trim()) return
+    // Already current: this is what stops the added `result.forInput`
+    // dependency from re-triggering the work it just completed.
+    if (result.forInput === input) return
 
     let cancelled = false
 
-    void (async () => {
-      const algorithms: HashAlgorithm[] = ['md5', 'sha1', 'sha256', 'sha512']
-      const next: Record<HashAlgorithm, string> = { ...EMPTY_HASHES }
+    /**
+     * Debounced for large inputs only.
+     *
+     * MD5 has no Web Crypto implementation so utils/hash.ts computes it in JS,
+     * which blocks the main thread for the whole string — ~37 ms at 1 MB and
+     * ~220 ms at 5 MB, before the three SHA digests start. Dropping a large
+     * file and then typing made every keystroke a visible freeze. Small inputs
+     * stay on the synchronous path so ordinary typing is still instant.
+     */
+    const delay = input.length > 50_000 ? 300 : 0
 
-      try {
-        for (const algo of algorithms) {
-          const { hash } = await generateHash(input, algo)
+    const timer = setTimeout(() => {
+      void (async () => {
+        const algorithms: HashAlgorithm[] = ['md5', 'sha1', 'sha256', 'sha512']
+        const next: Record<HashAlgorithm, string> = { ...EMPTY_HASHES }
+
+        try {
+          for (const algo of algorithms) {
+            const { hash } = await generateHash(input, algo)
+            if (cancelled) return
+            next[algo] = hash
+          }
+          setResult({ forInput: input, hashes: next })
+          setError('')
+        } catch (err) {
           if (cancelled) return
-          next[algo] = hash
+          setError(err instanceof Error ? err.message : 'Hash generation failed')
         }
-        setResult({ forInput: input, hashes: next })
-        setError('')
-      } catch (err) {
-        if (cancelled) return
-        setError(err instanceof Error ? err.message : 'Hash generation failed')
-      }
-    })()
+      })()
+    }, delay)
 
-    return () => { cancelled = true }
-  }, [input])
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+    /**
+     * `result.forInput` is a real dependency, not a lint appeasement.
+     *
+     * Without it, "Regenerate" — which invalidates the result by setting
+     * forInput to '' — could never cause a recomputation, because `input` had
+     * not changed. The tool wedged permanently: all four hashes blanked to
+     * '...', "Generating hashes..." span forever, and Regenerate, Download and
+     * every copy button disabled themselves. Editing the text was the only
+     * escape.
+     */
+  }, [input, result.forInput])
 
   const handleDownload = useCallback(() => {
     if (!input.trim() || Object.values(hashes).every(h => !h)) return

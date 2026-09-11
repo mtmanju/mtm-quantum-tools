@@ -49,13 +49,13 @@ const CsvToJsonConverter = () => {
 
     try {
       if (mode === 'csv-to-json') {
-        const result = csvToJson(input, { delimiter, hasHeaders })
+        const result = csvToJson(input, { delimiter: delimiter || ',', hasHeaders })
         if (!result.isValid) {
           return { value: '', error: result.error || 'Failed to convert CSV to JSON' }
         }
         return { value: result.json || '', error: '' }
       } else {
-        const result = jsonToCsv(input, { delimiter, hasHeaders })
+        const result = jsonToCsv(input, { delimiter: delimiter || ',', hasHeaders })
         if (!result.isValid) {
           return { value: '', error: result.error || 'Failed to convert JSON to CSV' }
         }
@@ -159,9 +159,10 @@ const CsvToJsonConverter = () => {
               value={delimiter}
               onChange={(e) => {
                 const val = e.target.value
-                if (val.length <= 1) {
-                  setDelimiter(val || ',')
-                }
+                // Keep '' in state: substituting ',' on backspace refilled the
+                // box, and maxLength={1} then blocked the replacement keystroke,
+                // leaving the field permanently stuck on a comma.
+                if (val.length <= 1) setDelimiter(val)
               }}
               className="csv-delimiter-input"
               maxLength={1}

@@ -38,6 +38,16 @@ const EXAMPLES = [
 
 const SqlFormatter = () => {
   const [sqlContent, setSqlContent] = useState('')
+  /**
+   * Which transform the output pane is showing.
+   *
+   * Minify wrote its result back into the *input* while the output pane,
+   * Download and Copy-output all re-ran the formatter over that input — so
+   * clicking Compact collapsed the left pane and instantly re-expanded the
+   * right one, and Download saved the pretty version of the text the user
+   * had just asked to minify. The minified result had no export path at all.
+   */
+  const [outputMode, setOutputMode] = useState<'format' | 'minify'>('format')
 
   // Accept a value handed over by the paste bar.
   useHandoff('sql-formatter', setSqlContent)
@@ -51,8 +61,10 @@ const SqlFormatter = () => {
   const formattedSql = useMemo(() => {
     if (!sqlContent.trim()) return ''
     if (!validation.isValid) return ''
-    return formatSql(sqlContent)
-  }, [sqlContent, validation.isValid])
+    return outputMode === 'minify'
+      ? minifySql(sqlContent)
+      : formatSql(sqlContent)
+  }, [sqlContent, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -94,15 +106,16 @@ const SqlFormatter = () => {
 
     const minified = minifySql(sqlContent)
     setSqlContent(minified)
+    setOutputMode('minify')
     setError('')
   }, [sqlContent, validation])
 
   const handleDownload = useCallback(() => {
-    const content = formattedSql || sqlContent
+    const content = formattedSql
     if (!content.trim()) return
 
     downloadTextFile(content, 'formatted.sql', 'text/plain')
-  }, [formattedSql, sqlContent])
+  }, [formattedSql])
 
   const handleClear = useCallback(() => {
     setSqlContent('')
@@ -140,7 +153,7 @@ const SqlFormatter = () => {
       icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !sqlContent.trim(),
+      disabled: !sqlContent.trim() || !validation.isValid,
       title: 'Download SQL file',
     },
     {

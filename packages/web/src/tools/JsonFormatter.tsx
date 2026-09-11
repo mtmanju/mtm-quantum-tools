@@ -39,6 +39,16 @@ const EXAMPLES = [
 
 const JsonFormatter = () => {
   const [jsonContent, setJsonContent] = useState('')
+  /**
+   * Which transform the output pane is showing.
+   *
+   * Minify wrote its result back into the *input* while the output pane,
+   * Download and Copy-output all re-ran the formatter over that input — so
+   * clicking Compact collapsed the left pane and instantly re-expanded the
+   * right one, and Download saved the pretty version of the text the user
+   * had just asked to minify. The minified result had no export path at all.
+   */
+  const [outputMode, setOutputMode] = useState<'format' | 'minify'>('format')
 
   // Accept a value handed over by the paste bar.
   useHandoff('json-formatter', setJsonContent)
@@ -53,8 +63,10 @@ const JsonFormatter = () => {
   const formattedJson = useMemo(() => {
     if (!jsonContent.trim()) return ''
     if (!validation.isValid) return ''
-    return formatJson(jsonContent, indentSize)
-  }, [jsonContent, indentSize, validation.isValid])
+    return outputMode === 'minify'
+      ? minifyJson(jsonContent)
+      : formatJson(jsonContent, indentSize)
+  }, [jsonContent, indentSize, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -96,15 +108,16 @@ const JsonFormatter = () => {
 
     const minified = minifyJson(jsonContent)
     setJsonContent(minified)
+    setOutputMode('minify')
     setError('')
   }, [jsonContent, validation])
 
   const handleDownload = useCallback(() => {
-    const content = formattedJson || jsonContent
+    const content = formattedJson
     if (!content) return
 
     downloadTextFile(content, 'json.json', 'application/json')
-  }, [formattedJson, jsonContent])
+  }, [formattedJson])
 
   const handleClear = useCallback(() => {
     setJsonContent('')
@@ -149,7 +162,7 @@ const JsonFormatter = () => {
       icon: <FileJson size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !jsonContent.trim(),
+      disabled: !jsonContent.trim() || !validation.isValid,
       title: 'Download JSON'
     },
     {
@@ -169,7 +182,7 @@ const JsonFormatter = () => {
         <button
           type="button"
           className="json-indent-btn"
-          onClick={() => setIndentSize(Math.max(0, indentSize - 1))}
+          onClick={() => setIndentSize(Math.max(1, indentSize - 1))}
           disabled={indentSize <= 0}
           aria-label="Decrease indent"
         >

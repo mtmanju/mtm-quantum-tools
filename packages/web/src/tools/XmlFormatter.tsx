@@ -15,6 +15,16 @@ import './XmlFormatter.css'
 
 const XmlFormatter = () => {
   const [xmlContent, setXmlContent] = useState('')
+  /**
+   * Which transform the output pane is showing.
+   *
+   * Minify wrote its result back into the *input* while the output pane,
+   * Download and Copy-output all re-ran the formatter over that input — so
+   * clicking Compact collapsed the left pane and instantly re-expanded the
+   * right one, and Download saved the pretty version of the text the user
+   * had just asked to minify. The minified result had no export path at all.
+   */
+  const [outputMode, setOutputMode] = useState<'format' | 'minify'>('format')
 
   // Accept a value handed over by the paste bar.
   useHandoff('xml-formatter', setXmlContent)
@@ -28,9 +38,9 @@ const XmlFormatter = () => {
   const formattedXml = useMemo(() => {
     if (!xmlContent.trim()) return ''
     if (!validation.isValid) return ''
-    const result = formatXml(xmlContent, 2)
+    const result = outputMode === 'minify' ? minifyXml(xmlContent) : formatXml(xmlContent, 2)
     return result.formatted || ''
-  }, [xmlContent, validation.isValid])
+  }, [xmlContent, validation.isValid, outputMode])
 
   const fileUpload = useFileUpload({
     onFileRead: (text) => {
@@ -59,6 +69,7 @@ const XmlFormatter = () => {
     const result = formatXml(xmlContent, 2)
     if (result.isValid && result.formatted) {
       setXmlContent(result.formatted)
+      setOutputMode('format')
       setError('')
     } else {
       setError(result.error || 'Failed to format XML')
@@ -86,11 +97,11 @@ const XmlFormatter = () => {
   }, [xmlContent, validation])
 
   const handleDownload = useCallback(() => {
-    const content = formattedXml || xmlContent
+    const content = formattedXml
     if (!content.trim()) return
 
     downloadTextFile(content, 'formatted.xml', 'text/xml')
-  }, [formattedXml, xmlContent])
+  }, [formattedXml])
 
   const handleClear = useCallback(() => {
     setXmlContent('')
@@ -137,7 +148,7 @@ const XmlFormatter = () => {
       icon: <FileCode size={16} />,
       label: 'Download',
       onClick: handleDownload,
-      disabled: !xmlContent.trim(),
+      disabled: !xmlContent.trim() || !validation.isValid,
       title: 'Download XML file',
     },
     {

@@ -54,7 +54,12 @@ const NumberBaseConverter = () => {
     if (!conversionResult) return null
     try {
       const decimal = parseInt(conversionResult.decimal, 10)
-      if (isNaN(decimal) || decimal < 0 || decimal > 2147483647) return null
+      // The 2147483647 ceiling dated from when performBitwiseOperations used
+      // JavaScript's int32 bitwise operators. It now computes with BigInt and
+      // widens the word itself, so the panel was silently vanishing for values
+      // it handles correctly — enter 3000000000 and it disappeared with no
+      // explanation, reappearing when a digit was deleted.
+      if (!Number.isSafeInteger(decimal) || decimal < 0) return null
       return performBitwiseOperations(decimal)
     } catch {
       return null
