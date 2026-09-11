@@ -36,6 +36,18 @@ const EXAMPLES = [
   },
 ]
 
+/**
+ * How many diff rows are put in the DOM.
+ *
+ * computeDiff itself is cheap — 100,000 lines in ~7 ms — but it returns one
+ * object per line and each renders a div plus three spans. A 100k-line log
+ * therefore mounts ~400,000 elements, and every keystroke in the other pane
+ * reconciles all of them, which is what locks the tab for seconds at a time.
+ * Nobody reads the 40,000th row; the ones that matter are the changes, and the
+ * count below is far more than enough to reach them.
+ */
+const MAX_RENDERED_DIFF_LINES = 2000
+
 const DiffChecker = () => {
   const [oldText, setOldText] = useState('')
 
@@ -273,7 +285,14 @@ const DiffChecker = () => {
                 </div>
               ) : (
                 <div className="diff-output">
-                  {diffResult?.lines.map((line, lineIndex) => (
+                  {diffResult && diffResult.lines.length > MAX_RENDERED_DIFF_LINES && (
+                    <div className="diff-truncated-note">
+                      Showing the first {MAX_RENDERED_DIFF_LINES.toLocaleString()} of{' '}
+                      {diffResult.lines.length.toLocaleString()} lines. The counts above cover
+                      the whole comparison; Download includes every line.
+                    </div>
+                  )}
+                  {diffResult?.lines.slice(0, MAX_RENDERED_DIFF_LINES).map((line, lineIndex) => (
                     <div
                       key={lineIndex}
                       className={`diff-line diff-line-${line.type}`}

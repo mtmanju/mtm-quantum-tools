@@ -27,7 +27,7 @@ import {
   X,
 } from 'lucide-react'
 import MarkdownIt from 'markdown-it'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { downloadBinaryFile, downloadTextFile } from '../utils/file'
 import { useCopy } from '../hooks/useCopy'
@@ -490,6 +490,43 @@ function sanitizeSvg(svg: string): string {
  */
 const _diagramCache = new Map<string, { ok: true; svg: string } | { ok: false; error: string }>()
 
+/**
+ * Cap on the diagram cache.
+ *
+ * The key is the diagram source, so every keystroke inside a fence produces a
+ * new entry — including the syntactically broken intermediate states — and none
+ * was ever evicted. Typing a ten-line diagram left dozens of rendered SVG
+ * strings in memory for the life of the page. Oldest-first eviction keeps the
+ * entries that matter (the current document's diagrams are re-touched on every
+ * render) without unbounded growth.
+ */
+const MAX_CACHED_DIAGRAMS = 50
+
+/**
+ * Markdown length past which the live preview stops painting on every change.
+ *
+ * The cost is the DOM commit, not the parse: a 310 KB document renders ~4,000
+ * headings plus everything between them, and re-committing that subtree took
+ * ~950 ms per keystroke even with the render deferred. The parsed HTML is still
+ * produced in full whenever an export asks for it — the exports call
+ * renderMarkdown on the complete document and must never receive a truncated
+ * one — while the on-screen painting, and the parse behind it, are held back.
+ * The user can turn the preview on for the current document.
+ */
+const LIVE_PREVIEW_LIMIT = 150_000
+
+const cacheDiagram = (
+  code: string,
+  value: { ok: true; svg: string } | { ok: false; error: string }
+) => {
+  _diagramCache.set(code, value)
+  while (_diagramCache.size > MAX_CACHED_DIAGRAMS) {
+    const oldest = _diagramCache.keys().next().value
+    if (oldest === undefined) break
+    _diagramCache.delete(oldest)
+  }
+}
+
 /** Render every uncached diagram in `codes`. Resolves once the cache is populated. */
 async function renderDiagramsToCache(codes: string[]): Promise<void> {
   const pending = codes.filter(c => !_diagramCache.has(c))
@@ -500,7 +537,7 @@ async function renderDiagramsToCache(codes: string[]): Promise<void> {
     m = await getMermaid()
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Failed to load the diagram renderer'
-    pending.forEach(c => _diagramCache.set(c, { ok: false, error }))
+    pending.forEach(c => cacheDiagram(c, { ok: false, error }))
     return
   }
 
@@ -510,14 +547,14 @@ async function renderDiagramsToCache(codes: string[]): Promise<void> {
         const id = `mermaid-preview-${_previewDiagramCounter++}`
         const { svg } = await m.render(id, code)
         const safe = sanitizeSvg(svg)
-        _diagramCache.set(
+        cacheDiagram(
           code,
           safe
             ? { ok: true, svg: safe }
             : { ok: false, error: 'Diagram output could not be safely displayed' }
         )
       } catch (err) {
-        _diagramCache.set(code, {
+        cacheDiagram(code, {
           ok: false,
           error: err instanceof Error ? err.message : 'Invalid diagram syntax',
         })
@@ -570,23 +607,44 @@ const MarkdownConverter = () => {
    */
   const [renderedDiagrams, setRenderedDiagrams] = useState<typeof _diagramCache>(new Map())
 
+  /**
+   * The preview follows typing rather than blocking it.
+   *
+   * md.render + DOMParser + querySelectorAll ran over the entire document on
+   * every keystroke, and MAX_FILE_SIZE allows 5 MB — so typing in a large
+   * document cost multiple seconds per character. useDeferredValue lets React
+   * keep the textarea responsive and re-render the preview at a lower priority,
+   * dropping intermediate values when input outpaces rendering.
+   */
+  const deferredMarkdown = useDeferredValue(markdownContent)
+
+  /** Set when the user asks for the preview despite the document's size. */
+  const [forcePreview, setForcePreview] = useState(false)
+  const previewSuppressed = !forcePreview && deferredMarkdown.length > LIVE_PREVIEW_LIMIT
+
   /** Diagram sources found in the current document, in order. */
   const diagramCodes = useMemo(() => {
-    if (!markdownContent.trim()) return [] as string[]
+    if (!deferredMarkdown.trim()) return [] as string[]
     const codes: string[] = []
     const fence = /^[ \t]*```[ \t]*mermaid[ \t]*\r?\n([\s\S]*?)^[ \t]*```[ \t]*$/gm
     let match: RegExpExecArray | null
-    while ((match = fence.exec(markdownContent)) !== null) {
+    while ((match = fence.exec(deferredMarkdown)) !== null) {
       const code = match[1].trim()
       if (code) codes.push(code)
     }
     return codes
-  }, [markdownContent])
+  }, [deferredMarkdown])
 
-  const htmlPreview = useMemo(() => {
-    if (!markdownContent.trim()) return ''
+  /**
+   * Markdown to preview HTML.
+   *
+   * Shared by the preview and by the HTML/PDF exports, so an export always
+   * serialises the complete document even when the on-screen preview is paused.
+   */
+  const renderMarkdown = useCallback((markdown: string) => {
+    if (!markdown.trim()) return ''
     try {
-      const html = md.render(markdownContent)
+      const html = md.render(markdown)
       const doc = new DOMParser().parseFromString(html, 'text/html')
       let idx = 0
       doc.querySelectorAll('pre code.language-mermaid').forEach(block => {
@@ -620,7 +678,19 @@ const MarkdownConverter = () => {
     } catch {
       return '<p>Error rendering preview</p>'
     }
-  }, [markdownContent, renderedDiagrams])
+  }, [renderedDiagrams])
+
+  /**
+   * Skipped entirely while the preview is paused.
+   *
+   * md.render + DOMParser over a 300 KB document is not free, and computing a
+   * preview that is not being shown is pure waste — the exports call
+   * renderMarkdown directly when they need it.
+   */
+  const htmlPreview = useMemo(
+    () => (previewSuppressed ? '' : renderMarkdown(deferredMarkdown)),
+    [previewSuppressed, renderMarkdown, deferredMarkdown]
+  )
 
   const documentStats = useMemo(() => computeStats(markdownContent), [markdownContent])
 
@@ -733,7 +803,8 @@ const MarkdownConverter = () => {
   // ── Export HTML ───────────────────────────────────────────────────────────────
 
   const handleExportHtml = useCallback(() => {
-    if (!htmlPreview) return
+    const exportHtml = renderMarkdown(markdownContent)
+    if (!exportHtml) return
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -751,10 +822,10 @@ const MarkdownConverter = () => {
     th{background:#f9fafb;font-weight:600}img{max-width:100%;height:auto}a{color:#C9A063}
   </style>
 </head>
-<body>${htmlPreview}</body>
+<body>${exportHtml}</body>
 </html>`
     downloadTextFile(fullHtml, `${fileName || 'document'}.html`, 'text/html')
-  }, [htmlPreview, fileName])
+  }, [renderMarkdown, markdownContent, fileName])
 
   // ── Download raw Markdown ─────────────────────────────────────────────────────
 
@@ -768,7 +839,8 @@ const MarkdownConverter = () => {
   // canvas-based capture libs, and produces vector text (selectable, searchable).
 
   const handleExportPdf = useCallback(() => {
-    if (!htmlPreview) return
+    const exportHtml = renderMarkdown(markdownContent)
+    if (!exportHtml) return
 
     // window.open() called synchronously from a click handler — not blocked by pop-up blockers
     const win = window.open('', '_blank')
@@ -805,14 +877,14 @@ a{color:#C9A063;text-decoration:none}
 hr{border:none;border-top:1px solid #e5e7eb;margin:1.5em 0}
 </style>
 </head>
-<body>${htmlPreview}</body>
+<body>${exportHtml}</body>
 </html>`)
 
     win.document.close()
     win.focus()
     // Small delay ensures the document is fully painted before the print dialog opens
     setTimeout(() => win.print(), 250)
-  }, [htmlPreview, fileName])
+  }, [renderMarkdown, markdownContent, fileName])
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────────
 
@@ -1023,7 +1095,24 @@ hr{border:none;border-top:1px solid #e5e7eb;margin:1.5em 0}
               </div>
             </div>
             <div className="converter-preview" ref={previewRef}>
-              {htmlPreview ? (
+              {previewSuppressed && deferredMarkdown.trim() ? (
+                <div className="converter-preview-paused">
+                  <Eye size={36} strokeWidth={1.5} />
+                  <p>Live preview paused</p>
+                  <p>
+                    This document is {Math.round(deferredMarkdown.length / 1024).toLocaleString()} KB.
+                    Re-rendering it on every keystroke makes typing stutter, so the preview is held
+                    back. Export still includes the whole document.
+                  </p>
+                  <button
+                    type="button"
+                    className="converter-preview-show-btn"
+                    onClick={() => setForcePreview(true)}
+                  >
+                    Show preview anyway
+                  </button>
+                </div>
+              ) : htmlPreview ? (
                 <div className="converter-preview-content" dangerouslySetInnerHTML={{ __html: htmlPreview }} />
               ) : (
                 <div className="converter-preview-empty">

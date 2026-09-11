@@ -12,6 +12,16 @@ import { convertCase, type CaseType } from '../utils/textCase'
 import { useHandoff } from '../hooks/useHandoff'
 import './TextCaseConverter.css'
 
+/**
+ * How much of each variation is put on screen.
+ *
+ * The panel is a nine-way preview, not nine full documents. Converting 900 KB
+ * costs ~72 ms, but the nine results come to ~7.7 MB of text, and rendering all
+ * of it into nine <code> blocks on every keystroke is what actually stalled the
+ * tab. Copy still copies the whole value — only the preview is clipped.
+ */
+const PREVIEW_CHARS = 2000
+
 const TextCaseConverter = () => {
   const [input, setInput] = useState('')
 
@@ -41,18 +51,29 @@ const TextCaseConverter = () => {
 
   const allCases = useMemo(() => {
     if (!input.trim()) return null
-    const cases: Array<{ type: CaseType; label: string; value: string }> = [
-      { type: 'lowercase', label: 'lowercase', value: convertCase(input, 'lowercase') },
-      { type: 'uppercase', label: 'UPPERCASE', value: convertCase(input, 'uppercase') },
-      { type: 'title', label: 'Title Case', value: convertCase(input, 'title') },
-      { type: 'sentence', label: 'Sentence case', value: convertCase(input, 'sentence') },
-      { type: 'camel', label: 'camelCase', value: convertCase(input, 'camel') },
-      { type: 'pascal', label: 'PascalCase', value: convertCase(input, 'pascal') },
-      { type: 'snake', label: 'snake_case', value: convertCase(input, 'snake') },
-      { type: 'kebab', label: 'kebab-case', value: convertCase(input, 'kebab') },
-      { type: 'constant', label: 'CONSTANT_CASE', value: convertCase(input, 'constant') }
+    const types: Array<{ type: CaseType; label: string }> = [
+      { type: 'lowercase', label: 'lowercase' },
+      { type: 'uppercase', label: 'UPPERCASE' },
+      { type: 'title', label: 'Title Case' },
+      { type: 'sentence', label: 'Sentence case' },
+      { type: 'camel', label: 'camelCase' },
+      { type: 'pascal', label: 'PascalCase' },
+      { type: 'snake', label: 'snake_case' },
+      { type: 'kebab', label: 'kebab-case' },
+      { type: 'constant', label: 'CONSTANT_CASE' },
     ]
-    return cases
+    return types.map(({ type, label }) => {
+      const value = convertCase(input, type)
+      return {
+        type,
+        label,
+        value,
+        // Rendered separately from `value`, which Copy still uses in full.
+        preview: value.length > PREVIEW_CHARS ? value.slice(0, PREVIEW_CHARS) : value,
+        clipped: value.length > PREVIEW_CHARS,
+        length: value.length,
+      }
+    })
   }, [input])
 
   const handleClear = useCallback(() => {
@@ -171,7 +192,14 @@ const TextCaseConverter = () => {
                   {allCases.map((caseItem) => (
                     <div key={caseItem.type} className="text-case-variation-item">
                       <div className="text-case-variation-label">{caseItem.label}:</div>
-                      <code className="text-case-variation-value">{caseItem.value}</code>
+                      <code className="text-case-variation-value">
+                        {caseItem.preview}
+                        {caseItem.clipped && (
+                          <span className="text-case-variation-clipped">
+                            {` … showing first ${PREVIEW_CHARS.toLocaleString()} of ${caseItem.length.toLocaleString()} characters — Copy takes all of it`}
+                          </span>
+                        )}
+                      </code>
                       <button
                         type="button"
                         className="text-case-variation-copy"

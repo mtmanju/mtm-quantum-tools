@@ -126,3 +126,9 @@
   margin: 0;
 }
 
+
+/* Clipped-preview note in the variations panel — see PREVIEW_CHARS. */
+.text-case-variation-clipped {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-style: italic;
+}

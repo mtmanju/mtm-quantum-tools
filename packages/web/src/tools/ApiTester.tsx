@@ -62,6 +62,57 @@ const QUICK_EXAMPLES: ApiExample[] = [
   },
 ]
 
+/**
+ * Cap on how much of a response body is read into memory.
+ *
+ * The whole body was buffered, then for JSON re-serialised into a second full
+ * copy, then handed to the renderer as one text node. Pointing the tester at a
+ * large artifact held the raw text, the parsed object and the pretty-printed
+ * string at once and then tried to render all of it — the tab became
+ * unresponsive with no way to cancel.
+ */
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024
+
+/**
+ * Read at most MAX_RESPONSE_BYTES, stopping early rather than buffering the
+ * rest. Falls back to res.text() where streaming is unavailable.
+ */
+async function readBodyWithLimit(res: Response): Promise<{ text: string; truncated: boolean }> {
+  if (!res.body) {
+    const text = await res.text()
+    return text.length > MAX_RESPONSE_BYTES
+      ? { text: text.slice(0, MAX_RESPONSE_BYTES), truncated: true }
+      : { text, truncated: false }
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  const chunks: string[] = []
+  let received = 0
+  let truncated = false
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      received += value.byteLength
+      if (received > MAX_RESPONSE_BYTES) {
+        const keep = value.byteLength - (received - MAX_RESPONSE_BYTES)
+        chunks.push(decoder.decode(value.slice(0, keep)))
+        truncated = true
+        break
+      }
+      chunks.push(decoder.decode(value, { stream: true }))
+    }
+  } finally {
+    // Releasing the lock lets the connection be torn down rather than left
+    // draining a body nobody is going to read.
+    await reader.cancel().catch(() => {})
+  }
+
+  return { text: chunks.join(''), truncated }
+}
+
 const ApiTester = () => {
   const [url, setUrl] = useState('https://api.github.com/users/octocat')
   const [method, setMethod] = useState<HttpMethod>('GET')
@@ -199,18 +250,19 @@ const ApiTester = () => {
       const endTime = Date.now()
       const responseTime = endTime - startTime
 
-      let responseBody = ''
       const contentType = res.headers.get('content-type') || ''
-      
-      if (contentType.includes('application/json')) {
+      const { text: rawBody, truncated } = await readBodyWithLimit(res)
+
+      let responseBody = rawBody
+      if (!truncated && contentType.includes('application/json')) {
         try {
-          const json = await res.json()
-          responseBody = JSON.stringify(json, null, 2)
+          responseBody = JSON.stringify(JSON.parse(rawBody), null, 2)
         } catch {
-          responseBody = await res.text()
+          // Not actually JSON despite the header — show what arrived.
         }
-      } else {
-        responseBody = await res.text()
+      }
+      if (truncated) {
+        responseBody = `${rawBody}\n\n--- response truncated at ${(MAX_RESPONSE_BYTES / 1024 / 1024).toFixed(0)} MB ---`
       }
 
       const responseHeaders: Record<string, string> = {}

@@ -169,3 +169,14 @@
   }
 }
 
+
+/* Notice shown when the rendered diff is capped — see MAX_RENDERED_DIFF_LINES. */
+.diff-truncated-note {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: var(--text-sm, 0.875rem);
+}
